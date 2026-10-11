@@ -330,42 +330,31 @@ public struct OverviewView: View {
     private var sensorsCard: some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack {
-                Label("Thermals & Fans", systemImage: "thermometer.medium")
+                Label("Temperature & Fans", systemImage: "thermometer.medium")
                     .font(.system(size: 13, weight: .semibold))
                     .foregroundStyle(AppTheme.orangeAccent)
                 Spacer()
                 StatusBadge(
-                    text: monitor.snapshot.sensors.thermalStateDescription.components(separatedBy: " ").first ?? "Nominal",
-                    color: thermalColor(monitor.snapshot.sensors.thermalState)
+                    text: monitor.snapshot.sensors.thermalState.shortLabel,
+                    color: thermalStateColor(monitor.snapshot.sensors.thermalState)
+                )
+            }
+            
+            ForEach([ThermalComponent.cpu, .gpu, .battery]) { component in
+                ComponentTemperatureRow(
+                    component: component,
+                    sensors: monitor.snapshot.sensors,
+                    unit: settings.temperatureUnit,
+                    staleAfter: monitor.sensorStaleAfter
                 )
             }
             
             StatRow(
-                label: "Thermal State",
+                label: "Thermal State (Pressure)",
                 value: monitor.snapshot.sensors.thermalStateDescription,
-                icon: "waveform.path.ecg"
+                icon: "waveform.path.ecg",
+                hint: "macOS thermal pressure level. This is not a temperature."
             )
-            
-            StatRow(
-                label: "Thermal Throttling",
-                value: monitor.snapshot.sensors.isThrottling ? "Active Throttling" : "None (Optimal)",
-                icon: "bolt.shield.fill"
-            )
-            
-            if let temp = monitor.snapshot.sensors.cpuTemperature {
-                StatRow(
-                    label: "CPU Temperature",
-                    value: Formatters.temperature(temp, inFahrenheit: settings.temperatureUnit.isFahrenheit),
-                    icon: "thermometer"
-                )
-            } else {
-                StatRow(
-                    label: "Direct Diode Access",
-                    value: "Sandboxed (SoC Guarded)",
-                    icon: "lock.shield",
-                    hint: "Direct thermal diodes require kernel-level helper on Apple Silicon. Thermal pressure state is fully active."
-                )
-            }
             
             if !monitor.snapshot.sensors.fanSpeeds.isEmpty {
                 ForEach(monitor.snapshot.sensors.fanSpeeds) { fan in
@@ -377,10 +366,10 @@ public struct OverviewView: View {
                 }
             } else {
                 StatRow(
-                    label: "Cooling Architecture",
-                    value: "Intelligent Fan / Silent",
+                    label: "Fan Speed",
+                    value: "Unavailable",
                     icon: "fanblades",
-                    hint: "Fan telemetry is managed by Apple Silicon SMC hardware controller."
+                    hint: monitor.snapshot.sensors.fansState.displayText
                 )
             }
         }
@@ -563,15 +552,6 @@ public struct OverviewView: View {
         case .normal: return AppTheme.successGreen
         case .warning: return AppTheme.warningAmber
         case .critical: return AppTheme.dangerRed
-        }
-    }
-    
-    private func thermalColor(_ state: ProcessInfo.ThermalState) -> Color {
-        switch state {
-        case .nominal: return AppTheme.successGreen
-        case .fair: return AppTheme.warningAmber
-        case .serious, .critical: return AppTheme.dangerRed
-        @unknown default: return AppTheme.textSecondary
         }
     }
 }

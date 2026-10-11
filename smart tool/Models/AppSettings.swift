@@ -38,6 +38,11 @@ public enum MenuBarStatusMetric: String, CaseIterable, Identifiable, Codable, Se
     case batteryTime      = "battery_time"
     case batteryWatts     = "battery_watts"
     case batteryStatus    = "battery_status"
+    case cpuTemperature   = "cpu_temperature"
+    case gpuTemperature   = "gpu_temperature"
+    case batteryTemperature = "battery_temperature"
+    case thermalState     = "thermal_state"
+    case fanSpeed         = "fan_speed"
 
     public var id: String { rawValue }
 
@@ -55,6 +60,11 @@ public enum MenuBarStatusMetric: String, CaseIterable, Identifiable, Codable, Se
         case .batteryTime:     return "BAT"
         case .batteryWatts:    return "PWR"
         case .batteryStatus:   return ""
+        case .cpuTemperature:  return "CPU"
+        case .gpuTemperature:  return "GPU"
+        case .batteryTemperature: return "BAT"
+        case .thermalState:    return "THM"
+        case .fanSpeed:        return "FAN"
         }
     }
 
@@ -72,6 +82,11 @@ public enum MenuBarStatusMetric: String, CaseIterable, Identifiable, Codable, Se
         case .batteryTime:     return "Battery Time Remaining"
         case .batteryWatts:    return "Battery Power (W)"
         case .batteryStatus:   return "Battery Status Icon"
+        case .cpuTemperature:  return "CPU Temperature"
+        case .gpuTemperature:  return "GPU Temperature"
+        case .batteryTemperature: return "Battery Temperature"
+        case .thermalState:    return "System Thermal State"
+        case .fanSpeed:        return "Fan Speed (RPM)"
         }
     }
 
@@ -89,6 +104,11 @@ public enum MenuBarStatusMetric: String, CaseIterable, Identifiable, Codable, Se
         case .batteryTime:     return "clock.fill"
         case .batteryWatts:    return "bolt.fill"
         case .batteryStatus:   return "battery.75"
+        case .cpuTemperature:  return "thermometer.sun.fill"
+        case .gpuTemperature:  return "thermometer.high"
+        case .batteryTemperature: return "thermometer.medium"
+        case .thermalState:    return "flame.fill"
+        case .fanSpeed:        return "fanblades.fill"
         }
     }
 
@@ -105,15 +125,59 @@ public enum MenuBarStatusMetric: String, CaseIterable, Identifiable, Codable, Se
     /// True when the metric requires battery hardware.
     public var requiresBattery: Bool {
         switch self {
-        case .batteryPercent, .batteryTime, .batteryWatts, .batteryStatus: return true
+        case .batteryPercent, .batteryTime, .batteryWatts, .batteryStatus, .batteryTemperature: return true
         default: return false
+        }
+    }
+
+    /// Whether the current Mac can supply this metric, with the reason when it can't.
+    public func availability(in snapshot: SystemMetricsSnapshot) -> AvailabilityState {
+        if requiresBattery && !snapshot.battery.hasBattery {
+            return .unavailable(reason: "This Mac has no internal battery.")
+        }
+        switch self {
+        case .gpuUsage:
+            return snapshot.gpu.deviceUtilization != nil ? .available : .unavailable(reason: "GPU utilization is not exposed on this Mac.")
+        case .cpuTemperature: return snapshot.sensors.state(for: .cpu)
+        case .gpuTemperature: return snapshot.sensors.state(for: .gpu)
+        case .batteryTemperature: return snapshot.sensors.state(for: .battery)
+        case .fanSpeed: return snapshot.sensors.fansState
+        default: return .available
         }
     }
 
     /// Render a compact text string for the live menu bar status item.
     /// Returns nil when the metric is unavailable or should be suppressed.
-    public func menuBarText(from snapshot: SystemMetricsSnapshot) -> String? {
+    public func menuBarText(
+        from snapshot: SystemMetricsSnapshot,
+        temperatureUnit: TemperatureUnit = .celsius,
+        now: Date = Date(),
+        staleAfter: TimeInterval = SensorFreshness.defaultStaleAfter
+    ) -> String? {
+        func freshCelsius(_ component: ThermalComponent) -> Double? {
+            guard let value = snapshot.sensors.temperature(for: component),
+                  !value.isStale(at: now, maxAge: staleAfter) else { return nil }
+            return value.celsius
+        }
+
         switch self {
+        case .cpuTemperature:
+            return "CPU " + Formatters.compactTemperature(freshCelsius(.cpu), unit: temperatureUnit)
+
+        case .gpuTemperature:
+            return "GPU " + Formatters.compactTemperature(freshCelsius(.gpu), unit: temperatureUnit)
+
+        case .batteryTemperature:
+            guard snapshot.battery.hasBattery else { return nil }
+            return "BAT " + Formatters.compactTemperature(freshCelsius(.battery), unit: temperatureUnit)
+
+        case .thermalState:
+            return "THM " + snapshot.sensors.thermalState.shortLabel
+
+        case .fanSpeed:
+            guard let fastest = snapshot.sensors.fanSpeeds.max(by: { $0.speedRPM < $1.speedRPM }) else { return "FAN --" }
+            return String(format: "FAN %.0frpm", fastest.speedRPM)
+
         case .iconOnly:
             return nil  // icon-only — caller sets just an image
 
@@ -238,6 +302,29 @@ public enum TemperatureUnit: String, CaseIterable, Identifiable, Codable {
     
     public var id: String { rawValue }
     public var isFahrenheit: Bool { self == .fahrenheit }
+
+    public var symbol: String {
+        switch self {
+        case .celsius: return "°C"
+        case .fahrenheit: return "°F"
+        }
+    }
+
+    /// Converts a Celsius reading into this unit.
+    public func convert(fromCelsius celsius: Double) -> Double {
+        switch self {
+        case .celsius: return celsius
+        case .fahrenheit: return celsius * 9.0 / 5.0 + 32.0
+        }
+    }
+
+    /// Converts a value expressed in this unit back to Celsius.
+    public func toCelsius(_ value: Double) -> Double {
+        switch self {
+        case .celsius: return value
+        case .fahrenheit: return (value - 32.0) * 5.0 / 9.0
+        }
+    }
 }
 
 @MainActor
@@ -249,6 +336,8 @@ public final class AppSettings: ObservableObject {
     @AppStorage("menuBarDisplay") public var menuBarDisplay: MenuBarMetricDisplay = .cpuPercentage
     @AppStorage("refreshIntervalSeconds") public var refreshIntervalSeconds: Double = 1.0
     @AppStorage("temperatureUnit") public var temperatureUnit: TemperatureUnit = .celsius
+    /// Allows reading SMC / IOHID thermal sensors (undocumented interfaces, unavailable when sandboxed).
+    @AppStorage("hardwareSensorAccessEnabled") public var hardwareSensorAccessEnabled: Bool = true
     @AppStorage("appearanceMode") public var appearanceMode: AppAppearanceMode = .light
     @AppStorage("historyDurationPoints") public var historyDurationPoints: Int = 60
 

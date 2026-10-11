@@ -755,13 +755,7 @@ public struct BatteryDetailView: View {
                     color: AppTheme.neonCyan
                 )
 
-                diagnosticCard(
-                    title: "Temperature",
-                    value: b.temperatureCelsius != nil ? String(format: "%.1f °C", b.temperatureCelsius!) : "Unavailable on this Mac",
-                    subtitle: "Internal battery temperature",
-                    icon: "thermometer.medium",
-                    color: AppTheme.orangeAccent
-                )
+                batteryTemperatureCard
 
                 diagnosticCard(
                     title: "Low Battery Target",
@@ -769,6 +763,33 @@ public struct BatteryDetailView: View {
                     subtitle: "Depletion safety reserve",
                     icon: "bell.fill",
                     color: AppTheme.warningAmber
+                )
+            }
+        }
+    }
+
+    /// Battery temperature comes only from a battery-attributed sensor; it is never inferred
+    /// from charge level, charging state or power draw.
+    private var batteryTemperatureCard: some View {
+        let sensors = monitor.snapshot.sensors
+        let unit = settings.temperatureUnit
+        return TimelineView(.periodic(from: .now, by: 5)) { context in
+            if let reading = sensors.batteryTemperature {
+                let stale = reading.isStale(at: context.date, maxAge: monitor.sensorStaleAfter)
+                diagnosticCard(
+                    title: "Temperature",
+                    value: Formatters.temperature(reading.celsius, unit: unit) + (stale ? " (stale)" : ""),
+                    subtitle: "\(reading.source.displayName) · updated \(Formatters.readingAge(since: reading.timestamp, now: context.date))",
+                    icon: "thermometer.medium",
+                    color: stale ? AppTheme.warningAmber : AppTheme.orangeAccent
+                )
+            } else {
+                diagnosticCard(
+                    title: "Temperature",
+                    value: "Unavailable",
+                    subtitle: sensors.state(for: .battery).displayText,
+                    icon: "thermometer.medium",
+                    color: AppTheme.textTertiary
                 )
             }
         }

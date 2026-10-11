@@ -43,12 +43,30 @@ public final class WidgetAlertService: ObservableObject {
         didSet { UserDefaults.standard.set(batteryThresholdPercent, forKey: "borno_alert_battery_threshold") }
     }
 
-    @Published public var enableTemperatureAlert: Bool {
-        didSet { UserDefaults.standard.set(enableTemperatureAlert, forKey: "borno_alert_temp_enabled") }
+    // Temperature alerts are per component; each compares only that component's own sensors.
+    // The CPU alert keeps the original single-alert UserDefaults keys.
+    @Published public var enableCPUTemperatureAlert: Bool {
+        didSet { UserDefaults.standard.set(enableCPUTemperatureAlert, forKey: "borno_alert_temp_enabled") }
     }
-    @Published public var temperatureThresholdCelsius: Double {
-        didSet { UserDefaults.standard.set(temperatureThresholdCelsius, forKey: "borno_alert_temp_threshold") }
+    @Published public var cpuTemperatureThresholdCelsius: Double {
+        didSet { UserDefaults.standard.set(cpuTemperatureThresholdCelsius, forKey: "borno_alert_temp_threshold") }
     }
+    @Published public var enableGPUTemperatureAlert: Bool {
+        didSet { UserDefaults.standard.set(enableGPUTemperatureAlert, forKey: "borno_alert_gpu_temp_enabled") }
+    }
+    @Published public var gpuTemperatureThresholdCelsius: Double {
+        didSet { UserDefaults.standard.set(gpuTemperatureThresholdCelsius, forKey: "borno_alert_gpu_temp_threshold") }
+    }
+    @Published public var enableBatteryTemperatureAlert: Bool {
+        didSet { UserDefaults.standard.set(enableBatteryTemperatureAlert, forKey: "borno_alert_battery_temp_enabled") }
+    }
+    @Published public var batteryTemperatureThresholdCelsius: Double {
+        didSet { UserDefaults.standard.set(batteryTemperatureThresholdCelsius, forKey: "borno_alert_battery_temp_threshold") }
+    }
+
+    public static let cpuTemperatureThresholdRange: ClosedRange<Double> = 60...105
+    public static let gpuTemperatureThresholdRange: ClosedRange<Double> = 60...105
+    public static let batteryTemperatureThresholdRange: ClosedRange<Double> = 35...60
 
     @Published public var enableNetworkDisconnectAlert: Bool {
         didSet { UserDefaults.standard.set(enableNetworkDisconnectAlert, forKey: "borno_alert_net_disc_enabled") }
@@ -72,8 +90,12 @@ public final class WidgetAlertService: ObservableObject {
         self.enableBatteryAlert = defaults.object(forKey: "borno_alert_battery_enabled") as? Bool ?? true
         self.batteryThresholdPercent = defaults.object(forKey: "borno_alert_battery_threshold") as? Int ?? 20
 
-        self.enableTemperatureAlert = defaults.object(forKey: "borno_alert_temp_enabled") as? Bool ?? false
-        self.temperatureThresholdCelsius = defaults.object(forKey: "borno_alert_temp_threshold") as? Double ?? 90.0
+        self.enableCPUTemperatureAlert = defaults.object(forKey: "borno_alert_temp_enabled") as? Bool ?? false
+        self.cpuTemperatureThresholdCelsius = defaults.object(forKey: "borno_alert_temp_threshold") as? Double ?? 90.0
+        self.enableGPUTemperatureAlert = defaults.object(forKey: "borno_alert_gpu_temp_enabled") as? Bool ?? false
+        self.gpuTemperatureThresholdCelsius = defaults.object(forKey: "borno_alert_gpu_temp_threshold") as? Double ?? 90.0
+        self.enableBatteryTemperatureAlert = defaults.object(forKey: "borno_alert_battery_temp_enabled") as? Bool ?? false
+        self.batteryTemperatureThresholdCelsius = defaults.object(forKey: "borno_alert_battery_temp_threshold") as? Double ?? 45.0
 
         self.enableNetworkDisconnectAlert = defaults.object(forKey: "borno_alert_net_disc_enabled") as? Bool ?? false
 
@@ -86,9 +108,8 @@ public final class WidgetAlertService: ObservableObject {
 
     // MARK: - Evaluate Real Measurements
     @discardableResult
-    public func evaluate(snapshot: SystemMetricsSnapshot) -> [String] {
+    public func evaluate(snapshot: SystemMetricsSnapshot, now: Date = Date()) -> [String] {
         var triggeredAlerts: [String] = []
-        let now = Date()
 
         // 1. CPU Threshold
         if enableCPUAlert && snapshot.cpu.totalUsage >= cpuThreshold {
@@ -131,12 +152,23 @@ public final class WidgetAlertService: ObservableObject {
             }
         }
 
-        // 5. High Temperature (Only when genuinely measured)
-        if enableTemperatureAlert, let cpuTemp = snapshot.sensors.cpuTemperature, cpuTemp >= temperatureThresholdCelsius {
-            if canTriggerAlert(id: "temp", at: now) {
-                let msg = "CPU temperature has reached \(String(format: "%.1f °C", cpuTemp))"
-                sendNotification(title: "Thermal Warning", body: msg)
-                markAlertTriggered(id: "temp", at: now)
+        // 5. High Temperature — per component, only from a fresh reading of that component's own sensors
+        let unit = AppSettings.shared.temperatureUnit
+        let staleAfter = SensorFreshness.staleAfter(refreshInterval: AppSettings.shared.refreshIntervalSeconds)
+        let temperatureRules: [(ThermalComponent, Bool, Double)] = [
+            (.cpu, enableCPUTemperatureAlert, cpuTemperatureThresholdCelsius),
+            (.gpu, enableGPUTemperatureAlert, gpuTemperatureThresholdCelsius),
+            (.battery, enableBatteryTemperatureAlert, batteryTemperatureThresholdCelsius)
+        ]
+        for (component, enabled, threshold) in temperatureRules where enabled {
+            guard let reading = snapshot.sensors.temperature(for: component),
+                  !reading.isStale(at: now, maxAge: staleAfter),
+                  reading.celsius >= threshold else { continue }
+            let alertId = "temp.\(component.rawValue)"
+            if canTriggerAlert(id: alertId, at: now) {
+                let msg = "\(component.displayName) temperature is \(Formatters.temperature(reading.celsius, unit: unit)) (threshold \(Formatters.temperature(threshold, unit: unit)))"
+                sendNotification(title: "\(component.displayName) Thermal Warning", body: msg)
+                markAlertTriggered(id: alertId, at: now)
                 triggeredAlerts.append(msg)
             }
         }

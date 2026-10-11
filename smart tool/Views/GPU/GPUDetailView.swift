@@ -7,6 +7,7 @@ import SwiftUI
 
 public struct GPUDetailView: View {
     @ObservedObject var monitor = SystemMonitor.shared
+    @ObservedObject var settings = AppSettings.shared
     
     public init() {}
     
@@ -95,6 +96,12 @@ public struct GPUDetailView: View {
                         StatRow(label: "Tiler Utilization", value: Formatters.percentage(tiler), icon: "square.grid.2x2.fill")
                     }
                     StatRow(label: "Low Power Device", value: monitor.snapshot.gpu.isLowPower ? "Yes" : "No", icon: "leaf.fill")
+                    ComponentTemperatureRow(
+                        component: .gpu,
+                        sensors: monitor.snapshot.sensors,
+                        unit: settings.temperatureUnit,
+                        staleAfter: monitor.sensorStaleAfter
+                    )
                     StatRow(label: "Registry ID", value: "\(monitor.snapshot.gpu.registryID)", icon: "tag.fill")
                 }
                 .smartCard()

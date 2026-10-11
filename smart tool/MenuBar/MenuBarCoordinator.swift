@@ -106,7 +106,11 @@ public final class MenuBarCoordinator: NSObject {
                 // Don't add a text token for icon-only metrics.
                 continue
             }
-            if let text = metric.menuBarText(from: snapshot) {
+            if let text = metric.menuBarText(
+                from: snapshot,
+                temperatureUnit: settings.temperatureUnit,
+                staleAfter: SystemMonitor.shared.sensorStaleAfter
+            ) {
                 tokens.append(text)
             }
         }

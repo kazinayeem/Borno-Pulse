@@ -67,6 +67,7 @@ public enum WidgetMetricId: String, CaseIterable, Identifiable, Codable, Sendabl
     case cpuTemperature = "cpu_temperature"
     case gpuTemperature = "gpu_temperature"
     case batteryTemperature = "battery_temperature"
+    case ssdTemperature = "ssd_temperature"
     case fanSpeed = "fan_speed"
     case thermalPressure = "thermal_pressure"
 
@@ -133,8 +134,9 @@ public enum WidgetMetricId: String, CaseIterable, Identifiable, Codable, Sendabl
         case .cpuTemperature: return "CPU Temperature"
         case .gpuTemperature: return "GPU Temperature"
         case .batteryTemperature: return "Battery Temperature"
+        case .ssdTemperature: return "SSD Temperature"
         case .fanSpeed: return "Fan Speed (RPM)"
-        case .thermalPressure: return "Thermal State"
+        case .thermalPressure: return "Thermal State (Pressure)"
 
         case .batteryPercentage: return "Battery Level"
         case .batteryTimeRemaining: return "Estimated Time Remaining"
@@ -178,7 +180,7 @@ public enum WidgetMetricId: String, CaseIterable, Identifiable, Codable, Sendabl
             return .memory
         case .gpuUtilization, .gpuDeviceInfo, .gpuMemory, .neuralEngineAvailability:
             return .gpu
-        case .cpuTemperature, .gpuTemperature, .batteryTemperature, .fanSpeed, .thermalPressure:
+        case .cpuTemperature, .gpuTemperature, .batteryTemperature, .ssdTemperature, .fanSpeed, .thermalPressure:
             return .thermal
         case .batteryPercentage, .batteryTimeRemaining, .batteryTimeUntilFull, .batteryState, .batteryHealth,
              .batteryCycleCount, .batteryChargingWatts, .batteryDischargingWatts, .systemPowerWatts, .powerAdapterInfo:
@@ -215,6 +217,7 @@ public enum WidgetMetricId: String, CaseIterable, Identifiable, Codable, Sendabl
         case .cpuTemperature: return "thermometer.sun.fill"
         case .gpuTemperature: return "thermometer.high"
         case .batteryTemperature: return "thermometer.medium"
+        case .ssdTemperature: return "internaldrive"
         case .fanSpeed: return "fanblades.fill"
         case .thermalPressure: return "flame.fill"
 
@@ -257,7 +260,7 @@ public enum WidgetMetricId: String, CaseIterable, Identifiable, Codable, Sendabl
             return .memory
         case .gpuUtilization, .gpuDeviceInfo, .gpuMemory, .neuralEngineAvailability:
             return .gpu
-        case .cpuTemperature, .gpuTemperature, .batteryTemperature, .fanSpeed, .thermalPressure:
+        case .cpuTemperature, .gpuTemperature, .batteryTemperature, .ssdTemperature, .fanSpeed, .thermalPressure:
             return .sensors
         case .batteryPercentage, .batteryTimeRemaining, .batteryTimeUntilFull, .batteryState, .batteryHealth,
              .batteryCycleCount, .batteryChargingWatts, .batteryDischargingWatts, .systemPowerWatts, .powerAdapterInfo:
@@ -813,91 +816,28 @@ public final class MenuBarWidgetPreferences: ObservableObject {
 
         // Temperature & Fans
         case .cpuTemperature:
-            if let temp = snapshot.sensors.cpuTemperature {
-                let unit = AppSettings.shared.temperatureUnit
-                return WidgetExtractedMetric(
-                    id: metric,
-                    title: metric.title,
-                    icon: metric.icon,
-                    category: metric.category,
-                    formattedValue: Formatters.temperature(temp, inFahrenheit: unit.isFahrenheit),
-                    progress: min(1.0, temp / 105.0),
-                    sparkline: snapshot.sensors.historicalTemperature,
-                    isAvailable: true,
-                    dashboardSection: metric.dashboardSection
-                )
-            } else {
-                return WidgetExtractedMetric(
-                    id: metric,
-                    title: metric.title,
-                    icon: metric.icon,
-                    category: metric.category,
-                    formattedValue: "Protected",
-                    isAvailable: false,
-                    availabilityNote: "Thermal die sensors are guarded by macOS SMC kernel permissions.",
-                    dashboardSection: metric.dashboardSection
-                )
-            }
+            return temperatureMetric(metric, component: .cpu, snapshot: snapshot)
 
         case .gpuTemperature:
-            if let temp = snapshot.sensors.gpuTemperature {
-                let unit = AppSettings.shared.temperatureUnit
-                return WidgetExtractedMetric(
-                    id: metric,
-                    title: metric.title,
-                    icon: metric.icon,
-                    category: metric.category,
-                    formattedValue: Formatters.temperature(temp, inFahrenheit: unit.isFahrenheit),
-                    isAvailable: true,
-                    dashboardSection: metric.dashboardSection
-                )
-            } else {
-                return WidgetExtractedMetric(
-                    id: metric,
-                    title: metric.title,
-                    icon: metric.icon,
-                    category: metric.category,
-                    formattedValue: "Protected",
-                    isAvailable: false,
-                    availabilityNote: "Direct GPU temperature sensor unexposed by sandbox.",
-                    dashboardSection: metric.dashboardSection
-                )
-            }
+            return temperatureMetric(metric, component: .gpu, snapshot: snapshot)
 
         case .batteryTemperature:
-            if let temp = snapshot.battery.temperatureCelsius {
-                let unit = AppSettings.shared.temperatureUnit
-                return WidgetExtractedMetric(
-                    id: metric,
-                    title: metric.title,
-                    icon: metric.icon,
-                    category: metric.category,
-                    formattedValue: Formatters.temperature(temp, inFahrenheit: unit.isFahrenheit),
-                    isAvailable: true,
-                    dashboardSection: metric.dashboardSection
-                )
-            } else {
-                return WidgetExtractedMetric(
-                    id: metric,
-                    title: metric.title,
-                    icon: metric.icon,
-                    category: metric.category,
-                    formattedValue: snapshot.battery.hasBattery ? "Unavailable" : "AC Desktop",
-                    isAvailable: false,
-                    availabilityNote: snapshot.battery.hasBattery ? "No battery sensor reading available." : "This Mac has no internal battery.",
-                    dashboardSection: metric.dashboardSection
-                )
-            }
+            return temperatureMetric(metric, component: .battery, snapshot: snapshot)
+
+        case .ssdTemperature:
+            return temperatureMetric(metric, component: .storage, snapshot: snapshot)
 
         case .fanSpeed:
-            if let firstFan = snapshot.sensors.fanSpeeds.first {
+            if let fastest = snapshot.sensors.fanSpeeds.max(by: { $0.speedRPM < $1.speedRPM }) {
+                let fanCount = snapshot.sensors.fanSpeeds.count
                 return WidgetExtractedMetric(
                     id: metric,
                     title: metric.title,
                     icon: metric.icon,
                     category: metric.category,
-                    formattedValue: String(format: "%.0f RPM", firstFan.speedRPM),
-                    progress: firstFan.maxRPM > 0 ? (firstFan.speedRPM / firstFan.maxRPM) : nil,
+                    formattedValue: Formatters.rpm(fastest.speedRPM),
+                    secondaryValue: fanCount > 1 ? "Fastest of \(fanCount) fans" : fastest.name,
+                    progress: fastest.maxRPM.map { min(1.0, fastest.speedRPM / $0) },
                     isAvailable: true,
                     dashboardSection: metric.dashboardSection
                 )
@@ -907,9 +847,9 @@ public final class MenuBarWidgetPreferences: ObservableObject {
                     title: metric.title,
                     icon: metric.icon,
                     category: metric.category,
-                    formattedValue: "Silent / Pass.",
+                    formattedValue: "Unavailable",
                     isAvailable: false,
-                    availabilityNote: "Passively cooled hardware (e.g. MacBook Air) or fan sensors restricted.",
+                    availabilityNote: snapshot.sensors.fansState.displayText,
                     dashboardSection: metric.dashboardSection
                 )
             }
@@ -920,10 +860,11 @@ public final class MenuBarWidgetPreferences: ObservableObject {
                 title: metric.title,
                 icon: metric.icon,
                 category: metric.category,
-                formattedValue: snapshot.sensors.thermalStateDescription,
-                secondaryValue: snapshot.sensors.isThrottling ? "Throttling" : "Normal",
+                formattedValue: snapshot.sensors.thermalState.shortLabel,
+                secondaryValue: snapshot.sensors.isThrottling ? "Performance reduced" : "No throttling",
                 progress: thermalProgress(for: snapshot.sensors.thermalState),
                 isAvailable: true,
+                availabilityNote: "macOS thermal pressure level — not a temperature.",
                 dashboardSection: metric.dashboardSection
             )
 
@@ -1445,6 +1386,49 @@ public final class MenuBarWidgetPreferences: ObservableObject {
             totalBytes: snapshot.storage.totalCapacityBytes,
             usedBytes: snapshot.storage.usedCapacityBytes,
             freeBytes: snapshot.storage.availableCapacityBytes
+        )
+    }
+
+    private func temperatureMetric(
+        _ metric: WidgetMetricId,
+        component: ThermalComponent,
+        snapshot: SystemMetricsSnapshot,
+        now: Date = Date()
+    ) -> WidgetExtractedMetric {
+        let unit = AppSettings.shared.temperatureUnit
+        let staleAfter = SensorFreshness.staleAfter(refreshInterval: AppSettings.shared.refreshIntervalSeconds)
+
+        guard let value = snapshot.sensors.temperature(for: component) else {
+            return WidgetExtractedMetric(
+                id: metric,
+                title: metric.title,
+                icon: metric.icon,
+                category: metric.category,
+                formattedValue: Formatters.unavailableTemperature,
+                isAvailable: false,
+                availabilityNote: snapshot.sensors.state(for: component).displayText,
+                dashboardSection: metric.dashboardSection
+            )
+        }
+
+        let isStale = value.isStale(at: now, maxAge: staleAfter)
+        let sparkline = snapshot.sensors.history[component]?
+            .compactMap(\.celsius)
+            .map { unit.convert(fromCelsius: $0) }
+        let detail = value.sensorCount > 1
+            ? "Peak \(Formatters.temperature(value.maximumCelsius, unit: unit)) · \(value.sensorCount) sensors"
+            : value.source.displayName
+        return WidgetExtractedMetric(
+            id: metric,
+            title: metric.title,
+            icon: metric.icon,
+            category: metric.category,
+            formattedValue: Formatters.temperature(value.celsius, unit: unit),
+            secondaryValue: isStale ? "Stale · updated \(Formatters.readingAge(since: value.timestamp, now: now))" : detail,
+            sparkline: sparkline,
+            isAvailable: !isStale,
+            availabilityNote: isStale ? "This reading has stopped updating." : nil,
+            dashboardSection: metric.dashboardSection
         )
     }
 

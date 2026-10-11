@@ -35,16 +35,34 @@ public enum Formatters {
         return String(format: "%.\(decimals)f%%", min(max(value, 0.0), 100.0))
     }
     
-    public static func temperature(_ celsius: Double, inFahrenheit: Bool = false) -> String {
-        if inFahrenheit {
-            let f = (celsius * 9 / 5) + 32
-            return String(format: "%.1f °F", f)
-        }
-        return String(format: "%.1f °C", celsius)
+    /// Placeholder for a missing reading. Deliberately not numeric so it can't be read as 0°.
+    public static let unavailableTemperature = "Unavailable"
+
+    /// Formats a Celsius reading in the requested unit. Defaults to whole degrees because
+    /// on-die and battery sensors are not accurate beyond about ±1 °C.
+    public static func temperature(_ celsius: Double?, unit: TemperatureUnit = .celsius, decimals: Int = 0) -> String {
+        guard let celsius, celsius.isFinite else { return unavailableTemperature }
+        let places = max(0, min(decimals, 2))
+        return String(format: "%.\(places)f %@", unit.convert(fromCelsius: celsius), unit.symbol)
+    }
+
+    /// Compact menu bar form, e.g. "47°C".
+    public static func compactTemperature(_ celsius: Double?, unit: TemperatureUnit = .celsius) -> String {
+        guard let celsius, celsius.isFinite else { return "--\(unit.symbol)" }
+        return String(format: "%.0f%@", unit.convert(fromCelsius: celsius), unit.symbol)
     }
     
     public static func rpm(_ value: Double) -> String {
         return String(format: "%.0f RPM", value)
+    }
+
+    /// "Updated 3s ago" style freshness text for a reading timestamp.
+    public static func readingAge(since date: Date, now: Date = Date()) -> String {
+        let seconds = max(0, Int(now.timeIntervalSince(date)))
+        if seconds < 2 { return "just now" }
+        if seconds < 60 { return "\(seconds)s ago" }
+        if seconds < 3600 { return "\(seconds / 60)m ago" }
+        return "\(seconds / 3600)h ago"
     }
     
     public static func duration(_ seconds: TimeInterval, showSeconds: Bool = false) -> String {

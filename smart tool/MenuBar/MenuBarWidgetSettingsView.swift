@@ -233,6 +233,7 @@ public struct MenuBarWidgetSettingsView: View {
             LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 6) {
                 ForEach(MenuBarStatusMetric.allCases) { metric in
                     let isSelected = settings.menuBarStatusMetrics.contains(metric)
+                    let availability = metric.availability(in: monitor.snapshot)
                     Button {
                         if isSelected {
                             settings.removeMenuBarMetric(metric)
@@ -248,6 +249,12 @@ public struct MenuBarWidgetSettingsView: View {
                                 .font(.system(size: 10))
                                 .lineLimit(1)
                             Spacer()
+                            if !availability.isAvailable {
+                                Text("N/A")
+                                    .font(.system(size: 8, weight: .bold))
+                                    .foregroundStyle(AppTheme.warningAmber)
+                                    .help(availability.displayText)
+                            }
                             Image(systemName: isSelected ? "checkmark.circle.fill" : "plus.circle")
                                 .font(.system(size: 12))
                                 .foregroundStyle(isSelected ? AppTheme.electricBlue : (canAdd ? AppTheme.matrixGreen : AppTheme.textTertiary))
@@ -299,7 +306,7 @@ public struct MenuBarWidgetSettingsView: View {
                         .foregroundStyle(AppTheme.textPrimary)
 
                     let tokens: [String] = Array(metrics.prefix(max(1, maxVisible))).compactMap {
-                        $0.menuBarText(from: snap)
+                        $0.menuBarText(from: snap, temperatureUnit: settings.temperatureUnit, staleAfter: monitor.sensorStaleAfter)
                     }
 
                     if tokens.isEmpty {
@@ -654,16 +661,28 @@ public struct MenuBarWidgetSettingsView: View {
                 
                 Divider().opacity(0.15)
                 
-                // Thermal Alert
-                Toggle("Alert on High Temperature (When Measured)", isOn: $alertService.enableTemperatureAlert)
-                if alertService.enableTemperatureAlert {
-                    HStack {
-                        Text("Threshold: \(Int(alertService.temperatureThresholdCelsius)) °C")
-                            .font(.system(size: 11))
-                            .foregroundStyle(AppTheme.textSecondary)
-                        Slider(value: $alertService.temperatureThresholdCelsius, in: 70...100, step: 1)
-                    }
-                }
+                // Thermal Alerts (one per component, each using only that component's sensors)
+                temperatureAlertRow(
+                    title: "Alert on High CPU Temperature",
+                    component: .cpu,
+                    isEnabled: $alertService.enableCPUTemperatureAlert,
+                    threshold: $alertService.cpuTemperatureThresholdCelsius,
+                    range: WidgetAlertService.cpuTemperatureThresholdRange
+                )
+                temperatureAlertRow(
+                    title: "Alert on High GPU Temperature",
+                    component: .gpu,
+                    isEnabled: $alertService.enableGPUTemperatureAlert,
+                    threshold: $alertService.gpuTemperatureThresholdCelsius,
+                    range: WidgetAlertService.gpuTemperatureThresholdRange
+                )
+                temperatureAlertRow(
+                    title: "Alert on High Battery Temperature",
+                    component: .battery,
+                    isEnabled: $alertService.enableBatteryTemperatureAlert,
+                    threshold: $alertService.batteryTemperatureThresholdCelsius,
+                    range: WidgetAlertService.batteryTemperatureThresholdRange
+                )
                 
                 Divider().opacity(0.15)
                 
@@ -693,6 +712,30 @@ public struct MenuBarWidgetSettingsView: View {
     }
     
     // MARK: - Helper Views
+    @ViewBuilder
+    private func temperatureAlertRow(
+        title: String,
+        component: ThermalComponent,
+        isEnabled: Binding<Bool>,
+        threshold: Binding<Double>,
+        range: ClosedRange<Double>
+    ) -> some View {
+        Toggle(title, isOn: isEnabled)
+        if isEnabled.wrappedValue {
+            HStack {
+                Text("Threshold: \(Formatters.temperature(threshold.wrappedValue, unit: settings.temperatureUnit))")
+                    .font(.system(size: 11))
+                    .foregroundStyle(AppTheme.textSecondary)
+                Slider(value: threshold, in: range, step: 1)
+            }
+            if case .unavailable(let reason) = monitor.snapshot.sensors.state(for: component) {
+                Text("No \(component.displayName) sensor reading on this Mac, so this alert cannot fire. \(reason)")
+                    .font(.system(size: 10))
+                    .foregroundStyle(AppTheme.warningAmber)
+            }
+        }
+    }
+
     private func sectionHeader(_ title: String, icon: String, color: Color) -> some View {
         HStack(spacing: 8) {
             Image(systemName: icon)

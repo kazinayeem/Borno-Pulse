@@ -466,7 +466,11 @@ public struct SettingsView: View {
                             telemetryPreviewChip(label: "CPU", value: "14.8%", color: AppTheme.electricBlue)
                             telemetryPreviewChip(label: "RAM", value: "6.42 GB / 36 GB", color: AppTheme.purpleAccent)
                             telemetryPreviewChip(label: "NET", value: "↓ 84.2 MB/s", color: AppTheme.successGreen)
-                            telemetryPreviewChip(label: "TEMP", value: "42.0 °C", color: AppTheme.orangeAccent)
+                            telemetryPreviewChip(
+                                label: "CPU TEMP",
+                                value: Formatters.temperature(SystemMonitor.shared.snapshot.sensors.cpuTemperature?.celsius, unit: settings.temperatureUnit),
+                                color: AppTheme.orangeAccent
+                            )
                         }
                         
                         // Developer / Hash Checksum Line
@@ -570,7 +574,9 @@ public struct SettingsView: View {
 
                         let snap = SystemMonitor.shared.snapshot
                         let tokens = settings.menuBarStatusMetrics.prefix(settings.menuBarMaxVisible)
-                            .compactMap { $0.menuBarText(from: snap) }
+                            .compactMap {
+                                $0.menuBarText(from: snap, temperatureUnit: settings.temperatureUnit, staleAfter: SystemMonitor.shared.sensorStaleAfter)
+                            }
 
                         if tokens.isEmpty {
                             Text("Icon only")
@@ -606,6 +612,13 @@ public struct SettingsView: View {
                         ForEach(TemperatureUnit.allCases) { unit in
                             Text(unit.rawValue).tag(unit)
                         }
+                    }
+
+                    VStack(alignment: .leading, spacing: 4) {
+                        Toggle("Read Hardware Temperature & Fan Sensors", isOn: $settings.hardwareSensorAccessEnabled)
+                        Text("Reads the SMC and IOHID thermal sensors through undocumented macOS interfaces. They are unavailable to sandboxed (Mac App Store) builds and may change in future macOS releases. When off, only the system thermal state and battery registry data are shown.")
+                            .font(AppTypography.font(size: 10))
+                            .foregroundStyle(AppTheme.textTertiary)
                     }
                     
                     Picker("Graph Historical Buffer", selection: $settings.historyDurationPoints) {

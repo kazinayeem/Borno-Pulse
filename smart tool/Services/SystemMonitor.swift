@@ -21,8 +21,13 @@ public final class SystemMonitor: ObservableObject {
     @Published public private(set) var memoryHistory: [Double] = []
     @Published public private(set) var downloadSpeedHistory: [Double] = []
     @Published public private(set) var uploadSpeedHistory: [Double] = []
-    /// Rolling history of CPU temperature readings (°C). Only populated when sensor is available.
-    @Published public private(set) var cpuTemperatureHistory: [Double] = []
+    /// Per-component temperature history. A nil point marks a poll where the sensor was missing or stale.
+    @Published public private(set) var temperatureHistory: [ThermalComponent: [TemperatureHistoryPoint]] = [:]
+
+    /// Age after which a temperature reading must be presented as stale.
+    public var sensorStaleAfter: TimeInterval {
+        SensorFreshness.staleAfter(refreshInterval: AppSettings.shared.refreshIntervalSeconds)
+    }
     
     private let cpuProvider = CPUProvider()
     private let gpuProvider = GPUProvider()
@@ -91,13 +96,34 @@ public final class SystemMonitor: ObservableObject {
         let mem = memoryProvider.sample()
         let net = networkProvider.sample()
         
-        // GPU and Sensors sampled every cycle or every 2 ticks
+        // GPU and hardware sensors are sampled every 2 ticks
         let gpu = (tick % 2 == 0 || tick == 1) ? gpuProvider.sample() : snapshot.gpu
-        let sensors = (tick % 2 == 0 || tick == 1) ? sensorProvider.sample() : snapshot.sensors
+        let pollSensors = tick % 2 == 0 || tick == 1
+        var sensors: SensorMetrics
+        if pollSensors {
+            let provider = sensorProvider
+            let accessEnabled = AppSettings.shared.hardwareSensorAccessEnabled
+            sensors = await Task.detached(priority: .utility) {
+                provider.sample(hardwareAccessEnabled: accessEnabled)
+            }.value
+        } else {
+            sensors = snapshot.sensors
+        }
         
         // Storage and Battery are slow-changing: sampled every 5 ticks
         let storage = (tick % 5 == 0 || tick == 1) ? storageProvider.sample() : snapshot.storage
         let battery = (tick % 5 == 0 || tick == 1) ? batteryProvider.sample() : snapshot.battery
+
+        SensorMetricsBuilder.mergeBatteryRegistry(
+            into: &sensors,
+            hasBattery: battery.hasBattery,
+            registryCelsius: battery.registryTemperatureCelsius,
+            registryTimestamp: battery.lastUpdated
+        )
+        if pollSensors {
+            appendTemperatureHistory(from: sensors)
+        }
+        sensors.history = temperatureHistory
         
         // Assemble snapshot
         var newSnapshot = SystemMetricsSnapshot()
@@ -126,6 +152,27 @@ public final class SystemMonitor: ObservableObject {
         self.snapshot.network.historicalUpload = self.uploadSpeedHistory
     }
     
+    private func appendTemperatureHistory(from sensors: SensorMetrics) {
+        let pointTime = sensors.sampledAt ?? Date()
+        let staleAfter = sensorStaleAfter
+        for component in ThermalComponent.headline {
+            let fresh = sensors.temperature(for: component).flatMap {
+                $0.isStale(at: pointTime, maxAge: staleAfter) ? nil : $0
+            }
+            var series = temperatureHistory[component] ?? []
+            series.append(TemperatureHistoryPoint(
+                timestamp: pointTime,
+                celsius: fresh?.celsius,
+                source: fresh?.source,
+                sensorCount: fresh?.sensorCount ?? 0
+            ))
+            if series.count > maxHistoryPoints {
+                series.removeFirst(series.count - maxHistoryPoints)
+            }
+            temperatureHistory[component] = series
+        }
+    }
+
     private func appendHistory(_ array: inout [Double], value: Double) {
         array.append(value)
         if array.count > maxHistoryPoints {

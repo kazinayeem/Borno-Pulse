@@ -7,6 +7,7 @@ import SwiftUI
 
 public struct CPUDetailView: View {
     @ObservedObject var monitor = SystemMonitor.shared
+    @ObservedObject var settings = AppSettings.shared
     
     public init() {}
     
@@ -92,6 +93,12 @@ public struct CPUDetailView: View {
                     StatRow(label: "Nice Priority Utilization", value: Formatters.percentage(monitor.snapshot.cpu.niceUsage), icon: "speedometer")
                     StatRow(label: "Hardware Architecture", value: monitor.snapshot.cpu.architecture, icon: "cpu")
                     StatRow(label: "Telemetry Source", value: "Darwin Mach Host Statistics (Kernel)", icon: "checkmark.shield.fill")
+                    ComponentTemperatureRow(
+                        component: .cpu,
+                        sensors: monitor.snapshot.sensors,
+                        unit: settings.temperatureUnit,
+                        staleAfter: monitor.sensorStaleAfter
+                    )
                 }
                 .smartCard()
             }

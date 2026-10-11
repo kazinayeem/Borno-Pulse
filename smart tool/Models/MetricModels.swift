@@ -103,14 +103,15 @@ public struct MemoryMetrics: Sendable {
 }
 
 // MARK: - Fan Info
-public struct FanInfo: Identifiable, Sendable {
+public struct FanInfo: Identifiable, Sendable, Equatable {
     public var id: Int
     public var name: String
     public var speedRPM: Double
-    public var minRPM: Double
-    public var maxRPM: Double
+    /// Hardware-reported limits; nil when the SMC does not expose them.
+    public var minRPM: Double?
+    public var maxRPM: Double?
     
-    public init(id: Int, name: String, speedRPM: Double, minRPM: Double = 0, maxRPM: Double = 6000) {
+    public init(id: Int, name: String, speedRPM: Double, minRPM: Double? = nil, maxRPM: Double? = nil) {
         self.id = id
         self.name = name
         self.speedRPM = speedRPM
@@ -121,17 +122,65 @@ public struct FanInfo: Identifiable, Sendable {
 
 // MARK: - Sensor Metrics
 public struct SensorMetrics: Sendable {
+    // OS thermal pressure (ProcessInfo.thermalState). This is a state, not a temperature.
     public var thermalState: ProcessInfo.ThermalState = .nominal
     public var thermalStateDescription: String = "Nominal"
     public var isThrottling: Bool = false
-    public var cpuTemperature: Double? = nil
-    public var gpuTemperature: Double? = nil
-    public var fanSpeeds: [FanInfo] = []
+
+    /// Every plausible reading from the preferred source of each component, with sensor identity.
+    public var readings: [TemperatureReading] = []
+
+    /// Populated only from sensors attributed to that specific component; never shared.
+    public var cpuTemperature: ComponentTemperature? = nil
+    public var gpuTemperature: ComponentTemperature? = nil
+    public var batteryTemperature: ComponentTemperature? = nil
+    public var storageTemperature: ComponentTemperature? = nil
+
+    /// Availability (with the reason when unavailable) for each headline component.
+    public var componentStates: [ThermalComponent: AvailabilityState] = [:]
+    /// Overall hardware temperature availability (any sensor at all).
     public var temperatureState: AvailabilityState = .measuring
+
+    public var fanSpeeds: [FanInfo] = []
+    public var reportedFanCount: Int? = nil
     public var fansState: AvailabilityState = .measuring
-    public var historicalTemperature: [Double] = []
+
+    public var sourceStatuses: [SensorSourceStatus] = []
+    /// When the hardware sensors were last polled; nil before the first poll.
+    public var sampledAt: Date? = nil
+    /// Rolling per-component history maintained by SystemMonitor. Gaps are nil points.
+    public var history: [ThermalComponent: [TemperatureHistoryPoint]] = [:]
     
     public init() {}
+
+    public func temperature(for component: ThermalComponent) -> ComponentTemperature? {
+        switch component {
+        case .cpu: return cpuTemperature
+        case .gpu: return gpuTemperature
+        case .battery: return batteryTemperature
+        case .storage: return storageTemperature
+        case .soc, .powerManagement, .other: return ComponentTemperature.aggregate(readings, component: component)
+        }
+    }
+
+    public mutating func setTemperature(_ value: ComponentTemperature?, for component: ThermalComponent) {
+        switch component {
+        case .cpu: cpuTemperature = value
+        case .gpu: gpuTemperature = value
+        case .battery: batteryTemperature = value
+        case .storage: storageTemperature = value
+        case .soc, .powerManagement, .other: break
+        }
+    }
+
+    public func state(for component: ThermalComponent) -> AvailabilityState {
+        if temperature(for: component) != nil { return .available }
+        return componentStates[component] ?? temperatureState
+    }
+
+    public func readings(for component: ThermalComponent) -> [TemperatureReading] {
+        readings.filter { $0.component == component }
+    }
 }
 
 // MARK: - Storage Volume
@@ -265,7 +314,9 @@ public struct BatteryMetrics: Sendable {
     public var isMeasuredWattage: Bool = true
     public var voltageVolts: Double? = nil
     public var amperageAmps: Double? = nil
-    public var temperatureCelsius: Double? = nil
+    /// Raw AppleSmartBattery "Temperature" registry value. UI must use
+    /// `SensorMetrics.batteryTemperature`, which merges this with hardware sensors.
+    public var registryTemperatureCelsius: Double? = nil
     public var cycleCount: Int? = nil
     public var healthPercentage: Int? = nil
     public var condition: String = "Normal"

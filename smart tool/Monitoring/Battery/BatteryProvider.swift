@@ -99,7 +99,7 @@ public final class BatteryProvider: @unchecked Sendable {
             metrics.isMeasuredWattage = telemetry.isMeasured
             if let cycles = telemetry.cycleCount { metrics.cycleCount = cycles }
             if let health = telemetry.healthPercentage { metrics.healthPercentage = health }
-            if let temp = telemetry.temperatureCelsius { metrics.temperatureCelsius = temp }
+            if let temp = telemetry.temperatureCelsius { metrics.registryTemperatureCelsius = temp }
             if let full = telemetry.isFullyCharged { metrics.isFullyCharged = full }
             
             // Effective battery wattage
@@ -125,7 +125,7 @@ public final class BatteryProvider: @unchecked Sendable {
                         voltageVolts: metrics.voltageVolts,
                         amperageAmps: metrics.amperageAmps,
                         wattage: metrics.wattage,
-                        temperatureCelsius: metrics.temperatureCelsius
+                        temperatureCelsius: metrics.registryTemperatureCelsius
                     )
                 }
             } else {
@@ -140,7 +140,7 @@ public final class BatteryProvider: @unchecked Sendable {
                         voltageVolts: metrics.voltageVolts,
                         amperageAmps: metrics.amperageAmps,
                         wattage: metrics.wattage,
-                        temperatureCelsius: metrics.temperatureCelsius
+                        temperatureCelsius: metrics.registryTemperatureCelsius
                     )
                 }
             }

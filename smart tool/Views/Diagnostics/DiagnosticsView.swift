@@ -72,7 +72,22 @@ public struct DiagnosticsView: View {
                     apiRow(name: "IOKit IOPowerSources (Battery Telemetry)", status: monitor.snapshot.battery.hasBattery ? "Active (AppleSmartBattery)" : "AC Powered (Desktop)", available: true)
                     apiRow(name: "Process Information (libproc / proc_listpids)", status: "Active (All User Space PIDs)", available: true)
                     apiRow(name: "ServiceManagement (SMAppService Login Item)", status: "Supported (macOS 13+)", available: true)
-                    apiRow(name: "AppleSMC Thermal Diodes", status: monitor.snapshot.sensors.temperatureState.displayText, available: false)
+                    apiRow(name: "ProcessInfo.thermalState (Thermal Pressure)", status: "Active (\(monitor.snapshot.sensors.thermalState.shortLabel))", available: true)
+                    if monitor.snapshot.sensors.sourceStatuses.isEmpty {
+                        apiRow(name: "Hardware Temperature Sensors", status: monitor.snapshot.sensors.temperatureState.displayText, available: false)
+                    }
+                    ForEach(monitor.snapshot.sensors.sourceStatuses) { status in
+                        apiRow(
+                            name: "\(status.source.displayName) Temperature Sensors",
+                            status: status.state.isAvailable ? "Active (\(status.sensorCount) sensors)" : status.state.displayText,
+                            available: status.state.isAvailable
+                        )
+                    }
+                    apiRow(
+                        name: "SMC Fan Telemetry",
+                        status: monitor.snapshot.sensors.fansState.isAvailable ? "Active (\(monitor.snapshot.sensors.fanSpeeds.count) fans)" : monitor.snapshot.sensors.fansState.displayText,
+                        available: monitor.snapshot.sensors.fansState.isAvailable
+                    )
                 }
                 .smartCard()
                 
@@ -176,6 +191,12 @@ public struct DiagnosticsView: View {
     
     private func exportDiagnosticReport() {
         let snap = monitor.snapshot
+        let temperatureLines = ThermalComponent.headline.map { component -> String in
+            if let value = snap.sensors.temperature(for: component) {
+                return "- \(component.displayName) Temperature: \(Formatters.temperature(value.celsius)) (avg of \(value.sensorCount), peak \(Formatters.temperature(value.maximumCelsius)), \(value.source.displayName))"
+            }
+            return "- \(component.displayName) Temperature: Unavailable — \(snap.sensors.state(for: component).displayText)"
+        }.joined(separator: "\n")
         let report = """
         # Borno Pulse — Diagnostic System Report
         Generated: \(Date().description)
@@ -195,8 +216,10 @@ public struct DiagnosticsView: View {
         - RAM Used: \(Formatters.bytes(snap.memory.usedBytes)) / \(Formatters.bytes(snap.memory.totalBytes))
         - Memory Pressure: \(snap.memory.pressureLevel.rawValue)
         - Swap Used: \(Formatters.bytes(snap.memory.swapUsedBytes))
-        - Thermal State: \(snap.sensors.thermalStateDescription)
+        - Thermal State (pressure, not a temperature): \(snap.sensors.thermalStateDescription)
         - Throttling Active: \(snap.sensors.isThrottling)
+        \(temperatureLines)
+        - Fans: \(snap.sensors.fansState.isAvailable ? snap.sensors.fanSpeeds.map { "\($0.name) \(Formatters.rpm($0.speedRPM))" }.joined(separator: ", ") : snap.sensors.fansState.displayText)
         - Network DL Speed: \(Formatters.speed(snap.network.downloadSpeedBytesPerSec))
         - Network UL Speed: \(Formatters.speed(snap.network.uploadSpeedBytesPerSec))
         - Battery: \(snap.battery.hasBattery ? "\\(snap.battery.percentage)%" : "AC Powered")

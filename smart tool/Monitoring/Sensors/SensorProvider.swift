@@ -2,182 +2,293 @@
 //  SensorProvider.swift
 //  Borno Pulse
 //
-//  Samples macOS hardware thermal and fan data using only publicly accessible APIs.
+//  Single entry point for thermal telemetry. Polls the hardware readers, classifies every
+//  value by the component it belongs to, and produces a `SensorMetrics` snapshot.
 //
-//  ──── macOS API Limitation Notes ────────────────────────────────────────────────────
-//  • Direct CPU / GPU die temperature sensors (SMC T-keys) are not accessible from
-//    sandboxed processes on macOS. They require a signed kernel extension or a
-//    privileged XPC helper that is NOT bundled with this application.
+//  Sources, in order of preference per component:
+//  1. IOHID event system services whose system-provided name identifies the component
+//     (e.g. "gas gauge battery", "NAND CH0 temp", "pACC MTR Temp Sensor").
+//  2. SMC keys identified by the naming convention (Tp/Te → CPU, Tg → GPU, TB?T → battery).
+//  3. AppleSmartBattery "Temperature" registry property (battery only, merged by SystemMonitor).
 //
-//  • `ProcessInfo.thermalState` IS publicly available and correctly represents the
-//    operating system's thermal management state. It is NOT a raw temperature in °C.
+//  `ProcessInfo.thermalState` is reported separately as thermal pressure; it is never
+//  converted into a temperature. Unattributed sensors (PMU die/device sensors) are listed
+//  under their own names and never promoted to CPU or GPU temperature.
 //
-//  • Fan count and fan speed (RPM) may be readable from IORegistry on some Intel Macs
-//    via public SMC properties; on Apple Silicon the SMC coprocessor manages the fan
-//    curve internally and does not always expose RPM to user-space processes.
-//
-//  • Battery temperature is sourced from `AppleSmartBattery` IORegistry (BatteryProvider
-//    → BatteryPowerService), NOT from this class. SensorMetrics.cpuTemperature and
-//    SensorMetrics.gpuTemperature are separate fields that are left nil when unavailable.
-//
-//  • GPU temperature is not exposed by IOAccelerator in the public dictionary on any
-//    Apple Silicon Mac. SensorMetrics.gpuTemperature is therefore always nil unless
-//    an optional compatible third-party sensor library is present.
-//  ────────────────────────────────────────────────────────────────────────────────────
 
 import Foundation
-import IOKit
 
 public final class SensorProvider: @unchecked Sendable {
+    /// How long a component's last good reading is retained (and shown as stale) when a poll fails.
+    public static let retainLastGoodReadingFor: TimeInterval = 60
+
     private let lock = NSLock()
+    private lazy var smcReader = SMCSensorReader()
+    private lazy var hidReader = HIDThermalSensorReader()
+    private var previous: SensorMetrics?
 
     public init() {}
 
-    public func sample() -> SensorMetrics {
+    /// Polls hardware sensors. Blocking; call off the main thread.
+    public func sample(hardwareAccessEnabled: Bool = true, now: Date = Date()) -> SensorMetrics {
         lock.lock()
         defer { lock.unlock() }
 
-        var metrics = SensorMetrics()
-
-        // ── 1. Official macOS Thermal Pressure State (always available, zero sandbox restriction) ──
         let thermalState = ProcessInfo.processInfo.thermalState
-        metrics.thermalState = thermalState
-        metrics.isThrottling = (thermalState == .serious || thermalState == .critical)
-
-        switch thermalState {
-        case .nominal:
-            metrics.thermalStateDescription = "Nominal (Normal Operating Temperatures)"
-        case .fair:
-            metrics.thermalStateDescription = "Fair (Elevated Thermal Load)"
-        case .serious:
-            metrics.thermalStateDescription = "Serious (Thermal Throttling Active)"
-        case .critical:
-            metrics.thermalStateDescription = "Critical (Maximum Thermal Throttling)"
-        @unknown default:
-            metrics.thermalStateDescription = "Unknown"
+        let metrics: SensorMetrics
+        if hardwareAccessEnabled {
+            metrics = SensorMetricsBuilder.build(
+                thermalState: thermalState,
+                hid: hidReader.readTemperatures(now: now),
+                smc: smcReader.readTemperatures(),
+                fans: smcReader.readFans(),
+                now: now
+            )
+        } else {
+            metrics = SensorMetricsBuilder.build(thermalState: thermalState, hid: nil, smc: nil, fans: nil, now: now)
         }
 
-        // ── 2. Optional hardware sensor query (fan RPM only; temperature gated by availability) ──
-        readIORegistrySensors(&metrics)
+        let result = SensorMetricsBuilder.retainingRecentReadings(
+            current: metrics,
+            previous: previous,
+            now: now,
+            maxAge: Self.retainLastGoodReadingFor
+        )
+        previous = result
+        return result
+    }
+}
 
+// MARK: - Builder (pure; used by the provider and by unit tests with mocked reader output)
+
+public enum SensorMetricsBuilder {
+    public static let disabledReason = "Hardware temperature sensors are turned off in Settings › General."
+
+    /// - Parameters:
+    ///   - hid, smc, fans: reader results, or nil when hardware sensor access is disabled.
+    public static func build(
+        thermalState: ProcessInfo.ThermalState,
+        hid: SensorReadResult?,
+        smc: SensorReadResult?,
+        fans: FanReadResult?,
+        isAppleSilicon: Bool = Self.isAppleSilicon,
+        now: Date = Date()
+    ) -> SensorMetrics {
+        var metrics = SensorMetrics()
+        metrics.sampledAt = now
+        applyThermalState(thermalState, to: &metrics)
+
+        let accessEnabled = hid != nil || smc != nil
+
+        // 1. Classify every plausible value with its identity and source.
+        var classified: [TemperatureReading] = []
+        var statuses: [SensorSourceStatus] = []
+        for (source, result) in [(SensorSource.hidEventSystem, hid), (SensorSource.smc, smc)] {
+            guard let result else { continue }
+            switch result {
+            case .unavailable(let reason):
+                statuses.append(SensorSourceStatus(source: source, state: .unavailable(reason: reason), sensorCount: 0))
+            case .values(let raws):
+                let readings = raws.compactMap { classify($0, isAppleSilicon: isAppleSilicon, now: now) }
+                classified.append(contentsOf: readings)
+                statuses.append(SensorSourceStatus(
+                    source: source,
+                    state: readings.isEmpty ? .unavailable(reason: "No plausible temperature values were returned.") : .available,
+                    sensorCount: readings.count
+                ))
+            }
+        }
+        metrics.sourceStatuses = statuses
+
+        // 2. Per component keep only the most reliably identified source, so one physical
+        //    component is never averaged across two different sensor families.
+        var chosen: [TemperatureReading] = []
+        for component in ThermalComponent.allCases {
+            let candidates = classified.filter { $0.component == component }
+            guard let best = candidates.min(by: { sourceRank($0) < sourceRank($1) }) else { continue }
+            chosen.append(contentsOf: candidates.filter { $0.source == best.source })
+        }
+        metrics.readings = chosen.sorted { lhs, rhs in
+            if lhs.component != rhs.component {
+                return ThermalComponent.allCases.firstIndex(of: lhs.component)! < ThermalComponent.allCases.firstIndex(of: rhs.component)!
+            }
+            return lhs.name.localizedStandardCompare(rhs.name) == .orderedAscending
+        }
+
+        // 3. Headline components, each from its own sensors only.
+        for component in ThermalComponent.headline {
+            let value = ComponentTemperature.aggregate(metrics.readings, component: component)
+            metrics.setTemperature(value, for: component)
+            metrics.componentStates[component] = value != nil
+                ? .available
+                : .unavailable(reason: unavailableReason(for: component, accessEnabled: accessEnabled, statuses: statuses, totalReadings: metrics.readings.count))
+        }
+
+        if !accessEnabled {
+            metrics.temperatureState = .unavailable(reason: disabledReason)
+        } else if metrics.readings.isEmpty {
+            let reasons = statuses.compactMap { status -> String? in
+                if case .unavailable(let reason) = status.state { return "\(status.source.displayName): \(reason)" }
+                return nil
+            }
+            metrics.temperatureState = .unavailable(reason: reasons.isEmpty ? "No temperature sensors were found." : reasons.joined(separator: " "))
+        } else {
+            metrics.temperatureState = .available
+        }
+
+        applyFans(fans, to: &metrics)
         return metrics
     }
 
-    // MARK: - IORegistry Sensor Query
-
-    private func readIORegistrySensors(_ metrics: inout SensorMetrics) {
-        // Attempt to open the AppleSMC service.
-        let matching = IOServiceMatching("AppleSMC")
-        var iterator: io_iterator_t = 0
-
-        guard IOServiceGetMatchingServices(kIOMainPortDefault, matching, &iterator) == kIOReturnSuccess else {
-            markSensorsUnavailable(&metrics)
+    /// Fills the battery temperature from the AppleSmartBattery registry only when no hardware
+    /// battery sensor was found. The registry timestamp is preserved so staleness stays honest.
+    public static func mergeBatteryRegistry(
+        into metrics: inout SensorMetrics,
+        hasBattery: Bool,
+        registryCelsius: Double?,
+        registryTimestamp: Date
+    ) {
+        guard hasBattery else {
+            metrics.batteryTemperature = nil
+            metrics.readings.removeAll { $0.component == .battery }
+            metrics.componentStates[.battery] = .unavailable(reason: "This Mac has no internal battery.")
             return
         }
-        defer { IOObjectRelease(iterator) }
+        guard metrics.batteryTemperature == nil,
+              let celsius = registryCelsius,
+              SensorClassifier.isPlausible(celsius) else { return }
 
-        let service = IOIteratorNext(iterator)
-        guard service != 0 else {
-            markSensorsUnavailable(&metrics)
-            return
+        let reading = TemperatureReading(
+            id: "\(SensorSource.appleSmartBattery.rawValue).Temperature",
+            name: "Battery (AppleSmartBattery)",
+            key: "Temperature",
+            component: .battery,
+            celsius: celsius,
+            timestamp: registryTimestamp,
+            source: .appleSmartBattery,
+            identification: .vendorLabeled
+        )
+        metrics.readings.append(reading)
+        metrics.batteryTemperature = ComponentTemperature.aggregate([reading], component: .battery)
+        metrics.componentStates[.battery] = .available
+    }
+
+    /// Keeps a headline component's previous value (with its original timestamp) when the
+    /// current poll lost it, so a transient read failure shows as stale rather than flickering.
+    public static func retainingRecentReadings(
+        current: SensorMetrics,
+        previous: SensorMetrics?,
+        now: Date,
+        maxAge: TimeInterval
+    ) -> SensorMetrics {
+        guard let previous, current.temperatureState != .unavailable(reason: disabledReason) else { return current }
+        var result = current
+        for component in ThermalComponent.headline where result.temperature(for: component) == nil {
+            guard let old = previous.temperature(for: component), !old.isStale(at: now, maxAge: maxAge) else { continue }
+            result.setTemperature(old, for: component)
+            result.readings.append(contentsOf: previous.readings(for: component))
+            result.componentStates[component] = .available
         }
-        defer { IOObjectRelease(service) }
+        return result
+    }
 
-        var props: Unmanaged<CFMutableDictionary>?
-        guard IORegistryEntryCreateCFProperties(service, &props, kCFAllocatorDefault, 0) == kIOReturnSuccess,
-              let dict = props?.takeRetainedValue() as? [String: Any] else {
-            markSensorsUnavailable(&metrics)
-            return
-        }
+    // MARK: - Helpers
 
-        // ── Fan speed ─────────────────────────────────────────────────────────────────────────
-        // The public AppleSMC dictionary may expose FNum (fan count) and F0Ac/F1Ac (actual RPM).
-        // These keys are model-dependent and are NOT guaranteed on Apple Silicon models.
-        // If they are present, they are real hardware readings; otherwise fans state is unavailable.
-        var fansRead: [FanInfo] = []
-
-        if let fanCount = dict["FNum"] as? Int, fanCount > 0 {
-            for i in 0..<fanCount {
-                // Keys: F0Ac (Fan 0 actual speed), F1Ac, etc.
-                let rpmKey = "F\(i)Ac"
-                if let rawRPM = dict[rpmKey] as? Double, rawRPM > 0 {
-                    // RPM values from SMC are stored as fp2e14 fixed-point;
-                    // already decoded to Double by IOKit on most macOS versions.
-                    let minKey = "F\(i)Mn"
-                    let maxKey = "F\(i)Mx"
-                    let minRPM = dict[minKey] as? Double ?? 0.0
-                    let maxRPM = dict[maxKey] as? Double ?? 6000.0
-                    fansRead.append(FanInfo(
-                        id: i,
-                        name: "Fan \(i + 1)",
-                        speedRPM: rawRPM,
-                        minRPM: minRPM,
-                        maxRPM: maxRPM
-                    ))
-                } else if let rawRPM = dict[rpmKey] as? Int, rawRPM > 0 {
-                    fansRead.append(FanInfo(id: i, name: "Fan \(i + 1)", speedRPM: Double(rawRPM)))
-                }
-            }
-        } else if let fanCount = dict["FanCount"] as? Int, fanCount > 0 {
-            // Alternate key used on some Intel models
-            for i in 0..<fanCount {
-                let rpmKey = "Fan\(i)Speed"
-                if let rawRPM = dict[rpmKey] as? Double, rawRPM > 0 {
-                    fansRead.append(FanInfo(id: i, name: "Fan \(i + 1)", speedRPM: rawRPM))
-                } else if let rawRPM = dict[rpmKey] as? Int, rawRPM > 0 {
-                    fansRead.append(FanInfo(id: i, name: "Fan \(i + 1)", speedRPM: Double(rawRPM)))
-                }
-            }
-        }
-
-        if !fansRead.isEmpty {
-            metrics.fanSpeeds = fansRead
-            metrics.fansState = .available
-        } else {
-            // No fan data was readable — this is normal for passively cooled models and Apple Silicon
-            #if arch(arm64)
-            metrics.fansState = .unavailable(reason: "Fan telemetry managed exclusively by Apple Silicon SMC coprocessor. Passively cooled models have no fans.")
-            #else
-            metrics.fansState = .unavailable(reason: "Fan speed sensor not accessible from this process. A privileged helper is required.")
-            #endif
-        }
-
-        // ── CPU temperature ──────────────────────────────────────────────────────────────────
-        // Temperature SMC keys (TC0P, TC0E, TCXC, etc.) require a signed kext / XPC helper
-        // in a sandboxed Mac app. These keys are NOT present in the public IORegistry dict
-        // returned by IORegistryEntryCreateCFProperties for AppleSMC.
-        //
-        // We explicitly set cpuTemperature = nil to represent "not available from public API."
-        // This prevents the app from ever displaying a fabricated or wrong temperature value.
-        metrics.cpuTemperature = nil
-
-        // ── GPU temperature ──────────────────────────────────────────────────────────────────
-        // IOAccelerator / IORegistry does not expose GPU die temperature in the public API
-        // for Apple Silicon. This field is intentionally left nil.
-        metrics.gpuTemperature = nil
-
-        // Set availability states
+    public static var isAppleSilicon: Bool {
         #if arch(arm64)
-        metrics.temperatureState = .unavailable(
-            reason: "CPU and GPU die temperature sensors are sandboxed on Apple Silicon. The OS Thermal State above reflects system health."
-        )
+        return true
         #else
-        metrics.temperatureState = .unavailable(
-            reason: "SMC temperature key access requires a privileged helper process."
-        )
+        return false
         #endif
     }
 
-    private func markSensorsUnavailable(_ metrics: inout SensorMetrics) {
-        metrics.cpuTemperature = nil
-        metrics.gpuTemperature = nil
-        metrics.fanSpeeds = []
-        #if arch(arm64)
-        metrics.temperatureState = .unavailable(reason: "Apple Silicon SMC service could not be opened by this sandboxed process.")
-        metrics.fansState = .unavailable(reason: "Apple Silicon SMC coprocessor manages fan control; RPM not exposed to user-space.")
-        #else
-        metrics.temperatureState = .unavailable(reason: "SMC service inaccessible — privileged helper required.")
-        metrics.fansState = .unavailable(reason: "SMC service inaccessible — privileged helper required.")
-        #endif
+    static func classify(_ raw: RawTemperatureValue, isAppleSilicon: Bool, now: Date) -> TemperatureReading? {
+        guard SensorClassifier.isPlausible(raw.celsius) else { return nil }
+        let component: ThermalComponent?
+        let identification: SensorIdentification
+        switch raw.source {
+        case .hidEventSystem:
+            component = SensorClassifier.component(forHIDProduct: raw.name)
+            identification = .vendorLabeled
+        case .smc:
+            component = SensorClassifier.component(forSMCKey: raw.key, isAppleSilicon: isAppleSilicon)
+            identification = .keyConvention
+        case .appleSmartBattery:
+            component = .battery
+            identification = .vendorLabeled
+        }
+        guard let component else { return nil }
+        return TemperatureReading(
+            id: "\(raw.source.rawValue).\(raw.key)",
+            name: raw.name,
+            key: raw.key,
+            component: component,
+            celsius: raw.celsius,
+            timestamp: now,
+            source: raw.source,
+            identification: identification
+        )
+    }
+
+    private static func sourceRank(_ reading: TemperatureReading) -> Int {
+        reading.identification.priority * 10 + (SensorSource.allCases.firstIndex(of: reading.source) ?? 9)
+    }
+
+    private static func unavailableReason(
+        for component: ThermalComponent,
+        accessEnabled: Bool,
+        statuses: [SensorSourceStatus],
+        totalReadings: Int
+    ) -> String {
+        guard accessEnabled else { return disabledReason }
+        if totalReadings == 0 {
+            let reasons = statuses.compactMap { status -> String? in
+                if case .unavailable(let reason) = status.state { return reason }
+                return nil
+            }
+            return reasons.first ?? "No temperature sensors are accessible on this Mac."
+        }
+        return "This Mac exposes \(totalReadings) temperature sensor\(totalReadings == 1 ? "" : "s"), but none is identified as a \(component.displayName) sensor."
+    }
+
+    private static func applyThermalState(_ state: ProcessInfo.ThermalState, to metrics: inout SensorMetrics) {
+        metrics.thermalState = state
+        metrics.isThrottling = state == .serious || state == .critical
+        switch state {
+        case .nominal: metrics.thermalStateDescription = "Nominal (No Thermal Pressure)"
+        case .fair: metrics.thermalStateDescription = "Fair (Elevated Thermal Pressure)"
+        case .serious: metrics.thermalStateDescription = "Serious (Performance Being Reduced)"
+        case .critical: metrics.thermalStateDescription = "Critical (Maximum Performance Reduction)"
+        @unknown default: metrics.thermalStateDescription = "Unknown"
+        }
+    }
+
+    private static func applyFans(_ fans: FanReadResult?, to metrics: inout SensorMetrics) {
+        guard let fans else {
+            metrics.fansState = .unavailable(reason: disabledReason)
+            return
+        }
+        switch fans {
+        case .unavailable(let reason):
+            metrics.fansState = .unavailable(reason: reason)
+        case .fans(let count, let readings):
+            metrics.reportedFanCount = count
+            metrics.fanSpeeds = readings.map { raw in
+                FanInfo(
+                    id: raw.index,
+                    name: "Fan \(raw.index + 1)",
+                    speedRPM: raw.rpm,
+                    minRPM: raw.minRPM.flatMap { $0 >= 0 ? $0 : nil },
+                    maxRPM: raw.maxRPM.flatMap { $0 > 0 ? $0 : nil }
+                )
+            }
+            if count == 0 {
+                metrics.fansState = .unavailable(reason: "The SMC reports no fans. This Mac is passively cooled.")
+            } else if metrics.fanSpeeds.isEmpty {
+                metrics.fansState = .unavailable(reason: "The SMC reports \(count) fan\(count == 1 ? "" : "s") but returned no speed reading.")
+            } else {
+                metrics.fansState = .available
+            }
+        }
     }
 }
