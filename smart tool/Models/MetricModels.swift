@@ -1,0 +1,279 @@
+//
+//  MetricModels.swift
+//  Naem Smart Tool
+//
+
+import Foundation
+import Metal
+
+// MARK: - Availability State
+public enum AvailabilityState: Equatable, Sendable {
+    case available
+    case unavailable(reason: String)
+    case permissionRequired(reason: String)
+    case measuring
+    
+    public var isAvailable: Bool {
+        if case .available = self { return true }
+        return false
+    }
+    
+    public var displayText: String {
+        switch self {
+        case .available:
+            return "Available"
+        case .unavailable(let reason):
+            return reason
+        case .permissionRequired(let reason):
+            return "Permission Required: \(reason)"
+        case .measuring:
+            return "Measuring..."
+        }
+    }
+}
+
+// MARK: - CPU Metrics
+public struct CPUMetrics: Sendable {
+    public var totalUsage: Double = 0.0 // 0-100%
+    public var userUsage: Double = 0.0
+    public var systemUsage: Double = 0.0
+    public var idleUsage: Double = 100.0
+    public var niceUsage: Double = 0.0
+    public var perCoreUsage: [Double] = []
+    public var physicalCoreCount: Int = 0
+    public var logicalCoreCount: Int = 0
+    public var modelName: String = "Apple Silicon"
+    public var architecture: String = "arm64"
+    public var historicalUsage: [Double] = []
+    public var state: AvailabilityState = .measuring
+    
+    public init() {}
+}
+
+// MARK: - GPU Metrics
+public struct GPUMetrics: Sendable {
+    public var deviceName: String = "Apple GPU"
+    public var deviceUtilization: Double? = nil // 0-100%
+    public var rendererUtilization: Double? = nil
+    public var tilerUtilization: Double? = nil
+    public var inUseMemoryBytes: UInt64? = nil
+    public var allocatedMemoryBytes: UInt64? = nil
+    public var recommendedMaxWorkingSetSize: UInt64 = 0
+    public var maxBufferLength: UInt64 = 0
+    public var hasUnifiedMemory: Bool = true
+    public var isLowPower: Bool = false
+    public var registryID: UInt64 = 0
+    public var neuralEngineAvailable: Bool = true
+    public var neuralEngineDescription: String = "Apple Neural Engine (Integrated)"
+    public var state: AvailabilityState = .measuring
+    public var historicalUsage: [Double] = []
+    
+    public init() {}
+}
+
+// MARK: - Memory Metrics
+public enum MemoryPressureLevel: String, Sendable {
+    case normal = "Normal"
+    case warning = "Warning"
+    case critical = "Critical"
+}
+
+public struct MemoryMetrics: Sendable {
+    public var totalBytes: UInt64 = 0
+    public var usedBytes: UInt64 = 0
+    public var availableBytes: UInt64 = 0
+    public var activeBytes: UInt64 = 0
+    public var inactiveBytes: UInt64 = 0
+    public var wiredBytes: UInt64 = 0
+    public var compressedBytes: UInt64 = 0
+    public var freeBytes: UInt64 = 0
+    public var swapTotalBytes: UInt64 = 0
+    public var swapUsedBytes: UInt64 = 0
+    public var pressureLevel: MemoryPressureLevel = .normal
+    public var pressurePercentage: Double = 0.0
+    public var historicalUsage: [Double] = []
+    public var state: AvailabilityState = .measuring
+    
+    public var usagePercentage: Double {
+        guard totalBytes > 0 else { return 0 }
+        return (Double(usedBytes) / Double(totalBytes)) * 100.0
+    }
+    
+    public init() {}
+}
+
+// MARK: - Fan Info
+public struct FanInfo: Identifiable, Sendable {
+    public var id: Int
+    public var name: String
+    public var speedRPM: Double
+    public var minRPM: Double
+    public var maxRPM: Double
+    
+    public init(id: Int, name: String, speedRPM: Double, minRPM: Double = 0, maxRPM: Double = 6000) {
+        self.id = id
+        self.name = name
+        self.speedRPM = speedRPM
+        self.minRPM = minRPM
+        self.maxRPM = maxRPM
+    }
+}
+
+// MARK: - Sensor Metrics
+public struct SensorMetrics: Sendable {
+    public var thermalState: ProcessInfo.ThermalState = .nominal
+    public var thermalStateDescription: String = "Nominal"
+    public var isThrottling: Bool = false
+    public var cpuTemperature: Double? = nil
+    public var gpuTemperature: Double? = nil
+    public var fanSpeeds: [FanInfo] = []
+    public var temperatureState: AvailabilityState = .measuring
+    public var fansState: AvailabilityState = .measuring
+    public var historicalTemperature: [Double] = []
+    
+    public init() {}
+}
+
+// MARK: - Storage Volume
+public struct StorageVolume: Identifiable, Sendable {
+    public var id: String { mountPoint }
+    public var name: String
+    public var mountPoint: String
+    public var fileSystem: String
+    public var totalBytes: UInt64
+    public var usedBytes: UInt64
+    public var freeBytes: UInt64
+    public var purgeableBytes: UInt64
+    public var isSystem: Bool
+    
+    public var usedPercentage: Double {
+        guard totalBytes > 0 else { return 0 }
+        return (Double(usedBytes) / Double(totalBytes)) * 100.0
+    }
+    
+    public init(
+        name: String,
+        mountPoint: String,
+        fileSystem: String = "APFS",
+        totalBytes: UInt64,
+        usedBytes: UInt64,
+        freeBytes: UInt64,
+        purgeableBytes: UInt64 = 0,
+        isSystem: Bool = false
+    ) {
+        self.name = name
+        self.mountPoint = mountPoint
+        self.fileSystem = fileSystem
+        self.totalBytes = totalBytes
+        self.usedBytes = usedBytes
+        self.freeBytes = freeBytes
+        self.purgeableBytes = purgeableBytes
+        self.isSystem = isSystem
+    }
+}
+
+public struct StorageMetrics: Sendable {
+    public var volumes: [StorageVolume] = []
+    public var primaryVolume: StorageVolume? = nil
+    public var totalCapacityBytes: UInt64 = 0
+    public var usedCapacityBytes: UInt64 = 0
+    public var availableCapacityBytes: UInt64 = 0
+    public var purgeableBytes: UInt64 = 0
+    public var state: AvailabilityState = .measuring
+    
+    public var usedPercentage: Double {
+        guard totalCapacityBytes > 0 else { return 0 }
+        return (Double(usedCapacityBytes) / Double(totalCapacityBytes)) * 100.0
+    }
+    
+    public init() {}
+}
+
+// MARK: - Network Info
+public struct NetworkInterfaceInfo: Identifiable, Sendable {
+    public var id: String { name }
+    public var name: String
+    public var displayName: String
+    public var ipAddress: String?
+    public var isUp: Bool
+    public var isWiFi: Bool
+    
+    public init(name: String, displayName: String, ipAddress: String? = nil, isUp: Bool = true, isWiFi: Bool = false) {
+        self.name = name
+        self.displayName = displayName
+        self.ipAddress = ipAddress
+        self.isUp = isUp
+        self.isWiFi = isWiFi
+    }
+}
+
+public struct NetworkMetrics: Sendable {
+    public var downloadSpeedBytesPerSec: Double = 0.0
+    public var uploadSpeedBytesPerSec: Double = 0.0
+    public var totalReceivedBytes: UInt64 = 0
+    public var totalSentBytes: UInt64 = 0
+    public var activeInterfaces: [NetworkInterfaceInfo] = []
+    public var primaryInterface: String = "en0"
+    public var historicalDownload: [Double] = []
+    public var historicalUpload: [Double] = []
+    public var state: AvailabilityState = .measuring
+    
+    public init() {}
+}
+
+// MARK: - Battery Metrics
+public struct BatteryMetrics: Sendable {
+    public var hasBattery: Bool = false
+    public var percentage: Int = 100
+    public var isCharging: Bool = false
+    public var isPluggedIn: Bool = true
+    public var timeToEmptyMinutes: Int? = nil
+    public var timeToFullMinutes: Int? = nil
+    public var cycleCount: Int? = nil
+    public var healthPercentage: Int? = nil
+    public var condition: String = "Normal"
+    public var powerSource: String = "Power Adapter"
+    public var state: AvailabilityState = .measuring
+    
+    public init() {}
+}
+
+// MARK: - Overall Snapshot
+public struct SystemMetricsSnapshot: Sendable {
+    public var timestamp: Date = Date()
+    public var cpu: CPUMetrics = CPUMetrics()
+    public var gpu: GPUMetrics = GPUMetrics()
+    public var memory: MemoryMetrics = MemoryMetrics()
+    public var sensors: SensorMetrics = SensorMetrics()
+    public var storage: StorageMetrics = StorageMetrics()
+    public var network: NetworkMetrics = NetworkMetrics()
+    public var battery: BatteryMetrics = BatteryMetrics()
+    
+    public var healthScore: Int {
+        var score = 100
+        if cpu.totalUsage > 85 { score -= 15 }
+        else if cpu.totalUsage > 60 { score -= 5 }
+        
+        if memory.usagePercentage > 90 || memory.pressureLevel == .critical { score -= 25 }
+        else if memory.usagePercentage > 75 || memory.pressureLevel == .warning { score -= 10 }
+        
+        if sensors.isThrottling { score -= 20 }
+        else if sensors.thermalState == .serious { score -= 15 }
+        else if sensors.thermalState == .fair { score -= 5 }
+        
+        if storage.usedPercentage > 95 { score -= 15 }
+        else if storage.usedPercentage > 85 { score -= 5 }
+        
+        return max(score, 10)
+    }
+    
+    public var healthStatusText: String {
+        let score = healthScore
+        if score >= 90 { return "Excellent" }
+        if score >= 75 { return "Good" }
+        if score >= 50 { return "Moderate Load" }
+        return "Heavy Load"
+    }
+    
+    public init() {}
+}
