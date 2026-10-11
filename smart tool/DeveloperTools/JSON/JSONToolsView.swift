@@ -38,30 +38,59 @@ public struct JSONToolsView: View {
     public var body: some View {
         VStack(spacing: 14) {
             // Tab Selector Bar
-            HStack {
-                Picker("Tool", selection: $selectedTab) {
-                    ForEach(JSONTab.allCases) { tab in
-                        Text(tab.rawValue).tag(tab)
+            ViewThatFits(in: .horizontal) {
+                HStack {
+                    Picker("Tool", selection: $selectedTab) {
+                        ForEach(JSONTab.allCases) { tab in
+                            Text(tab.rawValue).tag(tab)
+                        }
+                    }
+                    .pickerStyle(.segmented)
+                    .frame(maxWidth: 460)
+                    
+                    Spacer()
+                    
+                    Button {
+                        loadSampleData()
+                    } label: {
+                        Label("Sample JSON", systemImage: "sparkles")
+                    }
+                    .buttonStyle(.bordered)
+                    
+                    Button {
+                        clearAll()
+                    } label: {
+                        Label("Clear", systemImage: "trash")
+                    }
+                    .buttonStyle(.bordered)
+                }
+                
+                VStack(alignment: .leading, spacing: 8) {
+                    Picker("Tool", selection: $selectedTab) {
+                        ForEach(JSONTab.allCases) { tab in
+                            Text(tab.rawValue).tag(tab)
+                        }
+                    }
+                    .pickerStyle(.segmented)
+                    
+                    HStack {
+                        Button {
+                            loadSampleData()
+                        } label: {
+                            Label("Sample JSON", systemImage: "sparkles")
+                        }
+                        .buttonStyle(.bordered)
+                        
+                        Button {
+                            clearAll()
+                        } label: {
+                            Label("Clear", systemImage: "trash")
+                        }
+                        .buttonStyle(.bordered)
+                        
+                        Spacer()
                     }
                 }
-                .pickerStyle(.segmented)
-                .frame(maxWidth: 460)
-                
-                Spacer()
-                
-                Button {
-                    loadSampleData()
-                } label: {
-                    Label("Sample JSON", systemImage: "sparkles")
-                }
-                .buttonStyle(.bordered)
-                
-                Button {
-                    clearAll()
-                } label: {
-                    Label("Clear", systemImage: "trash")
-                }
-                .buttonStyle(.bordered)
             }
             
             // Tab Content
@@ -83,57 +112,80 @@ public struct JSONToolsView: View {
     private var formatAndMinifyView: some View {
         VStack(spacing: 12) {
             // Action Controls Bar
-            HStack(spacing: 10) {
-                Picker("Indent", selection: $indentSpaces) {
-                    Text("2 Spaces").tag(2)
-                    Text("4 Spaces").tag(4)
-                }
-                .frame(width: 120)
-                
-                Button("Beautify / Format") {
-                    formatJSON()
-                }
-                .buttonStyle(.borderedProminent)
-                .tint(AppTheme.electricBlue)
-                
-                Button("Minify (Compact)") {
-                    minifyJSON()
-                }
-                .buttonStyle(.bordered)
-                
-                Button("Validate Syntax") {
-                    validateJSON()
-                }
-                .buttonStyle(.bordered)
-                
-                Spacer()
-                
-                if let val = validationResult {
-                    HStack(spacing: 6) {
-                        Image(systemName: val.isValid ? "checkmark.circle.fill" : "exclamationmark.triangle.fill")
-                            .foregroundStyle(val.isValid ? AppTheme.successGreen : AppTheme.dangerRed)
-                        Text(val.isValid ? "Valid JSON" : "Syntax Error (Line \(val.line ?? 1), Col \(val.column ?? 1))")
-                            .font(.system(size: 11, weight: .medium))
-                            .foregroundStyle(val.isValid ? AppTheme.successGreen : AppTheme.dangerRed)
+            ViewThatFits(in: .horizontal) {
+                HStack(spacing: 10) {
+                    Picker("Indent", selection: $indentSpaces) {
+                        Text("2 Spaces").tag(2)
+                        Text("4 Spaces").tag(4)
                     }
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 4)
-                    .background(Color.white.opacity(0.04))
-                    .clipShape(Capsule())
-                }
-                
-                if !outputText.isEmpty {
-                    Button {
-                        copyToClipboard(outputText)
-                    } label: {
-                        Label("Copy Output", systemImage: "doc.on.doc")
+                    .frame(width: 120)
+                    
+                    Button("Beautify / Format") {
+                        formatJSON()
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .tint(AppTheme.electricBlue)
+                    
+                    Button("Minify (Compact)") {
+                        minifyJSON()
                     }
                     .buttonStyle(.bordered)
+                    
+                    Button("Validate Syntax") {
+                        validateJSON()
+                    }
+                    .buttonStyle(.bordered)
+                    
+                    Spacer()
+                    
+                    if let val = validationResult {
+                        validationIndicator(val)
+                    }
+                    
+                    if !outputText.isEmpty {
+                        copyOutputButton
+                    }
+                }
+                
+                VStack(alignment: .leading, spacing: 8) {
+                    HStack(spacing: 8) {
+                        Picker("Indent", selection: $indentSpaces) {
+                            Text("2 Spaces").tag(2)
+                            Text("4 Spaces").tag(4)
+                        }
+                        .frame(width: 120)
+                        
+                        Button("Beautify / Format") {
+                            formatJSON()
+                        }
+                        .buttonStyle(.borderedProminent)
+                        .tint(AppTheme.electricBlue)
+                        
+                        Button("Minify (Compact)") {
+                            minifyJSON()
+                        }
+                        .buttonStyle(.bordered)
+                        
+                        Button("Validate Syntax") {
+                            validateJSON()
+                        }
+                        .buttonStyle(.bordered)
+                    }
+                    
+                    HStack(spacing: 8) {
+                        if let val = validationResult {
+                            validationIndicator(val)
+                        }
+                        Spacer()
+                        if !outputText.isEmpty {
+                            copyOutputButton
+                        }
+                    }
                 }
             }
             
             // Dual Panes: Input & Output
-            HStack(spacing: 12) {
+            AdaptiveTwoColumnLayout(spacing: 12) {
                 // Input Pane
                 VStack(alignment: .leading, spacing: 6) {
                     Text("Input JSON")
@@ -147,8 +199,9 @@ public struct JSONToolsView: View {
                         .background(AppTheme.cardBackground)
                         .clipShape(RoundedRectangle(cornerRadius: 6))
                         .overlay(RoundedRectangle(cornerRadius: 6).stroke(AppTheme.cardBorder, lineWidth: 1))
+                        .frame(minHeight: 280)
                 }
-                
+            } right: {
                 // Output Pane
                 VStack(alignment: .leading, spacing: 6) {
                     Text("Formatted Output")
@@ -162,47 +215,110 @@ public struct JSONToolsView: View {
                         .background(AppTheme.cardBackground)
                         .clipShape(RoundedRectangle(cornerRadius: 6))
                         .overlay(RoundedRectangle(cornerRadius: 6).stroke(AppTheme.cardBorder, lineWidth: 1))
+                        .frame(minHeight: 280)
                 }
             }
-            .frame(minHeight: 380)
         }
+    }
+    
+    @ViewBuilder
+    private func validationIndicator(_ val: JSONValidationResult) -> some View {
+        HStack(spacing: 6) {
+            Image(systemName: val.isValid ? "checkmark.circle.fill" : "exclamationmark.triangle.fill")
+                .foregroundStyle(val.isValid ? AppTheme.successGreen : AppTheme.dangerRed)
+            Text(val.isValid ? "Valid JSON" : "Syntax Error (Line \(val.line ?? 1), Col \(val.column ?? 1))")
+                .font(.system(size: 11, weight: .medium))
+                .foregroundStyle(val.isValid ? AppTheme.successGreen : AppTheme.dangerRed)
+        }
+        .padding(.horizontal, 8)
+        .padding(.vertical, 4)
+        .background(Color.white.opacity(0.04))
+        .clipShape(Capsule())
+    }
+    
+    private var copyOutputButton: some View {
+        Button {
+            copyToClipboard(outputText)
+        } label: {
+            Label("Copy Output", systemImage: "doc.on.doc")
+        }
+        .buttonStyle(.bordered)
     }
     
     // MARK: - Tree Explorer View
     private var treeExplorerView: some View {
         VStack(spacing: 12) {
-            HStack {
-                Button("Parse Into Tree") {
-                    parseTree()
+            ViewThatFits(in: .horizontal) {
+                HStack {
+                    Button("Parse Into Tree") {
+                        parseTree()
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .tint(AppTheme.electricCyan)
+                    
+                    HStack(spacing: 6) {
+                        Image(systemName: "magnifyingglass")
+                            .font(.system(size: 11))
+                            .foregroundStyle(AppTheme.textTertiary)
+                        TextField("Search keys or values...", text: $treeSearchText)
+                            .textFieldStyle(.plain)
+                            .font(.system(size: 12))
+                    }
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 5)
+                    .background(Color.white.opacity(0.04))
+                    .clipShape(RoundedRectangle(cornerRadius: 6))
+                    .frame(maxWidth: 300)
+                    
+                    Spacer()
+                    
+                    Button("Expand All") {
+                        expandAllNodes(nodes: treeNodes)
+                    }
+                    .buttonStyle(.bordered)
+                    
+                    Button("Collapse All") {
+                        expandedNodeIDs.removeAll()
+                    }
+                    .buttonStyle(.bordered)
                 }
-                .buttonStyle(.borderedProminent)
-                .tint(AppTheme.electricCyan)
                 
-                HStack(spacing: 6) {
-                    Image(systemName: "magnifyingglass")
-                        .font(.system(size: 11))
-                        .foregroundStyle(AppTheme.textTertiary)
-                    TextField("Search keys or values...", text: $treeSearchText)
-                        .textFieldStyle(.plain)
-                        .font(.system(size: 12))
+                VStack(alignment: .leading, spacing: 8) {
+                    HStack {
+                        Button("Parse Into Tree") {
+                            parseTree()
+                        }
+                        .buttonStyle(.borderedProminent)
+                        .tint(AppTheme.electricCyan)
+                        
+                        HStack(spacing: 6) {
+                            Image(systemName: "magnifyingglass")
+                                .font(.system(size: 11))
+                                .foregroundStyle(AppTheme.textTertiary)
+                            TextField("Search keys or values...", text: $treeSearchText)
+                                .textFieldStyle(.plain)
+                                .font(.system(size: 12))
+                        }
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 5)
+                        .background(Color.white.opacity(0.04))
+                        .clipShape(RoundedRectangle(cornerRadius: 6))
+                    }
+                    
+                    HStack {
+                        Button("Expand All") {
+                            expandAllNodes(nodes: treeNodes)
+                        }
+                        .buttonStyle(.bordered)
+                        
+                        Button("Collapse All") {
+                            expandedNodeIDs.removeAll()
+                        }
+                        .buttonStyle(.bordered)
+                        
+                        Spacer()
+                    }
                 }
-                .padding(.horizontal, 8)
-                .padding(.vertical, 5)
-                .background(Color.white.opacity(0.04))
-                .clipShape(RoundedRectangle(cornerRadius: 6))
-                .frame(maxWidth: 300)
-                
-                Spacer()
-                
-                Button("Expand All") {
-                    expandAllNodes(nodes: treeNodes)
-                }
-                .buttonStyle(.bordered)
-                
-                Button("Collapse All") {
-                    expandedNodeIDs.removeAll()
-                }
-                .buttonStyle(.bordered)
             }
             
             if treeNodes.isEmpty {
@@ -242,29 +358,55 @@ public struct JSONToolsView: View {
     // MARK: - JSON to CSV View
     private var jsonToCSVView: some View {
         VStack(spacing: 12) {
-            HStack {
-                Button("Convert JSON to CSV") {
-                    convertToCSV()
-                }
-                .buttonStyle(.borderedProminent)
-                .tint(AppTheme.matrixGreen)
-                
-                Spacer()
-                
-                if !outputText.isEmpty {
-                    Button("Export CSV File") {
-                        exportCSVFile()
+            ViewThatFits(in: .horizontal) {
+                HStack {
+                    Button("Convert JSON to CSV") {
+                        convertToCSV()
                     }
-                    .buttonStyle(.bordered)
+                    .buttonStyle(.borderedProminent)
+                    .tint(AppTheme.matrixGreen)
                     
-                    Button("Copy CSV") {
-                        copyToClipboard(outputText)
+                    Spacer()
+                    
+                    if !outputText.isEmpty {
+                        Button("Export CSV File") {
+                            exportCSVFile()
+                        }
+                        .buttonStyle(.bordered)
+                        
+                        Button("Copy CSV") {
+                            copyToClipboard(outputText)
+                        }
+                        .buttonStyle(.bordered)
                     }
-                    .buttonStyle(.bordered)
+                }
+                
+                VStack(alignment: .leading, spacing: 8) {
+                    Button("Convert JSON to CSV") {
+                        convertToCSV()
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .tint(AppTheme.matrixGreen)
+                    
+                    if !outputText.isEmpty {
+                        HStack {
+                            Button("Export CSV File") {
+                                exportCSVFile()
+                            }
+                            .buttonStyle(.bordered)
+                            
+                            Button("Copy CSV") {
+                                copyToClipboard(outputText)
+                            }
+                            .buttonStyle(.bordered)
+                            
+                            Spacer()
+                        }
+                    }
                 }
             }
             
-            HStack(spacing: 12) {
+            AdaptiveTwoColumnLayout(spacing: 12) {
                 VStack(alignment: .leading, spacing: 6) {
                     Text("Source JSON Array")
                         .font(.system(size: 11, weight: .semibold))
@@ -277,8 +419,9 @@ public struct JSONToolsView: View {
                         .background(AppTheme.cardBackground)
                         .clipShape(RoundedRectangle(cornerRadius: 6))
                         .overlay(RoundedRectangle(cornerRadius: 6).stroke(AppTheme.cardBorder, lineWidth: 1))
+                        .frame(minHeight: 280)
                 }
-                
+            } right: {
                 VStack(alignment: .leading, spacing: 6) {
                     Text("Resulting CSV Table")
                         .font(.system(size: 11, weight: .semibold))
@@ -291,9 +434,9 @@ public struct JSONToolsView: View {
                         .background(AppTheme.cardBackground)
                         .clipShape(RoundedRectangle(cornerRadius: 6))
                         .overlay(RoundedRectangle(cornerRadius: 6).stroke(AppTheme.cardBorder, lineWidth: 1))
+                        .frame(minHeight: 280)
                 }
             }
-            .frame(minHeight: 380)
         }
     }
     
@@ -314,7 +457,7 @@ public struct JSONToolsView: View {
                     .foregroundStyle(diffResults.isEmpty ? AppTheme.textSecondary : AppTheme.warningAmber)
             }
             
-            HStack(spacing: 12) {
+            AdaptiveTwoColumnLayout(spacing: 12) {
                 VStack(alignment: .leading, spacing: 6) {
                     Text("Document A (Original)")
                         .font(.system(size: 11, weight: .semibold))
@@ -327,8 +470,9 @@ public struct JSONToolsView: View {
                         .background(AppTheme.cardBackground)
                         .clipShape(RoundedRectangle(cornerRadius: 6))
                         .overlay(RoundedRectangle(cornerRadius: 6).stroke(AppTheme.cardBorder, lineWidth: 1))
+                        .frame(minHeight: 180)
                 }
-                
+            } right: {
                 VStack(alignment: .leading, spacing: 6) {
                     Text("Document B (Modified)")
                         .font(.system(size: 11, weight: .semibold))
@@ -341,9 +485,9 @@ public struct JSONToolsView: View {
                         .background(AppTheme.cardBackground)
                         .clipShape(RoundedRectangle(cornerRadius: 6))
                         .overlay(RoundedRectangle(cornerRadius: 6).stroke(AppTheme.cardBorder, lineWidth: 1))
+                        .frame(minHeight: 180)
                 }
             }
-            .frame(height: 200)
             
             // Diff Results Table
             VStack(alignment: .leading, spacing: 6) {

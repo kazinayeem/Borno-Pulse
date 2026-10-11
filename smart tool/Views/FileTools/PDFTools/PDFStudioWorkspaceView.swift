@@ -269,52 +269,109 @@ public struct PDFStudioWorkspaceView: View {
             // Left/Center: Dropzone & Thumbnails Grid
             VStack(spacing: 0) {
                 // Top Action Toolbar
-                HStack(spacing: 10) {
-                    Button {
-                        selectFilesForAssembly()
-                    } label: {
-                        Label("Add Files", systemImage: "plus.circle.fill")
-                    }
-                    .buttonStyle(.borderedProminent)
-                    .tint(AppTheme.electricBlue)
-                    .controlSize(.small)
-                    
-                    if !assemblyService.pages.isEmpty {
-                        Button("Select All") {
-                            assemblyService.selectAllPages()
-                        }
-                        .controlSize(.small)
-                        
-                        Button("Deselect") {
-                            assemblyService.deselectAllPages()
-                        }
-                        .controlSize(.small)
-                        
+                ViewThatFits(in: .horizontal) {
+                    HStack(spacing: 10) {
                         Button {
-                            for page in assemblyService.pages where page.isSelected {
-                                assemblyService.rotatePage(id: page.id, delta: 90)
+                            selectFilesForAssembly()
+                        } label: {
+                            Label("Add Files", systemImage: "plus.circle.fill")
+                        }
+                        .buttonStyle(.borderedProminent)
+                        .tint(AppTheme.electricBlue)
+                        .controlSize(.small)
+                        
+                        if !assemblyService.pages.isEmpty {
+                            Button("Select All") {
+                                assemblyService.selectAllPages()
                             }
-                        } label: {
-                            Label("Rotate 90°", systemImage: "rotate.right")
+                            .controlSize(.small)
+                            
+                            Button("Deselect") {
+                                assemblyService.deselectAllPages()
+                            }
+                            .controlSize(.small)
+                            
+                            Button {
+                                for page in assemblyService.pages where page.isSelected {
+                                    assemblyService.rotatePage(id: page.id, delta: 90)
+                                }
+                            } label: {
+                                Label("Rotate 90°", systemImage: "rotate.right")
+                            }
+                            .controlSize(.small)
+                            
+                            Button(role: .destructive) {
+                                assemblyService.removeSelectedPages()
+                            } label: {
+                                Label("Delete Selected", systemImage: "trash")
+                            }
+                            .controlSize(.small)
+                            
+                            Spacer()
+                            
+                            Button("Clear All") {
+                                assemblyService.clearAllPages()
+                            }
+                            .controlSize(.small)
+                            .foregroundStyle(AppTheme.dangerRed)
+                        } else {
+                            Spacer()
                         }
-                        .controlSize(.small)
-                        
-                        Button(role: .destructive) {
-                            assemblyService.removeSelectedPages()
-                        } label: {
-                            Label("Delete Selected", systemImage: "trash")
+                    }
+                    
+                    VStack(alignment: .leading, spacing: 8) {
+                        HStack(spacing: 8) {
+                            Button {
+                                selectFilesForAssembly()
+                            } label: {
+                                Label("Add Files", systemImage: "plus.circle.fill")
+                            }
+                            .buttonStyle(.borderedProminent)
+                            .tint(AppTheme.electricBlue)
+                            .controlSize(.small)
+                            
+                            if !assemblyService.pages.isEmpty {
+                                Button("Select All") {
+                                    assemblyService.selectAllPages()
+                                }
+                                .controlSize(.small)
+                                
+                                Button("Deselect") {
+                                    assemblyService.deselectAllPages()
+                                }
+                                .controlSize(.small)
+                            }
+                            
+                            Spacer()
                         }
-                        .controlSize(.small)
                         
-                        Spacer()
-                        
-                        Button("Clear All") {
-                            assemblyService.clearAllPages()
+                        if !assemblyService.pages.isEmpty {
+                            HStack(spacing: 8) {
+                                Button {
+                                    for page in assemblyService.pages where page.isSelected {
+                                        assemblyService.rotatePage(id: page.id, delta: 90)
+                                    }
+                                } label: {
+                                    Label("Rotate 90°", systemImage: "rotate.right")
+                                }
+                                .controlSize(.small)
+                                
+                                Button(role: .destructive) {
+                                    assemblyService.removeSelectedPages()
+                                } label: {
+                                    Label("Delete Selected", systemImage: "trash")
+                                }
+                                .controlSize(.small)
+                                
+                                Spacer()
+                                
+                                Button("Clear All") {
+                                    assemblyService.clearAllPages()
+                                }
+                                .controlSize(.small)
+                                .foregroundStyle(AppTheme.dangerRed)
+                            }
                         }
-                        .controlSize(.small)
-                        .foregroundStyle(AppTheme.dangerRed)
-                    } else {
-                        Spacer()
                     }
                 }
                 .padding(.horizontal, 16)

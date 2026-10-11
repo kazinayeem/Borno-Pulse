@@ -16,18 +16,12 @@ public struct FocusPomodoroView: View {
         ScrollView {
             VStack(spacing: 20) {
                 // Header
-                HStack {
-                    VStack(alignment: .leading, spacing: 3) {
-                        Text("Focus & Pomodoro")
-                            .font(.system(size: 16, weight: .bold))
-                            .foregroundStyle(AppTheme.textPrimary)
-                        Text("Distraction-free focus sessions, structured breaks & session reporting")
-                            .font(.system(size: 11))
-                            .foregroundStyle(AppTheme.textSecondary)
-                    }
-                    
-                    Spacer()
-                    
+                AdaptivePageHeader(
+                    title: "Focus & Pomodoro",
+                    subtitle: "Distraction-free focus sessions, structured breaks & session reporting",
+                    icon: "timer",
+                    iconColor: AppTheme.matrixGreen
+                ) {
                     HStack(spacing: 6) {
                         Image(systemName: focus.soundEnabled ? "speaker.wave.2.fill" : "speaker.slash.fill")
                             .font(.system(size: 12))
@@ -41,7 +35,7 @@ public struct FocusPomodoroView: View {
                 timerDisplayCard
                 
                 // Focus Metrics Grid
-                HStack(spacing: 12) {
+                AdaptiveCardGrid(minColumnWidth: 150, spacing: 12) {
                     metricCard(title: "Today's Focus", value: Formatters.duration(focus.todayFocusSeconds), icon: "target", tint: AppTheme.matrixGreen)
                     metricCard(title: "Last 7 Days", value: Formatters.duration(focus.weekFocusSeconds), icon: "chart.bar.fill", tint: AppTheme.electricBlue)
                     metricCard(title: "Cycles Completed", value: "\(focus.completedCyclesCount)", icon: "repeat", tint: AppTheme.purpleAccent)

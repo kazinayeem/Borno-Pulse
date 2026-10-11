@@ -40,7 +40,7 @@ public struct PDFCompressorView: View {
                         .font(.system(size: 13, weight: .semibold))
                         .foregroundStyle(AppTheme.textSecondary)
                     
-                    HStack(spacing: 12) {
+                    AdaptiveCardGrid(minColumnWidth: 140, spacing: 10) {
                         ForEach(PDFCompressionPreset.allCases) { preset in
                             Button {
                                 service.selectedPreset = preset
@@ -49,6 +49,7 @@ public struct PDFCompressorView: View {
                                     Text(preset.rawValue)
                                         .font(.system(size: 12, weight: .medium))
                                 }
+                                .frame(maxWidth: .infinity)
                                 .padding(.horizontal, 12)
                                 .padding(.vertical, 8)
                                 .background(service.selectedPreset == preset ? AppTheme.electricBlue.opacity(0.18) : Color.white.opacity(0.04))

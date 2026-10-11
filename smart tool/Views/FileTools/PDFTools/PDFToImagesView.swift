@@ -63,26 +63,51 @@ public struct PDFToImagesView: View {
                             .font(.system(size: 13, weight: .semibold))
                             .foregroundStyle(AppTheme.textSecondary)
                         
-                        HStack(spacing: 20) {
-                            VStack(alignment: .leading, spacing: 4) {
-                                Text("Output Format").font(.system(size: 11)).foregroundStyle(AppTheme.textTertiary)
-                                Picker("", selection: $service.targetFormat) {
-                                    Text("PNG (Lossless)").tag(ImageFormat.png)
-                                    Text("JPG (Compressed)").tag(ImageFormat.jpeg)
+                        ViewThatFits(in: .horizontal) {
+                            HStack(spacing: 20) {
+                                VStack(alignment: .leading, spacing: 4) {
+                                    Text("Output Format").font(.system(size: 11)).foregroundStyle(AppTheme.textTertiary)
+                                    Picker("", selection: $service.targetFormat) {
+                                        Text("PNG (Lossless)").tag(ImageFormat.png)
+                                        Text("JPG (Compressed)").tag(ImageFormat.jpeg)
+                                    }
+                                    .labelsHidden()
+                                    .frame(width: 160)
                                 }
-                                .labelsHidden()
-                                .frame(width: 160)
+                                
+                                VStack(alignment: .leading, spacing: 4) {
+                                    Text("Resolution (DPI)").font(.system(size: 11)).foregroundStyle(AppTheme.textTertiary)
+                                    Picker("", selection: $service.dpi) {
+                                        Text("72 DPI (Web Screen)").tag(CGFloat(72.0))
+                                        Text("150 DPI (Balanced)").tag(CGFloat(150.0))
+                                        Text("300 DPI (High Print)").tag(CGFloat(300.0))
+                                    }
+                                    .labelsHidden()
+                                    .frame(width: 170)
+                                }
                             }
                             
-                            VStack(alignment: .leading, spacing: 4) {
-                                Text("Resolution (DPI)").font(.system(size: 11)).foregroundStyle(AppTheme.textTertiary)
-                                Picker("", selection: $service.dpi) {
-                                    Text("72 DPI (Web Screen)").tag(CGFloat(72.0))
-                                    Text("150 DPI (Balanced)").tag(CGFloat(150.0))
-                                    Text("300 DPI (High Print)").tag(CGFloat(300.0))
+                            VStack(alignment: .leading, spacing: 10) {
+                                VStack(alignment: .leading, spacing: 4) {
+                                    Text("Output Format").font(.system(size: 11)).foregroundStyle(AppTheme.textTertiary)
+                                    Picker("", selection: $service.targetFormat) {
+                                        Text("PNG (Lossless)").tag(ImageFormat.png)
+                                        Text("JPG (Compressed)").tag(ImageFormat.jpeg)
+                                    }
+                                    .labelsHidden()
+                                    .frame(maxWidth: .infinity)
                                 }
-                                .labelsHidden()
-                                .frame(width: 170)
+                                
+                                VStack(alignment: .leading, spacing: 4) {
+                                    Text("Resolution (DPI)").font(.system(size: 11)).foregroundStyle(AppTheme.textTertiary)
+                                    Picker("", selection: $service.dpi) {
+                                        Text("72 DPI (Web Screen)").tag(CGFloat(72.0))
+                                        Text("150 DPI (Balanced)").tag(CGFloat(150.0))
+                                        Text("300 DPI (High Print)").tag(CGFloat(300.0))
+                                    }
+                                    .labelsHidden()
+                                    .frame(maxWidth: .infinity)
+                                }
                             }
                         }
                         

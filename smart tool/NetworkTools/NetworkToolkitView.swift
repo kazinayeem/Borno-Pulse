@@ -55,17 +55,11 @@ public struct NetworkToolkitView: View {
     public var body: some View {
         VStack(spacing: 0) {
             // Workspace Header Bar
-            HStack(spacing: 12) {
-                HStack(spacing: 6) {
-                    Image(systemName: "antenna.radiowaves.left.and.right")
-                        .foregroundStyle(AppTheme.electricCyan)
-                    Text("Network Toolkit")
-                        .font(.system(size: 15, weight: .bold))
-                        .foregroundStyle(AppTheme.textPrimary)
-                }
-                
-                Spacer()
-                
+            AdaptivePageHeader(
+                title: "Network Toolkit",
+                icon: "antenna.radiowaves.left.and.right",
+                iconColor: AppTheme.electricCyan
+            ) {
                 // Tab Switcher
                 HStack(spacing: 4) {
                     ForEach(NetworkTab.allCases) { tab in
@@ -92,9 +86,6 @@ public struct NetworkToolkitView: View {
                 .clipShape(RoundedRectangle(cornerRadius: 8))
                 .overlay(RoundedRectangle(cornerRadius: 8).stroke(AppTheme.cardBorder, lineWidth: 0.5))
             }
-            .padding(.horizontal, 18)
-            .padding(.vertical, 12)
-            .background(AppTheme.cardBackgroundSecondary)
             
             Divider()
                 .background(AppTheme.cardBorder)
@@ -243,7 +234,7 @@ public struct NetworkToolkitView: View {
                 let avgRtt = rtts.isEmpty ? 0 : (rtts.reduce(0, +) / Double(rtts.count))
                 let loss = pingPackets.isEmpty ? 0.0 : (Double(pingPackets.count - successPackets.count) / Double(pingPackets.count)) * 100.0
                 
-                HStack(spacing: 12) {
+                AdaptiveCardGrid(minColumnWidth: 140, spacing: 10) {
                     statCard(title: "Avg Latency", value: String(format: "%.1f ms", avgRtt), tint: AppTheme.electricCyan)
                     statCard(title: "Min Latency", value: String(format: "%.1f ms", minRtt), tint: AppTheme.successGreen)
                     statCard(title: "Max Latency", value: String(format: "%.1f ms", maxRtt), tint: AppTheme.warningAmber)

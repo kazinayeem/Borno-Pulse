@@ -16,18 +16,12 @@ public struct BatchConverterView: View {
     public var body: some View {
         VStack(spacing: 14) {
             // Header Bar
-            HStack {
-                VStack(alignment: .leading, spacing: 3) {
-                    Text("Batch File Converter")
-                        .font(.system(size: 16, weight: .bold))
-                        .foregroundStyle(AppTheme.textPrimary)
-                    Text("Unified processing queue for images, PDFs, compression, and resizing")
-                        .font(.system(size: 11))
-                        .foregroundStyle(AppTheme.textSecondary)
-                }
-                
-                Spacer()
-                
+            AdaptivePageHeader(
+                title: "Batch File Converter",
+                subtitle: "Unified processing queue for images, PDFs, compression, and resizing",
+                icon: "arrow.triangle.2.circlepath",
+                iconColor: AppTheme.electricBlue
+            ) {
                 // Destination Folder Button
                 HStack(spacing: 6) {
                     Image(systemName: "folder")
@@ -51,55 +45,29 @@ public struct BatchConverterView: View {
             }
             
             // Batch Operation Toolbar & Add Files
-            HStack(spacing: 10) {
-                // Add Files Button
-                Button {
-                    openFilePicker()
-                } label: {
-                    Label("Add Files...", systemImage: "plus.circle.fill")
+            ViewThatFits(in: .horizontal) {
+                HStack(spacing: 10) {
+                    addFilesButton
+                    operationPicker
+                    applyToAllButton
+                    Spacer()
+                    batchProcessButton
+                    clearDoneButton
                 }
-                .buttonStyle(.borderedProminent)
-                .tint(AppTheme.electricBlue)
                 
-                // Global Operation Selector
-                Picker("Operation", selection: $globalOperation) {
-                    ForEach(BatchOperationKind.allCases) { op in
-                        Text(op.rawValue).tag(op)
+                VStack(alignment: .leading, spacing: 10) {
+                    HStack(spacing: 10) {
+                        addFilesButton
+                        operationPicker
+                        applyToAllButton
+                    }
+                    
+                    HStack(spacing: 10) {
+                        batchProcessButton
+                        clearDoneButton
+                        Spacer()
                     }
                 }
-                .pickerStyle(.menu)
-                .frame(width: 190)
-                
-                Button("Apply to All") {
-                    for i in 0..<batch.queue.count {
-                        batch.queue[i].operation = globalOperation
-                    }
-                }
-                .buttonStyle(.bordered)
-                .disabled(batch.queue.isEmpty)
-                
-                Spacer()
-                
-                if batch.isProcessing {
-                    Button("Cancel") {
-                        batch.cancel()
-                    }
-                    .buttonStyle(.borderedProminent)
-                    .tint(AppTheme.dangerRed)
-                } else {
-                    Button("Start Batch (\(batch.queue.filter { $0.status == .queued }.count))") {
-                        batch.startProcessing()
-                    }
-                    .buttonStyle(.borderedProminent)
-                    .tint(AppTheme.matrixGreen)
-                    .disabled(batch.queue.isEmpty)
-                }
-                
-                Button("Clear Done") {
-                    batch.clearCompleted()
-                }
-                .buttonStyle(.bordered)
-                .disabled(batch.queue.isEmpty)
             }
             
             // Queue Table / Drop Zone
@@ -296,5 +264,62 @@ public struct BatchConverterView: View {
         if openPanel.runModal() == .OK, let url = openPanel.url {
             batch.outputFolderURL = url
         }
+    }
+    
+    // MARK: - Toolbar Subviews
+    private var addFilesButton: some View {
+        Button {
+            openFilePicker()
+        } label: {
+            Label("Add Files...", systemImage: "plus.circle.fill")
+        }
+        .buttonStyle(.borderedProminent)
+        .tint(AppTheme.electricBlue)
+    }
+    
+    private var operationPicker: some View {
+        Picker("Operation", selection: $globalOperation) {
+            ForEach(BatchOperationKind.allCases) { op in
+                Text(op.rawValue).tag(op)
+            }
+        }
+        .pickerStyle(.menu)
+        .frame(width: 190)
+    }
+    
+    private var applyToAllButton: some View {
+        Button("Apply to All") {
+            for i in 0..<batch.queue.count {
+                batch.queue[i].operation = globalOperation
+            }
+        }
+        .buttonStyle(.bordered)
+        .disabled(batch.queue.isEmpty)
+    }
+    
+    @ViewBuilder
+    private var batchProcessButton: some View {
+        if batch.isProcessing {
+            Button("Cancel") {
+                batch.cancel()
+            }
+            .buttonStyle(.borderedProminent)
+            .tint(AppTheme.dangerRed)
+        } else {
+            Button("Start Batch (\(batch.queue.filter { $0.status == .queued }.count))") {
+                batch.startProcessing()
+            }
+            .buttonStyle(.borderedProminent)
+            .tint(AppTheme.matrixGreen)
+            .disabled(batch.queue.isEmpty)
+        }
+    }
+    
+    private var clearDoneButton: some View {
+        Button("Clear Done") {
+            batch.clearCompleted()
+        }
+        .buttonStyle(.bordered)
+        .disabled(batch.queue.isEmpty)
     }
 }

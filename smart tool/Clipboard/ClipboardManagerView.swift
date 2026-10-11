@@ -25,83 +25,27 @@ public struct ClipboardManagerView: View {
             }
             
             // Header Controls Bar
-            HStack(spacing: 10) {
-                // Search Field
-                HStack(spacing: 6) {
-                    Image(systemName: "magnifyingglass")
-                        .font(.system(size: 11))
-                        .foregroundStyle(AppTheme.textTertiary)
+            ViewThatFits(in: .horizontal) {
+                HStack(spacing: 10) {
+                    searchBar
+                    typePicker
+                    pinnedFilterButton
+                    Spacer()
+                    actionButtonsGroup
+                }
+                
+                VStack(alignment: .leading, spacing: 10) {
+                    HStack(spacing: 10) {
+                        searchBar
+                        typePicker
+                        pinnedFilterButton
+                    }
                     
-                    TextField("Search clipboard text or filename...", text: $searchText)
-                        .textFieldStyle(.plain)
-                        .font(.system(size: 12))
-                    
-                    if !searchText.isEmpty {
-                        Button {
-                            searchText = ""
-                        } label: {
-                            Image(systemName: "xmark.circle.fill")
-                                .font(.system(size: 10))
-                                .foregroundStyle(AppTheme.textTertiary)
-                        }
-                        .buttonStyle(.plain)
+                    HStack(spacing: 10) {
+                        actionButtonsGroup
+                        Spacer()
                     }
                 }
-                .padding(.horizontal, 8)
-                .padding(.vertical, 6)
-                .background(AppTheme.cardBackground)
-                .clipShape(RoundedRectangle(cornerRadius: 6))
-                .overlay(RoundedRectangle(cornerRadius: 6).stroke(AppTheme.cardBorder, lineWidth: 1))
-                .frame(maxWidth: 280)
-                
-                // Type Filter
-                Picker("Type", selection: $selectedType) {
-                    Text("All Types").tag(ClipboardContentType?.none)
-                    ForEach(ClipboardContentType.allCases) { t in
-                        Text(t.rawValue).tag(ClipboardContentType?.some(t))
-                    }
-                }
-                .pickerStyle(.menu)
-                .frame(width: 130)
-                
-                // Pinned Filter Toggle
-                Button {
-                    showPinnedOnly.toggle()
-                } label: {
-                    Label("Pinned", systemImage: showPinnedOnly ? "star.fill" : "star")
-                        .foregroundStyle(showPinnedOnly ? AppTheme.warningAmber : AppTheme.textSecondary)
-                }
-                .buttonStyle(.bordered)
-                
-                Spacer()
-                
-                // Pause / Resume
-                if clipboard.isEnabled {
-                    Button {
-                        if clipboard.isPaused {
-                            clipboard.resume()
-                        } else {
-                            clipboard.pause()
-                        }
-                    } label: {
-                        Label(clipboard.isPaused ? "Resume" : "Pause", systemImage: clipboard.isPaused ? "play.fill" : "pause.fill")
-                    }
-                    .buttonStyle(.bordered)
-                }
-                
-                // Clear History
-                Button("Clear Unpinned") {
-                    clipboard.clearAll()
-                }
-                .buttonStyle(.bordered)
-                
-                // Settings Sheet
-                Button {
-                    showingSettingsSheet = true
-                } label: {
-                    Image(systemName: "gearshape")
-                }
-                .buttonStyle(.bordered)
             }
             
             // Clipboard List View
@@ -352,5 +296,85 @@ public struct ClipboardManagerView: View {
         }
         
         return list
+    }
+    
+    // MARK: - Header Controls Subviews
+    private var searchBar: some View {
+        HStack(spacing: 6) {
+            Image(systemName: "magnifyingglass")
+                .font(.system(size: 11))
+                .foregroundStyle(AppTheme.textTertiary)
+            
+            TextField("Search clipboard text or filename...", text: $searchText)
+                .textFieldStyle(.plain)
+                .font(.system(size: 12))
+            
+            if !searchText.isEmpty {
+                Button {
+                    searchText = ""
+                } label: {
+                    Image(systemName: "xmark.circle.fill")
+                        .font(.system(size: 10))
+                        .foregroundStyle(AppTheme.textTertiary)
+                }
+                .buttonStyle(.plain)
+            }
+        }
+        .padding(.horizontal, 8)
+        .padding(.vertical, 6)
+        .background(AppTheme.cardBackground)
+        .clipShape(RoundedRectangle(cornerRadius: 6))
+        .overlay(RoundedRectangle(cornerRadius: 6).stroke(AppTheme.cardBorder, lineWidth: 1))
+        .frame(maxWidth: 280)
+    }
+    
+    private var typePicker: some View {
+        Picker("Type", selection: $selectedType) {
+            Text("All Types").tag(ClipboardContentType?.none)
+            ForEach(ClipboardContentType.allCases) { t in
+                Text(t.rawValue).tag(ClipboardContentType?.some(t))
+            }
+        }
+        .pickerStyle(.menu)
+        .frame(width: 130)
+    }
+    
+    private var pinnedFilterButton: some View {
+        Button {
+            showPinnedOnly.toggle()
+        } label: {
+            Label("Pinned", systemImage: showPinnedOnly ? "star.fill" : "star")
+                .foregroundStyle(showPinnedOnly ? AppTheme.warningAmber : AppTheme.textSecondary)
+        }
+        .buttonStyle(.bordered)
+    }
+    
+    private var actionButtonsGroup: some View {
+        HStack(spacing: 8) {
+            if clipboard.isEnabled {
+                Button {
+                    if clipboard.isPaused {
+                        clipboard.resume()
+                    } else {
+                        clipboard.pause()
+                    }
+                } label: {
+                    Label(clipboard.isPaused ? "Resume" : "Pause", systemImage: clipboard.isPaused ? "play.fill" : "pause.fill")
+                }
+                .buttonStyle(.bordered)
+            }
+            
+            Button("Clear Unpinned") {
+                clipboard.clearAll()
+            }
+            .buttonStyle(.bordered)
+            
+            Button {
+                showingSettingsSheet = true
+            } label: {
+                Image(systemName: "gearshape")
+            }
+            .buttonStyle(.bordered)
+        }
     }
 }

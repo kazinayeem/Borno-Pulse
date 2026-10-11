@@ -81,6 +81,33 @@ public extension AdaptivePageHeader where LeadingExtra == EmptyView {
     }
 }
 
+public extension AdaptivePageHeader where LeadingExtra == AnyView {
+    init(
+        title: String,
+        subtitle: String? = nil,
+        icon: String? = nil,
+        iconColor: Color = .accentColor,
+        @ViewBuilder trailing: () -> Trailing
+    ) {
+        self.init(
+            title: title,
+            subtitle: subtitle,
+            leadingExtra: {
+                if let icon = icon {
+                    AnyView(
+                        Image(systemName: icon)
+                            .font(.system(size: 16, weight: .bold))
+                            .foregroundStyle(iconColor)
+                    )
+                } else {
+                    AnyView(EmptyView())
+                }
+            },
+            trailing: trailing
+        )
+    }
+}
+
 // MARK: - Adaptive Two Column Layout
 public struct AdaptiveTwoColumnLayout<Left: View, Right: View>: View {
     public let left: Left

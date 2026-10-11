@@ -60,80 +60,83 @@ public struct FileToolsDashboardView: View {
     public var body: some View {
         VStack(spacing: 0) {
             // Category Navigation Bar
-            HStack(spacing: 12) {
-                ForEach(FileToolCategory.allCases) { category in
-                    Button {
-                        selectedCategory = category
-                        if category == .overview {
-                            activeSubTool = nil
-                        } else if activeSubTool?.category != category {
-                            activeSubTool = defaultSubTool(for: category)
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 12) {
+                    ForEach(FileToolCategory.allCases) { category in
+                        Button {
+                            selectedCategory = category
+                            if category == .overview {
+                                activeSubTool = nil
+                            } else if activeSubTool?.category != category {
+                                activeSubTool = defaultSubTool(for: category)
+                            }
+                        } label: {
+                            HStack(spacing: 6) {
+                                categoryIcon(for: category)
+                                Text(category.rawValue)
+                                    .font(.system(size: 13, weight: .medium))
+                            }
+                            .padding(.horizontal, 14)
+                            .padding(.vertical, 8)
+                            .background(selectedCategory == category ? AppTheme.electricBlue.opacity(0.18) : Color.white.opacity(0.04))
+                            .foregroundStyle(selectedCategory == category ? AppTheme.electricBlue : AppTheme.textSecondary)
+                            .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 8, style: .continuous)
+                                    .stroke(selectedCategory == category ? AppTheme.electricBlue : Color.clear, lineWidth: 1)
+                            )
                         }
-                    } label: {
-                        HStack(spacing: 6) {
-                            categoryIcon(for: category)
-                            Text(category.rawValue)
-                                .font(.system(size: 13, weight: .medium))
-                        }
-                        .padding(.horizontal, 14)
-                        .padding(.vertical, 8)
-                        .background(selectedCategory == category ? AppTheme.electricBlue.opacity(0.18) : Color.white.opacity(0.04))
-                        .foregroundStyle(selectedCategory == category ? AppTheme.electricBlue : AppTheme.textSecondary)
-                        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 8, style: .continuous)
-                                .stroke(selectedCategory == category ? AppTheme.electricBlue : Color.clear, lineWidth: 1)
-                        )
+                        .buttonStyle(.plain)
                     }
-                    .buttonStyle(.plain)
+                    
+                    Spacer()
+                    
+                    // Privacy badge
+                    HStack(spacing: 6) {
+                        Image(systemName: "lock.shield.fill")
+                            .foregroundStyle(AppTheme.matrixGreen)
+                        Text("100% Offline & Private")
+                            .font(.system(size: 11, weight: .semibold))
+                            .foregroundStyle(AppTheme.matrixGreen)
+                    }
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 5)
+                    .background(AppTheme.matrixGreen.opacity(0.12))
+                    .clipShape(Capsule())
                 }
-                
-                Spacer()
-                
-                // Privacy badge
-                HStack(spacing: 6) {
-                    Image(systemName: "lock.shield.fill")
-                        .foregroundStyle(AppTheme.matrixGreen)
-                    Text("100% Offline & Private")
-                        .font(.system(size: 11, weight: .semibold))
-                        .foregroundStyle(AppTheme.matrixGreen)
-                }
-                .padding(.horizontal, 10)
-                .padding(.vertical, 5)
-                .background(AppTheme.matrixGreen.opacity(0.12))
-                .clipShape(Capsule())
+                .padding(.horizontal, 24)
+                .padding(.vertical, 14)
             }
-            .padding(.horizontal, 24)
-            .padding(.vertical, 14)
             .background(AppTheme.cardBackground)
             
             Divider()
             
             // Subtool Pills Bar (when category is selected)
             if selectedCategory != .overview {
-                HStack(spacing: 8) {
-                    ForEach(subTools(for: selectedCategory)) { tool in
-                        Button {
-                            activeSubTool = tool
-                        } label: {
-                            Text(tool.rawValue)
-                                .font(.system(size: 11, weight: .medium))
-                                .padding(.horizontal, 10)
-                                .padding(.vertical, 5)
-                                .background(activeSubTool == tool ? AppTheme.neonCyan.opacity(0.2) : Color.white.opacity(0.04))
-                                .foregroundStyle(activeSubTool == tool ? AppTheme.neonCyan : AppTheme.textSecondary)
-                                .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 6, style: .continuous)
-                                        .stroke(activeSubTool == tool ? AppTheme.neonCyan : Color.clear, lineWidth: 1)
-                                )
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 8) {
+                        ForEach(subTools(for: selectedCategory)) { tool in
+                            Button {
+                                activeSubTool = tool
+                            } label: {
+                                Text(tool.rawValue)
+                                    .font(.system(size: 11, weight: .medium))
+                                    .padding(.horizontal, 10)
+                                    .padding(.vertical, 5)
+                                    .background(activeSubTool == tool ? AppTheme.neonCyan.opacity(0.2) : Color.white.opacity(0.04))
+                                    .foregroundStyle(activeSubTool == tool ? AppTheme.neonCyan : AppTheme.textSecondary)
+                                    .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 6, style: .continuous)
+                                            .stroke(activeSubTool == tool ? AppTheme.neonCyan : Color.clear, lineWidth: 1)
+                                    )
+                            }
+                            .buttonStyle(.plain)
                         }
-                        .buttonStyle(.plain)
                     }
-                    Spacer()
+                    .padding(.horizontal, 24)
+                    .padding(.vertical, 8)
                 }
-                .padding(.horizontal, 24)
-                .padding(.vertical, 8)
                 .background(AppTheme.cardBackgroundSecondary)
                 
                 Divider()

@@ -16,16 +16,12 @@ public struct DiagnosticsView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
                 // Header
-                HStack {
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("System Diagnostics & Telemetry")
-                            .font(.system(size: 22, weight: .bold))
-                            .foregroundStyle(AppTheme.textPrimary)
-                        Text("Hardware audit, API capability verification, and exportable diagnostics")
-                            .font(.system(size: 13))
-                            .foregroundStyle(AppTheme.textSecondary)
-                    }
-                    Spacer()
+                AdaptivePageHeader(
+                    title: "System Diagnostics & Telemetry",
+                    subtitle: "Hardware audit, API capability verification, and exportable diagnostics",
+                    icon: "waveform.path.ecg.rectangle",
+                    iconColor: AppTheme.electricBlue
+                ) {
                     Button {
                         exportDiagnosticReport()
                     } label: {

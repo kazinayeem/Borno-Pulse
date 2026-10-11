@@ -70,22 +70,12 @@ public struct LocalBackupHelperView: View {
     
     // MARK: - Header
     private var headerView: some View {
-        HStack(alignment: .top) {
-            VStack(alignment: .leading, spacing: 4) {
-                HStack(spacing: 8) {
-                    Image(systemName: "externaldrive.badge.timemachine")
-                        .font(.title2)
-                        .foregroundStyle(Color.accentColor)
-                    Text("Local Backup Helper")
-                        .font(.title.bold())
-                }
-                Text("Private, verifiable local and external folder backups with incremental sync and SHA-256 verification.")
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-            }
-            
-            Spacer()
-            
+        AdaptivePageHeader(
+            title: "Local Backup Helper",
+            subtitle: "Private, verifiable local and external folder backups with incremental sync and SHA-256 verification.",
+            icon: "externaldrive.badge.timemachine",
+            iconColor: Color.accentColor
+        ) {
             Button {
                 showingNewProfileSheet = true
             } label: {

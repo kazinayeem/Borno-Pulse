@@ -85,7 +85,7 @@ public struct MainDashboardView: View {
             detailContent
         }
         .preferredColorScheme(settings.appearanceMode.colorScheme)
-        .frame(minWidth: 1000, minHeight: 650)
+        .frame(minWidth: 960, minHeight: 620)
         .toolbar {
             ToolbarItem(placement: .navigation) {
                 Button {

@@ -31,17 +31,11 @@ public struct DeveloperToolboxView: View {
     public var body: some View {
         VStack(spacing: 0) {
             // Workspace Top Navigation Bar
-            HStack(spacing: 12) {
-                HStack(spacing: 6) {
-                    Image(systemName: "wrench.and.screwdriver.fill")
-                        .foregroundStyle(AppTheme.electricBlue)
-                    Text("Developer Toolbox")
-                        .font(.system(size: 15, weight: .bold))
-                        .foregroundStyle(AppTheme.textPrimary)
-                }
-                
-                Spacer()
-                
+            AdaptivePageHeader(
+                title: "Developer Toolbox",
+                icon: "wrench.and.screwdriver.fill",
+                iconColor: AppTheme.electricBlue
+            ) {
                 // Segmented Tool Switcher
                 HStack(spacing: 4) {
                     ForEach(DevToolTab.allCases) { tab in
@@ -68,9 +62,6 @@ public struct DeveloperToolboxView: View {
                 .clipShape(RoundedRectangle(cornerRadius: 8))
                 .overlay(RoundedRectangle(cornerRadius: 8).stroke(AppTheme.cardBorder, lineWidth: 0.5))
             }
-            .padding(.horizontal, 18)
-            .padding(.vertical, 12)
-            .background(AppTheme.cardBackgroundSecondary)
             
             Divider()
                 .background(AppTheme.cardBorder)

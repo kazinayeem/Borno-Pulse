@@ -13,136 +13,123 @@ public struct ProcessMonitorView: View {
     public var body: some View {
         VStack(spacing: 0) {
             // Top Toolbar
-            HStack(spacing: 12) {
-                // Search Field
-                HStack {
-                    Image(systemName: "magnifyingglass")
-                        .foregroundStyle(AppTheme.textTertiary)
-                    TextField("Search processes by name or PID...", text: $service.searchText)
-                        .textFieldStyle(.plain)
-                    if !service.searchText.isEmpty {
-                        Button {
-                            service.searchText = ""
-                        } label: {
-                            Image(systemName: "xmark.circle.fill")
-                                .foregroundStyle(AppTheme.textTertiary)
-                        }
-                        .buttonStyle(.plain)
+            ViewThatFits(in: .horizontal) {
+                HStack(spacing: 12) {
+                    // Search Field
+                    searchField
+                    
+                    // Sort Picker
+                    sortPicker
+                    
+                    // Sort Order Toggle
+                    sortOrderButton
+                    
+                    // Refresh Button
+                    refreshButton
+                }
+                
+                VStack(spacing: 10) {
+                    searchField
+                    
+                    HStack(spacing: 10) {
+                        sortPicker
+                        sortOrderButton
+                        Spacer()
+                        refreshButton
                     }
-                }
-                .padding(8)
-                .background(AppTheme.cardBackground)
-                .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
-                .overlay(RoundedRectangle(cornerRadius: 8, style: .continuous).stroke(AppTheme.cardBorder, lineWidth: 0.5))
-                
-                // Sort Picker
-                Picker("Sort by", selection: $service.sortField) {
-                    ForEach(ProcessSortField.allCases) { field in
-                        Text(field.rawValue).tag(field)
-                    }
-                }
-                .frame(width: 130)
-                
-                // Sort Order Toggle
-                Button {
-                    service.sortAscending.toggle()
-                } label: {
-                    Image(systemName: service.sortAscending ? "arrow.up" : "arrow.down")
-                }
-                .help("Toggle ascending / descending order")
-                
-                // Refresh Button
-                Button {
-                    service.refreshProcesses()
-                } label: {
-                    Label("Refresh", systemImage: "arrow.clockwise")
                 }
             }
             .padding(.horizontal, 20)
             .padding(.vertical, 12)
             .background(AppTheme.cardBackgroundSecondary)
             
-            // Process Table Header
-            HStack {
-                Text("Process Name").font(.system(size: 11, weight: .bold)).foregroundStyle(AppTheme.textTertiary).frame(maxWidth: .infinity, alignment: .leading)
-                Text("PID").font(.system(size: 11, weight: .bold)).foregroundStyle(AppTheme.textTertiary).frame(width: 70, alignment: .trailing)
-                Text("CPU %").font(.system(size: 11, weight: .bold)).foregroundStyle(AppTheme.textTertiary).frame(width: 80, alignment: .trailing)
-                Text("Memory").font(.system(size: 11, weight: .bold)).foregroundStyle(AppTheme.textTertiary).frame(width: 90, alignment: .trailing)
-                Text("Threads").font(.system(size: 11, weight: .bold)).foregroundStyle(AppTheme.textTertiary).frame(width: 65, alignment: .trailing)
-                Text("User").font(.system(size: 11, weight: .bold)).foregroundStyle(AppTheme.textTertiary).frame(width: 80, alignment: .leading)
-                Text("Action").font(.system(size: 11, weight: .bold)).foregroundStyle(AppTheme.textTertiary).frame(width: 65, alignment: .center)
-            }
-            .padding(.horizontal, 20)
-            .padding(.vertical, 8)
-            .background(AppTheme.cardBackgroundSecondary)
-            
-            // Process List
-            let list = service.filteredProcesses
-            if list.isEmpty {
-                VStack(spacing: 8) {
-                    Spacer()
-                    Image(systemName: "cpu")
-                        .font(.system(size: 32))
-                        .foregroundStyle(AppTheme.textTertiary)
-                    Text("No processes match the query.")
-                        .font(.system(size: 13))
-                        .foregroundStyle(AppTheme.textSecondary)
-                    Spacer()
-                }
-            } else {
-                List(list) { process in
+            // Adaptive Process Table Container
+            AdaptiveTableContainer(minWidth: 650) {
+                VStack(spacing: 0) {
+                    // Process Table Header
                     HStack {
-                        HStack(spacing: 8) {
-                            Image(systemName: process.isCurrentProcess ? "app.badge.fill" : "gearshape.2")
-                                .foregroundStyle(process.isCurrentProcess ? AppTheme.electricBlue : AppTheme.textTertiary)
-                            Text(process.name)
-                                .font(.system(size: 12, weight: process.isCurrentProcess ? .bold : .medium))
-                                .foregroundStyle(AppTheme.textPrimary)
-                                .lineLimit(1)
-                        }
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        
-                        Text("\(process.pid)")
-                            .font(.system(size: 11, design: .monospaced))
-                            .foregroundStyle(AppTheme.textSecondary)
-                            .frame(width: 70, alignment: .trailing)
-                        
-                        Text(Formatters.percentage(process.cpuPercentage, decimals: 1))
-                            .font(.system(size: 11, weight: .semibold, design: .monospaced))
-                            .foregroundStyle(process.cpuPercentage > 50 ? AppTheme.dangerRed : (process.cpuPercentage > 15 ? AppTheme.warningAmber : AppTheme.textPrimary))
-                            .frame(width: 80, alignment: .trailing)
-                        
-                        Text(Formatters.bytes(process.residentMemoryBytes))
-                            .font(.system(size: 11, weight: .medium, design: .monospaced))
-                            .foregroundStyle(AppTheme.textPrimary)
-                            .frame(width: 90, alignment: .trailing)
-                        
-                        Text("\(process.threadCount)")
-                            .font(.system(size: 11, design: .monospaced))
-                            .foregroundStyle(AppTheme.textSecondary)
-                            .frame(width: 65, alignment: .trailing)
-                        
-                        Text(process.user)
-                            .font(.system(size: 11))
-                            .foregroundStyle(AppTheme.textTertiary)
-                            .lineLimit(1)
-                            .frame(width: 80, alignment: .leading)
-                        
-                        Button {
-                            service.promptTermination(for: process)
-                        } label: {
-                            Image(systemName: "xmark.circle")
-                                .font(.system(size: 13))
-                                .foregroundStyle(AppTheme.dangerRed)
-                        }
-                        .buttonStyle(.plain)
-                        .disabled(process.isCurrentProcess)
-                        .frame(width: 65, alignment: .center)
-                        .help("Stop process")
+                        Text("Process Name").font(.system(size: 11, weight: .bold)).foregroundStyle(AppTheme.textTertiary).frame(minWidth: 160, maxWidth: .infinity, alignment: .leading)
+                        Text("PID").font(.system(size: 11, weight: .bold)).foregroundStyle(AppTheme.textTertiary).frame(width: 70, alignment: .trailing)
+                        Text("CPU %").font(.system(size: 11, weight: .bold)).foregroundStyle(AppTheme.textTertiary).frame(width: 80, alignment: .trailing)
+                        Text("Memory").font(.system(size: 11, weight: .bold)).foregroundStyle(AppTheme.textTertiary).frame(width: 90, alignment: .trailing)
+                        Text("Threads").font(.system(size: 11, weight: .bold)).foregroundStyle(AppTheme.textTertiary).frame(width: 65, alignment: .trailing)
+                        Text("User").font(.system(size: 11, weight: .bold)).foregroundStyle(AppTheme.textTertiary).frame(width: 80, alignment: .leading)
+                        Text("Action").font(.system(size: 11, weight: .bold)).foregroundStyle(AppTheme.textTertiary).frame(width: 65, alignment: .center)
                     }
-                    .padding(.vertical, 3)
+                    .padding(.horizontal, 20)
+                    .padding(.vertical, 8)
+                    .background(AppTheme.cardBackgroundSecondary)
+                    
+                    // Process List
+                    let list = service.filteredProcesses
+                    if list.isEmpty {
+                        VStack(spacing: 8) {
+                            Spacer()
+                            Image(systemName: "cpu")
+                                .font(.system(size: 32))
+                                .foregroundStyle(AppTheme.textTertiary)
+                            Text("No processes match the query.")
+                                .font(.system(size: 13))
+                                .foregroundStyle(AppTheme.textSecondary)
+                            Spacer()
+                        }
+                        .frame(maxWidth: .infinity, minHeight: 250)
+                    } else {
+                        List(list) { process in
+                            HStack {
+                                HStack(spacing: 8) {
+                                    Image(systemName: process.isCurrentProcess ? "app.badge.fill" : "gearshape.2")
+                                        .foregroundStyle(process.isCurrentProcess ? AppTheme.electricBlue : AppTheme.textTertiary)
+                                    Text(process.name)
+                                        .font(.system(size: 12, weight: process.isCurrentProcess ? .bold : .medium))
+                                        .foregroundStyle(AppTheme.textPrimary)
+                                        .lineLimit(1)
+                                }
+                                .frame(minWidth: 160, maxWidth: .infinity, alignment: .leading)
+                                
+                                Text("\(process.pid)")
+                                    .font(.system(size: 11, design: .monospaced))
+                                    .foregroundStyle(AppTheme.textSecondary)
+                                    .frame(width: 70, alignment: .trailing)
+                                
+                                Text(Formatters.percentage(process.cpuPercentage, decimals: 1))
+                                    .font(.system(size: 11, weight: .semibold, design: .monospaced))
+                                    .foregroundStyle(process.cpuPercentage > 50 ? AppTheme.dangerRed : (process.cpuPercentage > 15 ? AppTheme.warningAmber : AppTheme.textPrimary))
+                                    .frame(width: 80, alignment: .trailing)
+                                
+                                Text(Formatters.bytes(process.residentMemoryBytes))
+                                    .font(.system(size: 11, weight: .medium, design: .monospaced))
+                                    .foregroundStyle(AppTheme.textPrimary)
+                                    .frame(width: 90, alignment: .trailing)
+                                
+                                Text("\(process.threadCount)")
+                                    .font(.system(size: 11, design: .monospaced))
+                                    .foregroundStyle(AppTheme.textSecondary)
+                                    .frame(width: 65, alignment: .trailing)
+                                
+                                Text(process.user)
+                                    .font(.system(size: 11))
+                                    .foregroundStyle(AppTheme.textTertiary)
+                                    .lineLimit(1)
+                                    .frame(width: 80, alignment: .leading)
+                                
+                                Button {
+                                    service.promptTermination(for: process)
+                                } label: {
+                                    Image(systemName: "xmark.circle")
+                                        .font(.system(size: 13))
+                                        .foregroundStyle(AppTheme.dangerRed)
+                                }
+                                .buttonStyle(.plain)
+                                .disabled(process.isCurrentProcess)
+                                .frame(width: 65, alignment: .center)
+                                .help("Stop process")
+                            }
+                            .padding(.vertical, 3)
+                        }
+                        .listStyle(.inset)
+                    }
                 }
-                .listStyle(.inset)
             }
         }
         .sheet(isPresented: $service.showTerminationConfirmDialog) {
@@ -198,5 +185,54 @@ public struct ProcessMonitorView: View {
         }
         .padding(24)
         .frame(width: 440)
+    }
+    
+    // MARK: - Toolbar Components
+    private var searchField: some View {
+        HStack {
+            Image(systemName: "magnifyingglass")
+                .foregroundStyle(AppTheme.textTertiary)
+            TextField("Search processes by name or PID...", text: $service.searchText)
+                .textFieldStyle(.plain)
+            if !service.searchText.isEmpty {
+                Button {
+                    service.searchText = ""
+                } label: {
+                    Image(systemName: "xmark.circle.fill")
+                        .foregroundStyle(AppTheme.textTertiary)
+                }
+                .buttonStyle(.plain)
+            }
+        }
+        .padding(8)
+        .background(AppTheme.cardBackground)
+        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: 8, style: .continuous).stroke(AppTheme.cardBorder, lineWidth: 0.5))
+    }
+    
+    private var sortPicker: some View {
+        Picker("Sort by", selection: $service.sortField) {
+            ForEach(ProcessSortField.allCases) { field in
+                Text(field.rawValue).tag(field)
+            }
+        }
+        .frame(width: 130)
+    }
+    
+    private var sortOrderButton: some View {
+        Button {
+            service.sortAscending.toggle()
+        } label: {
+            Image(systemName: service.sortAscending ? "arrow.up" : "arrow.down")
+        }
+        .help("Toggle ascending / descending order")
+    }
+    
+    private var refreshButton: some View {
+        Button {
+            service.refreshProcesses()
+        } label: {
+            Label("Refresh", systemImage: "arrow.clockwise")
+        }
     }
 }

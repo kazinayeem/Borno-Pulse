@@ -57,24 +57,19 @@ public struct CacheCleanerView: View {
     
     // MARK: - Header Banner
     private var headerBanner: some View {
-        HStack {
-            VStack(alignment: .leading, spacing: 4) {
-                Text("Safe Cache & Storage Cleaner")
-                    .font(.system(size: 22, weight: .bold))
-                    .foregroundStyle(AppTheme.textPrimary)
-                Text("Reclaim user-level cached files, temporary build artifacts, and expired diagnostics")
-                    .font(.system(size: 13))
-                    .foregroundStyle(AppTheme.textSecondary)
-            }
-            Spacer()
-            
-            let totalSelected = service.categories.filter { $0.isSelected }.reduce(0) { $0 + $1.estimatedSizeBytes }
+        let totalSelected = service.categories.filter { $0.isSelected }.reduce(0) { $0 + $1.estimatedSizeBytes }
+        return AdaptivePageHeader(
+            title: "Safe Cache & Storage Cleaner",
+            subtitle: "Reclaim user-level cached files, temporary build artifacts, and expired diagnostics",
+            icon: "sparkles",
+            iconColor: AppTheme.electricBlue
+        ) {
             VStack(alignment: .trailing, spacing: 2) {
                 Text("Selected for Reclaim")
                     .font(.system(size: 11))
                     .foregroundStyle(AppTheme.textTertiary)
                 Text(Formatters.bytes(totalSelected))
-                    .font(.system(size: 24, weight: .bold, design: .rounded))
+                    .font(.system(size: 22, weight: .bold, design: .rounded))
                     .foregroundStyle(AppTheme.electricBlue)
             }
         }
@@ -107,52 +102,84 @@ public struct CacheCleanerView: View {
     
     // MARK: - Control Bar
     private var controlBar: some View {
-        HStack(spacing: 12) {
-            Button {
-                service.scanAll()
-            } label: {
-                Label("Scan Now", systemImage: "arrow.clockwise")
-            }
-            .disabled(service.isScanning || service.isCleaning)
-            
-            Button("Select All Safe") {
-                service.selectAllSafe()
-            }
-            .buttonStyle(.bordered)
-            .disabled(service.isScanning || service.isCleaning)
-            
-            Button("Deselect All") {
-                service.deselectAll()
-            }
-            .buttonStyle(.bordered)
-            .disabled(service.isScanning || service.isCleaning)
-            
-            Spacer()
-            
-            if service.isScanning {
-                HStack(spacing: 8) {
-                    ProgressView().controlSize(.small)
-                    Text(service.currentActionText)
-                        .font(.system(size: 11))
-                        .foregroundStyle(AppTheme.textSecondary)
-                    Button("Cancel") {
-                        service.cancelScan()
-                    }
-                    .buttonStyle(.plain)
-                    .foregroundStyle(AppTheme.dangerRed)
+        ViewThatFits(in: .horizontal) {
+            HStack(spacing: 12) {
+                Button {
+                    service.scanAll()
+                } label: {
+                    Label("Scan Now", systemImage: "arrow.clockwise")
                 }
-            } else if service.isCleaning {
-                HStack(spacing: 8) {
-                    ProgressView().controlSize(.small)
-                    Text(service.currentActionText)
-                        .font(.system(size: 11))
-                        .foregroundStyle(AppTheme.textSecondary)
-                    Button("Cancel") {
-                        service.cancelClean()
-                    }
-                    .buttonStyle(.plain)
-                    .foregroundStyle(AppTheme.dangerRed)
+                .disabled(service.isScanning || service.isCleaning)
+                
+                Button("Select All Safe") {
+                    service.selectAllSafe()
                 }
+                .buttonStyle(.bordered)
+                .disabled(service.isScanning || service.isCleaning)
+                
+                Button("Deselect All") {
+                    service.deselectAll()
+                }
+                .buttonStyle(.bordered)
+                .disabled(service.isScanning || service.isCleaning)
+                
+                Spacer()
+                
+                statusIndicators
+            }
+            
+            VStack(alignment: .leading, spacing: 10) {
+                HStack(spacing: 10) {
+                    Button {
+                        service.scanAll()
+                    } label: {
+                        Label("Scan Now", systemImage: "arrow.clockwise")
+                    }
+                    .disabled(service.isScanning || service.isCleaning)
+                    
+                    Button("Select All Safe") {
+                        service.selectAllSafe()
+                    }
+                    .buttonStyle(.bordered)
+                    .disabled(service.isScanning || service.isCleaning)
+                    
+                    Button("Deselect All") {
+                        service.deselectAll()
+                    }
+                    .buttonStyle(.bordered)
+                    .disabled(service.isScanning || service.isCleaning)
+                }
+                
+                statusIndicators
+            }
+        }
+    }
+    
+    @ViewBuilder
+    private var statusIndicators: some View {
+        if service.isScanning {
+            HStack(spacing: 8) {
+                ProgressView().controlSize(.small)
+                Text(service.currentActionText)
+                    .font(.system(size: 11))
+                    .foregroundStyle(AppTheme.textSecondary)
+                Button("Cancel") {
+                    service.cancelScan()
+                }
+                .buttonStyle(.plain)
+                .foregroundStyle(AppTheme.dangerRed)
+            }
+        } else if service.isCleaning {
+            HStack(spacing: 8) {
+                ProgressView().controlSize(.small)
+                Text(service.currentActionText)
+                    .font(.system(size: 11))
+                    .foregroundStyle(AppTheme.textSecondary)
+                Button("Cancel") {
+                    service.cancelClean()
+                }
+                .buttonStyle(.plain)
+                .foregroundStyle(AppTheme.dangerRed)
             }
         }
     }

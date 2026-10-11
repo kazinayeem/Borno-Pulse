@@ -43,17 +43,12 @@ public struct PrivacySecurityWorkspaceView: View {
     public var body: some View {
         VStack(spacing: 0) {
             // Workspace Header
-            HStack(spacing: 12) {
-                HStack(spacing: 6) {
-                    Image(systemName: "shield.lefthalf.filled")
-                        .foregroundStyle(AppTheme.matrixGreen)
-                    Text("Privacy & Security Workspace")
-                        .font(.system(size: 15, weight: .bold))
-                        .foregroundStyle(AppTheme.textPrimary)
-                }
-                
-                Spacer()
-                
+            AdaptivePageHeader(
+                title: "Privacy & Security",
+                subtitle: "Offline verification, hashing, metadata, and permission audit",
+                icon: "shield.lefthalf.filled",
+                iconColor: AppTheme.matrixGreen
+            ) {
                 // Tabs
                 HStack(spacing: 4) {
                     ForEach(PrivacyTab.allCases) { tab in
@@ -80,9 +75,6 @@ public struct PrivacySecurityWorkspaceView: View {
                 .clipShape(RoundedRectangle(cornerRadius: 8))
                 .overlay(RoundedRectangle(cornerRadius: 8).stroke(AppTheme.cardBorder, lineWidth: 0.5))
             }
-            .padding(.horizontal, 18)
-            .padding(.vertical, 12)
-            .background(AppTheme.cardBackgroundSecondary)
             
             Divider()
                 .background(AppTheme.cardBorder)

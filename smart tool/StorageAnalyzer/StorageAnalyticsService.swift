@@ -110,6 +110,16 @@ public final class StorageAnalyticsService: ObservableObject {
         
         public var id: String { rawValue }
     }
+    public typealias ExplorerSortColumn = StorageSortColumn
+    
+    public func toggleSort(by column: StorageSortColumn) {
+        if sortColumn == column {
+            sortAscending.toggle()
+        } else {
+            sortColumn = column
+            sortAscending = (column == .name)
+        }
+    }
     
     public init() {
         refreshMountedVolumes()

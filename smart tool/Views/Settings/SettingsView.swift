@@ -34,47 +34,39 @@ public struct SettingsView: View {
     public var body: some View {
         VStack(spacing: 0) {
             // Header with Section Tabs
-            HStack {
-                VStack(alignment: .leading, spacing: 3) {
-                    Text("Settings & Preferences")
-                        .font(AppTypography.font(size: 20, weight: .bold))
-                        .foregroundStyle(AppTheme.textPrimary)
-                    Text("System appearance, custom typography, widget metrics, alerts, and exclusions")
-                        .font(AppTypography.font(size: 12))
-                        .foregroundStyle(AppTheme.textSecondary)
-                }
-                
-                Spacer()
-                
-                // Segmented Tab Picker
-                HStack(spacing: 6) {
-                    ForEach(SettingsSectionTab.allCases) { tab in
-                        Button {
-                            selectedTab = tab
-                        } label: {
-                            HStack(spacing: 6) {
-                                Image(systemName: tab.icon)
-                                    .font(.system(size: 11))
-                                Text(tab.rawValue)
-                                    .font(AppTypography.font(size: 12, weight: selectedTab == tab ? .semibold : .medium))
+            AdaptivePageHeader(
+                title: "Settings & Preferences",
+                subtitle: "System appearance, custom typography, widget metrics, alerts, and exclusions",
+                icon: "gearshape.fill",
+                iconColor: AppTheme.electricBlue
+            ) {
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 6) {
+                        ForEach(SettingsSectionTab.allCases) { tab in
+                            Button {
+                                selectedTab = tab
+                            } label: {
+                                HStack(spacing: 6) {
+                                    Image(systemName: tab.icon)
+                                        .font(.system(size: 11))
+                                    Text(tab.rawValue)
+                                        .font(AppTypography.font(size: 12, weight: selectedTab == tab ? .semibold : .medium))
+                                }
+                                .padding(.horizontal, 12)
+                                .padding(.vertical, 6)
+                                .background(selectedTab == tab ? AppTheme.electricBlue.opacity(0.18) : Color.white.opacity(0.04))
+                                .foregroundStyle(selectedTab == tab ? AppTheme.electricBlue : AppTheme.textSecondary)
+                                .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 6, style: .continuous)
+                                        .stroke(selectedTab == tab ? AppTheme.electricBlue : Color.clear, lineWidth: 1)
+                                )
                             }
-                            .padding(.horizontal, 12)
-                            .padding(.vertical, 6)
-                            .background(selectedTab == tab ? AppTheme.electricBlue.opacity(0.18) : Color.white.opacity(0.04))
-                            .foregroundStyle(selectedTab == tab ? AppTheme.electricBlue : AppTheme.textSecondary)
-                            .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 6, style: .continuous)
-                                    .stroke(selectedTab == tab ? AppTheme.electricBlue : Color.clear, lineWidth: 1)
-                            )
+                            .buttonStyle(.plain)
                         }
-                        .buttonStyle(.plain)
                     }
                 }
             }
-            .padding(.horizontal, 24)
-            .padding(.vertical, 16)
-            .background(AppTheme.cardBackground)
             
             Divider()
             
@@ -109,7 +101,7 @@ public struct SettingsView: View {
                             .foregroundStyle(AppTheme.textSecondary)
                     }
                     
-                    HStack(spacing: 12) {
+                    AdaptiveCardGrid(minColumnWidth: 160, spacing: 12) {
                         appearanceOptionTile(
                             title: "Light",
                             subtitle: "Crisp neutral white (Default)",
