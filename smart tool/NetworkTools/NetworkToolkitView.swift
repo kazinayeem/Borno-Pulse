@@ -87,9 +87,11 @@ public struct NetworkToolkitView: View {
                 .clipShape(RoundedRectangle(cornerRadius: 8))
                 .overlay(RoundedRectangle(cornerRadius: 8).stroke(AppTheme.cardBorder, lineWidth: 0.5))
             }
+            .padding(.horizontal, 20)
+            .padding(.vertical, 12)
+            .background(AppTheme.toolbarBackground)
             
             Divider()
-                .background(AppTheme.cardBorder)
             
             // Tab Content
             ScrollView {

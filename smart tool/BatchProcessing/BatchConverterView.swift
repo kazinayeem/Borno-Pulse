@@ -79,9 +79,10 @@ public struct BatchConverterView: View {
             }
         }
         .padding(18)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .background(AppTheme.graphiteCanvas)
     }
-    
+
     // MARK: - Queue Table View
     private var queueTableView: some View {
         VStack(alignment: .leading, spacing: 10) {

@@ -102,7 +102,7 @@ public struct ScreenTimeDashboardView: View {
             }
         }
         .pickerStyle(.segmented)
-        .frame(minWidth: 200, maxWidth: 240)
+        .fixedSize()
     }
     
     private var trackingControls: some View {
@@ -124,16 +124,22 @@ public struct ScreenTimeDashboardView: View {
                 .help(tracker.isTrackingPaused ? "Resume tracking" : "Pause tracking")
             }
             
-            Button {
-                tracker.isTrackingEnabled.toggle()
-            } label: {
-                Label(
-                    tracker.isTrackingEnabled ? "Stop" : "Start Tracking",
-                    systemImage: tracker.isTrackingEnabled ? "stop.fill" : "record.circle"
-                )
+            if tracker.isTrackingEnabled {
+                Button {
+                    tracker.isTrackingEnabled = false
+                } label: {
+                    Label("Stop", systemImage: "stop.fill")
+                }
+                .buttonStyle(.bordered)
+            } else {
+                Button {
+                    tracker.isTrackingEnabled = true
+                } label: {
+                    Label("Start Tracking", systemImage: "record.circle")
+                }
+                .buttonStyle(.borderedProminent)
+                .tint(AppTheme.successFill)
             }
-            .buttonStyle(.borderedProminent)
-            .tint(tracker.isTrackingEnabled ? AppTheme.cardBackgroundSecondary : AppTheme.matrixGreen)
         }
     }
     

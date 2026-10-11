@@ -130,7 +130,7 @@ public struct FocusPomodoroView: View {
                     .frame(width: 130)
                 }
                 .buttonStyle(.borderedProminent)
-                .tint(focus.currentMode == .focus ? AppTheme.matrixGreen : AppTheme.electricCyan)
+                .tint(focus.currentMode == .focus ? AppTheme.successFill : AppTheme.infoFill)
                 
                 // Skip
                 Button {
@@ -201,6 +201,8 @@ public struct FocusPomodoroView: View {
                                         .foregroundStyle(AppTheme.dangerRed)
                                 }
                                 .buttonStyle(.plain)
+                                .help("Delete session")
+                                .accessibilityLabel("Delete session")
                             }
                             .padding(8)
                             .background(AppTheme.cardBackgroundSecondary)
@@ -225,12 +227,17 @@ public struct FocusPomodoroView: View {
     }
     
     private func presetButton(minutes: Int) -> some View {
-        Button("\(minutes)m") {
+        let isSelected = focus.focusMinutes == minutes
+        return Button {
             focus.setFocusDuration(minutes: minutes)
+        } label: {
+            Text("\(minutes)m")
+                .fontWeight(isSelected ? .bold : .regular)
         }
         .buttonStyle(.bordered)
-        .tint(focus.focusMinutes == minutes ? AppTheme.matrixGreen : Color.secondary)
+        .tint(isSelected ? AppTheme.successGreen : Color.secondary)
         .controlSize(.small)
+        .accessibilityAddTraits(isSelected ? .isSelected : [])
     }
     
     private func metricCard(title: String, value: String, icon: String, tint: Color) -> some View {

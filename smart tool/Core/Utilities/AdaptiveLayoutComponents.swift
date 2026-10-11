@@ -268,7 +268,9 @@ public struct AdaptiveTableContainer<Content: View>: View {
     public var body: some View {
         ScrollView(.horizontal, showsIndicators: true) {
             content
-                .frame(minWidth: minWidth, alignment: .leading)
+                .containerRelativeFrame(.horizontal, alignment: .leading) { visibleWidth, _ in
+                    max(visibleWidth, minWidth)
+                }
         }
     }
 }
