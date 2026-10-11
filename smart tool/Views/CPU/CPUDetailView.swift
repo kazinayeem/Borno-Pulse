@@ -14,18 +14,12 @@ public struct CPUDetailView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
                 // Header
-                HStack {
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("CPU & Processor")
-                            .font(.system(size: 22, weight: .bold))
-                            .foregroundStyle(AppTheme.textPrimary)
-                        Text("\(monitor.snapshot.cpu.modelName) (\(monitor.snapshot.cpu.architecture))")
-                            .font(.system(size: 13))
-                            .foregroundStyle(AppTheme.textSecondary)
-                    }
-                    Spacer()
+                AdaptivePageHeader(
+                    title: "CPU & Processor",
+                    subtitle: "\(monitor.snapshot.cpu.modelName) (\(monitor.snapshot.cpu.architecture))"
+                ) {
                     Text(Formatters.percentage(monitor.snapshot.cpu.totalUsage))
-                        .font(.system(size: 32, weight: .bold, design: .rounded))
+                        .font(AppTypography.monospaced(size: 28, weight: .bold))
                         .foregroundStyle(AppTheme.electricBlue)
                 }
                 

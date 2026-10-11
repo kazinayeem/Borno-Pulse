@@ -14,19 +14,13 @@ public struct GPUDetailView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
                 // Header
-                HStack {
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("GPU & Neural Engine")
-                            .font(.system(size: 22, weight: .bold))
-                            .foregroundStyle(AppTheme.textPrimary)
-                        Text(monitor.snapshot.gpu.deviceName)
-                            .font(.system(size: 13))
-                            .foregroundStyle(AppTheme.textSecondary)
-                    }
-                    Spacer()
+                AdaptivePageHeader(
+                    title: "GPU & Neural Engine",
+                    subtitle: monitor.snapshot.gpu.deviceName
+                ) {
                     if let util = monitor.snapshot.gpu.deviceUtilization {
                         Text(Formatters.percentage(util))
-                            .font(.system(size: 32, weight: .bold, design: .rounded))
+                            .font(AppTypography.monospaced(size: 28, weight: .bold))
                             .foregroundStyle(AppTheme.purpleAccent)
                     } else {
                         StatusBadge(text: "Metal Ready", color: AppTheme.purpleAccent)

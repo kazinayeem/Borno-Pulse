@@ -14,18 +14,12 @@ public struct StorageDetailView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
                 // Header
-                HStack {
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("Storage & APFS Volumes")
-                            .font(.system(size: 22, weight: .bold))
-                            .foregroundStyle(AppTheme.textPrimary)
-                        Text("Apple File System containers and disk space allocation")
-                            .font(.system(size: 13))
-                            .foregroundStyle(AppTheme.textSecondary)
-                    }
-                    Spacer()
+                AdaptivePageHeader(
+                    title: "Storage & APFS Volumes",
+                    subtitle: "Apple File System containers and disk space allocation"
+                ) {
                     Text(Formatters.bytes(monitor.snapshot.storage.availableCapacityBytes) + " Free")
-                        .font(.system(size: 26, weight: .bold, design: .rounded))
+                        .font(AppTypography.monospaced(size: 24, weight: .bold))
                         .foregroundStyle(AppTheme.warningAmber)
                 }
                 

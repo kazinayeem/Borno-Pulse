@@ -14,18 +14,12 @@ public struct MemoryDetailView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
                 // Header
-                HStack {
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("Unified Memory (RAM)")
-                            .font(.system(size: 22, weight: .bold))
-                            .foregroundStyle(AppTheme.textPrimary)
-                        Text("Total Physical Capacity: \(Formatters.bytes(monitor.snapshot.memory.totalBytes))")
-                            .font(.system(size: 13))
-                            .foregroundStyle(AppTheme.textSecondary)
-                    }
-                    Spacer()
+                AdaptivePageHeader(
+                    title: "Unified Memory (RAM)",
+                    subtitle: "Total Physical Capacity: \(Formatters.bytes(monitor.snapshot.memory.totalBytes))"
+                ) {
                     Text(Formatters.percentage(monitor.snapshot.memory.usagePercentage))
-                        .font(.system(size: 32, weight: .bold, design: .rounded))
+                        .font(AppTypography.monospaced(size: 28, weight: .bold))
                         .foregroundStyle(AppTheme.electricCyan)
                 }
                 

@@ -27,111 +27,134 @@ public struct ScreenTimeExplorerTableView: View {
         
         VStack(alignment: .leading, spacing: 14) {
             // Header Controls
-            HStack(spacing: 12) {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("Application Usage Explorer")
-                        .font(.system(size: 14, weight: .semibold))
-                        .foregroundStyle(AppTheme.textPrimary)
-                    
-                    Text("\(apps.count) applications recorded in \(tracker.selectedRange.rawValue.lowercased())")
-                        .font(.system(size: 11))
-                        .foregroundStyle(AppTheme.textSecondary)
+            ViewThatFits(in: .horizontal) {
+                // Wide: title on left, all search and filters on right
+                HStack(spacing: 10) {
+                    explorerTitleSection(count: apps.count)
+                    Spacer()
+                    searchAndFiltersBar
                 }
                 
-                Spacer()
-                
-                // Search Field
-                HStack(spacing: 6) {
-                    Image(systemName: "magnifyingglass")
-                        .font(.system(size: 11))
-                        .foregroundStyle(AppTheme.textTertiary)
+                // Compact: title on top, filters wrapped below
+                VStack(alignment: .leading, spacing: 10) {
+                    explorerTitleSection(count: apps.count)
+                    searchAndFiltersBar
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                }
+            }
+            
+            // Scrollable Table Container
+            AdaptiveTableContainer(minWidth: 800) {
+                VStack(spacing: 6) {
+                    // Table Header Bar
+                    HStack(spacing: 8) {
+                        tableHeader(title: "Application", column: .name, width: 220, alignment: .leading)
+                        tableHeader(title: "Category", column: nil, width: 130, alignment: .leading)
+                        tableHeader(title: "Total Duration", column: .duration, width: 140, alignment: .leading)
+                        tableHeader(title: "Active Focus", column: nil, width: 95, alignment: .leading)
+                        tableHeader(title: "Active %", column: .activePercentage, width: 80, alignment: .leading)
+                        tableHeader(title: "Sessions", column: .sessions, width: 65, alignment: .leading)
+                        Spacer()
+                        Text("Actions")
+                            .font(.system(size: 10, weight: .semibold))
+                            .foregroundStyle(AppTheme.textTertiary)
+                            .frame(width: 65, alignment: .trailing)
+                    }
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 6)
+                    .background(Color.white.opacity(0.04))
+                    .clipShape(RoundedRectangle(cornerRadius: 4))
                     
-                    TextField("Search app or bundle ID...", text: $tracker.filterSearchText)
-                        .textFieldStyle(.plain)
-                        .font(.system(size: 12))
-                        .frame(width: 170)
-                    
-                    if !tracker.filterSearchText.isEmpty {
-                        Button {
-                            tracker.filterSearchText = ""
-                        } label: {
-                            Image(systemName: "xmark.circle.fill")
-                                .font(.system(size: 10))
+                    // Table Rows List
+                    if apps.isEmpty {
+                        VStack(spacing: 8) {
+                            Image(systemName: "app.dashed")
+                                .font(.system(size: 26))
+                                .foregroundStyle(AppTheme.textTertiary)
+                            Text("No applications match the current search or filters.")
+                                .font(.system(size: 12))
                                 .foregroundStyle(AppTheme.textTertiary)
                         }
-                        .buttonStyle(.plain)
-                    }
-                }
-                .padding(.horizontal, 8)
-                .padding(.vertical, 5)
-                .background(Color.white.opacity(0.05))
-                .clipShape(RoundedRectangle(cornerRadius: 6))
-                
-                // Category Filter
-                Picker("Category", selection: $tracker.filterCategory) {
-                    Text("All Categories").tag(AppUsageCategory?.none)
-                    ForEach(AppUsageCategory.allCases) { cat in
-                        Text(cat.rawValue).tag(AppUsageCategory?.some(cat))
-                    }
-                }
-                .pickerStyle(.menu)
-                .frame(width: 150)
-                
-                // Min Duration Filter
-                Picker("Min Time", selection: $tracker.minDurationSeconds) {
-                    Text("All Durations").tag(TimeInterval(0))
-                    Text("> 1 min").tag(TimeInterval(60))
-                    Text("> 5 min").tag(TimeInterval(300))
-                    Text("> 15 min").tag(TimeInterval(900))
-                    Text("> 1 hour").tag(TimeInterval(3600))
-                }
-                .pickerStyle(.menu)
-                .frame(width: 120)
-            }
-            
-            // Table Header Bar
-            HStack(spacing: 8) {
-                tableHeader(title: "Application", column: .name, width: 220, alignment: .leading)
-                tableHeader(title: "Category", column: nil, width: 140, alignment: .leading)
-                tableHeader(title: "Total Duration", column: .duration, width: 150, alignment: .leading)
-                tableHeader(title: "Active Focus", column: nil, width: 100, alignment: .leading)
-                tableHeader(title: "Active %", column: .activePercentage, width: 90, alignment: .leading)
-                tableHeader(title: "Sessions", column: .sessions, width: 70, alignment: .leading)
-                Spacer()
-                Text("Actions")
-                    .font(.system(size: 10, weight: .semibold))
-                    .foregroundStyle(AppTheme.textTertiary)
-                    .frame(width: 70, alignment: .trailing)
-            }
-            .padding(.horizontal, 10)
-            .padding(.vertical, 6)
-            .background(Color.white.opacity(0.04))
-            .clipShape(RoundedRectangle(cornerRadius: 4))
-            
-            // Table Rows List
-            if apps.isEmpty {
-                VStack(spacing: 8) {
-                    Image(systemName: "app.dashed")
-                        .font(.system(size: 26))
-                        .foregroundStyle(AppTheme.textTertiary)
-                    Text("No applications match the current search or filters.")
-                        .font(.system(size: 12))
-                        .foregroundStyle(AppTheme.textTertiary)
-                }
-                .frame(maxWidth: .infinity, minHeight: 140)
-            } else {
-                ScrollView {
-                    LazyVStack(spacing: 3) {
-                        ForEach(Array(apps.enumerated()), id: \.element.id) { index, app in
-                            appRow(index: index + 1, app: app, maxDuration: maxDuration)
+                        .frame(maxWidth: .infinity, minHeight: 140)
+                    } else {
+                        ScrollView {
+                            LazyVStack(spacing: 3) {
+                                ForEach(Array(apps.enumerated()), id: \.element.id) { index, app in
+                                    appRow(index: index + 1, app: app, maxDuration: maxDuration)
+                                }
+                            }
                         }
+                        .frame(maxHeight: 340)
                     }
                 }
-                .frame(maxHeight: 340)
             }
         }
         .padding(16)
         .smartCard()
+    }
+    
+    private func explorerTitleSection(count: Int) -> some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text("Application Usage Explorer")
+                .font(.system(size: 14, weight: .semibold))
+                .foregroundStyle(AppTheme.textPrimary)
+            
+            Text("\(count) applications recorded in \(tracker.selectedRange.rawValue.lowercased())")
+                .font(.system(size: 11))
+                .foregroundStyle(AppTheme.textSecondary)
+        }
+    }
+    
+    private var searchAndFiltersBar: some View {
+        HStack(spacing: 8) {
+            // Search Field
+            HStack(spacing: 6) {
+                Image(systemName: "magnifyingglass")
+                    .font(.system(size: 11))
+                    .foregroundStyle(AppTheme.textTertiary)
+                
+                TextField("Search app or bundle ID...", text: $tracker.filterSearchText)
+                    .textFieldStyle(.plain)
+                    .font(.system(size: 12))
+                    .frame(minWidth: 120, maxWidth: 170)
+                
+                if !tracker.filterSearchText.isEmpty {
+                    Button {
+                        tracker.filterSearchText = ""
+                    } label: {
+                        Image(systemName: "xmark.circle.fill")
+                            .font(.system(size: 10))
+                            .foregroundStyle(AppTheme.textTertiary)
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+            .padding(.horizontal, 8)
+            .padding(.vertical, 5)
+            .background(Color.white.opacity(0.05))
+            .clipShape(RoundedRectangle(cornerRadius: 6))
+            
+            // Category Filter
+            Picker("Category", selection: $tracker.filterCategory) {
+                Text("All Categories").tag(AppUsageCategory?.none)
+                ForEach(AppUsageCategory.allCases) { cat in
+                    Text(cat.rawValue).tag(AppUsageCategory?.some(cat))
+                }
+            }
+            .pickerStyle(.menu)
+            .frame(minWidth: 120, maxWidth: 150)
+            
+            // Min Duration Filter
+            Picker("Min Time", selection: $tracker.minDurationSeconds) {
+                Text("All Durations").tag(TimeInterval(0))
+                Text("> 1 min").tag(TimeInterval(60))
+                Text("> 5 min").tag(TimeInterval(300))
+                Text("> 15 min").tag(TimeInterval(900))
+                Text("> 1 hour").tag(TimeInterval(3600))
+            }
+            .pickerStyle(.menu)
+            .frame(minWidth: 100, maxWidth: 120)
+        }
     }
     
     // MARK: - App Row

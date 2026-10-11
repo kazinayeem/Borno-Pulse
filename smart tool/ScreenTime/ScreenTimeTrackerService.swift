@@ -50,6 +50,18 @@ public struct DailyTrendPoint: Identifiable, Sendable {
         self.totalDurationHours = (activeSeconds + idleSeconds) / 3600.0
         self.label = label
     }
+    
+    public var weekdayLabel: String {
+        let df = DateFormatter()
+        df.dateFormat = "EEE"
+        return df.string(from: date)
+    }
+    
+    public var shortDateLabel: String {
+        let df = DateFormatter()
+        df.dateFormat = "MMM d"
+        return df.string(from: date)
+    }
 }
 
 // MARK: - Screen Time Tracker Service

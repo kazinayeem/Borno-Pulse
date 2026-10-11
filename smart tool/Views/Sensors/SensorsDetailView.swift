@@ -15,16 +15,10 @@ public struct SensorsDetailView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
                 // Header
-                HStack {
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("Temperature, Fans & Thermals")
-                            .font(.system(size: 22, weight: .bold))
-                            .foregroundStyle(AppTheme.textPrimary)
-                        Text("Hardware thermal envelope monitoring and cooling subsystem")
-                            .font(.system(size: 13))
-                            .foregroundStyle(AppTheme.textSecondary)
-                    }
-                    Spacer()
+                AdaptivePageHeader(
+                    title: "Temperature, Fans & Thermals",
+                    subtitle: "Hardware thermal envelope monitoring and cooling subsystem"
+                ) {
                     StatusBadge(
                         text: monitor.snapshot.sensors.thermalStateDescription.components(separatedBy: " ").first ?? "Nominal",
                         color: thermalColor(monitor.snapshot.sensors.thermalState)
@@ -34,14 +28,14 @@ public struct SensorsDetailView: View {
                 // Thermal State Card
                 VStack(alignment: .leading, spacing: 14) {
                     Label("macOS Thermal State Architecture", systemImage: "flame.fill")
-                        .font(.system(size: 14, weight: .semibold))
+                        .font(AppTypography.font(size: 14, weight: .semibold))
                         .foregroundStyle(AppTheme.orangeAccent)
                     
                     Text("The operating system dynamically modulates SoC clock frequencies and power delivery based on internal temperature sensors across CPU, GPU, Neural Engine, and power management ICs.")
-                        .font(.system(size: 13))
+                        .font(AppTypography.font(size: 13))
                         .foregroundStyle(AppTheme.textSecondary)
                     
-                    HStack(spacing: 12) {
+                    AdaptiveCardGrid(minColumnWidth: 140, spacing: 10) {
                         thermalLevelCard(title: "Nominal", desc: "Optimal temperatures. Full performance unlocked.", active: monitor.snapshot.sensors.thermalState == .nominal, color: AppTheme.successGreen)
                         thermalLevelCard(title: "Fair", desc: "Elevated thermal load. Fans ramping up if equipped.", active: monitor.snapshot.sensors.thermalState == .fair, color: AppTheme.warningAmber)
                         thermalLevelCard(title: "Serious", desc: "High temperature. Proactive clock throttling active.", active: monitor.snapshot.sensors.thermalState == .serious, color: AppTheme.orangeAccent)

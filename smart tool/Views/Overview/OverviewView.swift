@@ -41,41 +41,30 @@ public struct OverviewView: View {
     
     // MARK: - Header Banner
     private var headerBanner: some View {
-        HStack(alignment: .center) {
-            VStack(alignment: .leading, spacing: 3) {
-                HStack(spacing: 8) {
-                    Text("System Overview")
-                        .font(.system(size: 20, weight: .bold))
-                        .foregroundStyle(AppTheme.textPrimary)
-                    
-                    StatusBadge(
-                        text: monitor.snapshot.healthStatusText,
-                        color: healthColor(monitor.snapshot.healthScore)
-                    )
-                }
-                
-                Text("\(monitor.snapshot.cpu.modelName) • \(monitor.snapshot.cpu.architecture) • \(monitor.snapshot.cpu.logicalCoreCount) Logical Cores")
-                    .font(.system(size: 12))
-                    .foregroundStyle(AppTheme.textSecondary)
+        AdaptivePageHeader(
+            title: "System Overview",
+            subtitle: "\(monitor.snapshot.cpu.modelName) • \(monitor.snapshot.cpu.architecture) • \(monitor.snapshot.cpu.logicalCoreCount) Logical Cores",
+            leadingExtra: {
+                StatusBadge(
+                    text: monitor.snapshot.healthStatusText,
+                    color: healthColor(monitor.snapshot.healthScore)
+                )
             }
-            
-            Spacer()
-            
+        ) {
             Button {
                 monitor.refreshNow()
             } label: {
                 Label("Refresh", systemImage: "arrow.clockwise")
-                    .font(.system(size: 11, weight: .medium))
+                    .font(AppTypography.font(size: 11, weight: .medium))
             }
             .buttonStyle(.bordered)
             .controlSize(.small)
         }
-        .padding(.horizontal, 2)
     }
     
     // MARK: - Top Summary Chips
     private var topSummaryBar: some View {
-        HStack(spacing: 10) {
+        AdaptiveCardGrid(minColumnWidth: 105, spacing: 10) {
             summaryTile(
                 title: "CPU",
                 value: Formatters.percentage(monitor.snapshot.cpu.totalUsage),

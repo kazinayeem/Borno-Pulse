@@ -14,22 +14,16 @@ public struct NetworkDetailView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
                 // Header
-                HStack {
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("Network & Bandwidth")
-                            .font(.system(size: 22, weight: .bold))
-                            .foregroundStyle(AppTheme.textPrimary)
-                        Text("Real-time network interface telemetry and packet counters")
-                            .font(.system(size: 13))
-                            .foregroundStyle(AppTheme.textSecondary)
-                    }
-                    Spacer()
+                AdaptivePageHeader(
+                    title: "Network & Bandwidth",
+                    subtitle: "Real-time network interface telemetry and packet counters"
+                ) {
                     VStack(alignment: .trailing, spacing: 2) {
                         Label(Formatters.speed(monitor.snapshot.network.downloadSpeedBytesPerSec), systemImage: "arrow.down")
-                            .font(.system(size: 16, weight: .bold))
+                            .font(AppTypography.monospaced(size: 15, weight: .bold))
                             .foregroundStyle(AppTheme.successGreen)
                         Label(Formatters.speed(monitor.snapshot.network.uploadSpeedBytesPerSec), systemImage: "arrow.up")
-                            .font(.system(size: 14, weight: .semibold))
+                            .font(AppTypography.monospaced(size: 13, weight: .semibold))
                             .foregroundStyle(AppTheme.electricBlueLight)
                     }
                 }

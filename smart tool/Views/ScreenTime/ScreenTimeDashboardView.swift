@@ -55,102 +55,130 @@ public struct ScreenTimeDashboardView: View {
     
     // MARK: - Header View
     private var headerView: some View {
-        HStack(alignment: .top) {
-            VStack(alignment: .leading, spacing: 4) {
-                HStack(spacing: 8) {
-                    Text("Screen Time Analytics")
-                        .font(.system(size: 22, weight: .bold))
-                        .foregroundStyle(AppTheme.textPrimary)
-                    
-                    statusBadge
-                }
-                
-                Text("Private, native on-device application tracking • Foreground attention vs idle detection")
-                    .font(.system(size: 13))
-                    .foregroundStyle(AppTheme.textSecondary)
+        AdaptivePageHeader(
+            title: "Screen Time Analytics",
+            subtitle: "Private, native on-device application tracking • Foreground attention vs idle detection",
+            leadingExtra: { statusBadge }
+        ) {
+            headerActionsToolbar
+        }
+    }
+    
+    private var headerActionsToolbar: some View {
+        ViewThatFits(in: .horizontal) {
+            // Wide toolbar: full inline controls
+            HStack(spacing: 8) {
+                rangePicker
+                trackingControls
+                exportMenu
+                exclusionsButton
             }
             
-            Spacer()
-            
-            // Actions Toolbar
-            HStack(spacing: 10) {
-                // Date Range Picker
-                Picker("Range", selection: $tracker.selectedRange) {
-                    ForEach(ScreenTimeRangeOption.allCases) { opt in
-                        Text(opt.rawValue).tag(opt)
-                    }
-                }
-                .pickerStyle(.segmented)
-                .frame(width: 250)
+            // Compact toolbar: primary controls with overflow menu
+            HStack(spacing: 8) {
+                rangePicker
+                trackingControls
                 
-                // Tracking Pause/Resume Button
-                if tracker.isTrackingEnabled {
-                    Button {
-                        if tracker.isTrackingPaused {
-                            tracker.resumeTracking()
-                        } else {
-                            tracker.pauseTracking()
-                        }
-                    } label: {
-                        Label(
-                            tracker.isTrackingPaused ? "Resume" : "Pause",
-                            systemImage: tracker.isTrackingPaused ? "play.fill" : "pause.fill"
-                        )
-                    }
-                    .buttonStyle(.bordered)
-                    .help(tracker.isTrackingPaused ? "Resume tracking" : "Pause tracking")
-                }
-                
-                // Master Enable / Disable Tracking
-                Button {
-                    tracker.isTrackingEnabled.toggle()
-                } label: {
-                    Label(
-                        tracker.isTrackingEnabled ? "Stop" : "Start Tracking",
-                        systemImage: tracker.isTrackingEnabled ? "stop.fill" : "record.circle"
-                    )
-                }
-                .buttonStyle(.borderedProminent)
-                .tint(tracker.isTrackingEnabled ? AppTheme.cardBackgroundSecondary : AppTheme.matrixGreen)
-                
-                // Export Menu (CSV & PDF)
                 Menu {
-                    Button {
-                        exportCSVReport()
-                    } label: {
-                        Label("Export Data as CSV", systemImage: "tablecells")
-                    }
-                    
-                    Button {
-                        exportPDFReport()
-                    } label: {
-                        Label("Export PDF Audit Report", systemImage: "doc.richtext")
-                    }
-                    
+                    exportMenuItems
                     Divider()
-                    
                     Button {
-                        tracker.generateSampleHistoryIfEmpty()
-                        bannerNotification = "Sample 30-day activity dataset loaded for preview."
+                        showingExclusionsSheet = true
                     } label: {
-                        Label("Seed 30-Day Demo Data", systemImage: "sparkles")
+                        Label("Excluded Applications", systemImage: "hand.raised.shield")
                     }
                 } label: {
-                    Label("Export", systemImage: "square.and.arrow.up")
+                    Label("More", systemImage: "ellipsis.circle")
                 }
                 .buttonStyle(.bordered)
-                
-                // Privacy & Settings Sheet
-                Button {
-                    showingExclusionsSheet = true
-                } label: {
-                    Image(systemName: "hand.raised.shield")
-                        .font(.system(size: 13))
-                }
-                .buttonStyle(.bordered)
-                .help("Privacy and excluded applications")
             }
         }
+    }
+    
+    private var rangePicker: some View {
+        Picker("Range", selection: $tracker.selectedRange) {
+            ForEach(ScreenTimeRangeOption.allCases) { opt in
+                Text(opt.rawValue).tag(opt)
+            }
+        }
+        .pickerStyle(.segmented)
+        .frame(minWidth: 200, maxWidth: 240)
+    }
+    
+    private var trackingControls: some View {
+        HStack(spacing: 6) {
+            if tracker.isTrackingEnabled {
+                Button {
+                    if tracker.isTrackingPaused {
+                        tracker.resumeTracking()
+                    } else {
+                        tracker.pauseTracking()
+                    }
+                } label: {
+                    Label(
+                        tracker.isTrackingPaused ? "Resume" : "Pause",
+                        systemImage: tracker.isTrackingPaused ? "play.fill" : "pause.fill"
+                    )
+                }
+                .buttonStyle(.bordered)
+                .help(tracker.isTrackingPaused ? "Resume tracking" : "Pause tracking")
+            }
+            
+            Button {
+                tracker.isTrackingEnabled.toggle()
+            } label: {
+                Label(
+                    tracker.isTrackingEnabled ? "Stop" : "Start Tracking",
+                    systemImage: tracker.isTrackingEnabled ? "stop.fill" : "record.circle"
+                )
+            }
+            .buttonStyle(.borderedProminent)
+            .tint(tracker.isTrackingEnabled ? AppTheme.cardBackgroundSecondary : AppTheme.matrixGreen)
+        }
+    }
+    
+    private var exportMenu: some View {
+        Menu {
+            exportMenuItems
+        } label: {
+            Label("Export", systemImage: "square.and.arrow.up")
+        }
+        .buttonStyle(.bordered)
+    }
+    
+    @ViewBuilder
+    private var exportMenuItems: some View {
+        Button {
+            exportCSVReport()
+        } label: {
+            Label("Export Data as CSV", systemImage: "tablecells")
+        }
+        
+        Button {
+            exportPDFReport()
+        } label: {
+            Label("Export PDF Audit Report", systemImage: "doc.richtext")
+        }
+        
+        Divider()
+        
+        Button {
+            tracker.generateSampleHistoryIfEmpty()
+            bannerNotification = "Sample 30-day activity dataset loaded for preview."
+        } label: {
+            Label("Seed 30-Day Demo Data", systemImage: "sparkles")
+        }
+    }
+    
+    private var exclusionsButton: some View {
+        Button {
+            showingExclusionsSheet = true
+        } label: {
+            Image(systemName: "hand.raised.shield")
+                .font(.system(size: 13))
+        }
+        .buttonStyle(.bordered)
+        .help("Privacy and excluded applications")
     }
     
     // MARK: - Status Badge

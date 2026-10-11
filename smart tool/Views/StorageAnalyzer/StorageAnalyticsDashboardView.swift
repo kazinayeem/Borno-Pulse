@@ -17,7 +17,7 @@ public struct StorageAnalyticsDashboardView: View {
                 // Top Header Toolbar
                 topHeaderSection
                 
-                // Summary Metric Cards
+                // Summary Metric Cards (Adaptive Grid)
                 summaryCardsGrid
                 
                 // Prominent Storage Composition Bar
@@ -28,10 +28,10 @@ public struct StorageAnalyticsDashboardView: View {
                     HStack {
                         VStack(alignment: .leading, spacing: 2) {
                             Text("Interactive Storage Treemap")
-                                .font(.system(size: 14, weight: .bold))
+                                .font(AppTypography.font(size: 14, weight: .bold))
                                 .foregroundStyle(AppTheme.textPrimary)
                             Text("Tile areas are proportional to size. Click any category or folder to drill down into subdirectories.")
-                                .font(.system(size: 11))
+                                .font(AppTypography.font(size: 11))
                                 .foregroundStyle(AppTheme.textSecondary)
                         }
                         Spacer()
@@ -41,21 +41,17 @@ public struct StorageAnalyticsDashboardView: View {
                 }
                 .smartCard()
                 
-                // Charts Section: Donut Chart & Rankings
-                HStack(alignment: .top, spacing: 16) {
+                // Charts Section: Donut Chart & Rankings (Adaptive Two Column)
+                AdaptiveTwoColumnLayout(spacing: 16) {
                     StorageCategoryDonutChart()
-                        .frame(maxWidth: .infinity)
-                    
+                } right: {
                     LargestFoldersBarChart()
-                        .frame(maxWidth: .infinity)
                 }
                 
-                HStack(alignment: .top, spacing: 16) {
+                AdaptiveTwoColumnLayout(spacing: 16) {
                     LargestFilesBarChart()
-                        .frame(maxWidth: .infinity)
-                    
+                } right: {
                     HistoricalStorageTrendView()
-                        .frame(maxWidth: .infinity)
                 }
                 
                 // Searchable File & Folder Explorer
@@ -78,91 +74,106 @@ public struct StorageAnalyticsDashboardView: View {
     
     // MARK: - Top Header Section
     private var topHeaderSection: some View {
-        HStack(alignment: .top) {
-            VStack(alignment: .leading, spacing: 4) {
-                Text("Storage Analytics")
-                    .font(.system(size: 22, weight: .bold))
-                    .foregroundStyle(AppTheme.textPrimary)
-                Text("Comprehensive visual breakdown of disk consumption, file types, and space hogs across mounted volumes")
-                    .font(.system(size: 12))
-                    .foregroundStyle(AppTheme.textSecondary)
-            }
-            
-            Spacer()
-            
-            // Volume Switcher & Scan Controls
+        AdaptivePageHeader(
+            title: "Storage Analytics",
+            subtitle: "Comprehensive visual breakdown of disk consumption, file types, and space hogs across mounted volumes"
+        ) {
+            headerActionsToolbar
+        }
+    }
+    
+    private var headerActionsToolbar: some View {
+        ViewThatFits(in: .horizontal) {
+            // Wide toolbar: All inline controls
             HStack(spacing: 10) {
-                // Volume Selector Menu
-                Menu {
-                    ForEach(service.mountedVolumes) { vol in
-                        Button {
-                            service.selectedVolume = vol
-                            service.customDirectoryURL = nil
-                            service.startScan()
-                        } label: {
-                            HStack {
-                                Text(vol.name)
-                                if service.selectedVolume?.id == vol.id && service.customDirectoryURL == nil {
-                                    Image(systemName: "checkmark")
-                                }
-                            }
-                        }
-                    }
-                    
-                    Divider()
-                    
-                    Button("Analyze Specific Folder...") {
-                        service.selectCustomFolder()
-                    }
+                volumeSelectorMenu
+                scopePicker
+                scanActionButton
+            }
+            
+            // Compact toolbar: Volume + Action, scope in submenu or wrapped
+            VStack(alignment: .trailing, spacing: 8) {
+                HStack(spacing: 8) {
+                    volumeSelectorMenu
+                    scanActionButton
+                }
+                scopePicker
+            }
+        }
+    }
+    
+    private var volumeSelectorMenu: some View {
+        Menu {
+            ForEach(service.mountedVolumes) { vol in
+                Button {
+                    service.selectedVolume = vol
+                    service.customDirectoryURL = nil
+                    service.startScan()
                 } label: {
-                    HStack(spacing: 6) {
-                        Image(systemName: service.customDirectoryURL != nil ? "folder.fill" : "internaldrive.fill")
-                            .foregroundStyle(AppTheme.neonCyan)
-                        Text(service.customDirectoryURL?.lastPathComponent ?? service.selectedVolume?.name ?? "Macintosh HD")
-                            .font(.system(size: 12, weight: .semibold))
-                    }
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 5)
-                    .background(AppTheme.cardBackgroundSecondary)
-                    .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
-                    .overlay(RoundedRectangle(cornerRadius: 6, style: .continuous).stroke(AppTheme.cardBorder, lineWidth: 0.5))
-                }
-                .menuStyle(.borderlessButton)
-                
-                // Scan Mode Picker
-                Picker("Scope", selection: $service.scanMode) {
-                    ForEach(StorageScanMode.allCases) { mode in
-                        Text(mode == .quick ? "Quick" : "Detailed").tag(mode)
-                    }
-                }
-                .pickerStyle(.segmented)
-                .frame(width: 140)
-                
-                // Scan Action Button
-                if service.isScanning {
-                    Button {
-                        service.cancelScan()
-                    } label: {
-                        HStack(spacing: 6) {
-                            ProgressView().controlSize(.small)
-                            Text("Cancel")
+                    HStack {
+                        Text(vol.name)
+                        if service.selectedVolume?.id == vol.id && service.customDirectoryURL == nil {
+                            Image(systemName: "checkmark")
                         }
                     }
-                    .buttonStyle(.bordered)
-                    .foregroundStyle(AppTheme.dangerRed)
-                } else {
-                    Button {
-                        service.startScan()
-                    } label: {
-                        HStack(spacing: 6) {
-                            Image(systemName: "arrow.clockwise")
-                            Text("Rescan")
-                        }
-                    }
-                    .buttonStyle(.borderedProminent)
-                    .tint(AppTheme.electricBlue)
                 }
             }
+            
+            Divider()
+            
+            Button("Analyze Specific Folder...") {
+                service.selectCustomFolder()
+            }
+        } label: {
+            HStack(spacing: 6) {
+                Image(systemName: service.customDirectoryURL != nil ? "folder.fill" : "internaldrive.fill")
+                    .foregroundStyle(AppTheme.neonCyan)
+                Text(service.customDirectoryURL?.lastPathComponent ?? service.selectedVolume?.name ?? "Macintosh HD")
+                    .font(AppTypography.font(size: 12, weight: .semibold))
+            }
+            .padding(.horizontal, 10)
+            .padding(.vertical, 5)
+            .background(AppTheme.cardBackgroundSecondary)
+            .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: 6, style: .continuous).stroke(AppTheme.cardBorder, lineWidth: 0.5))
+        }
+        .menuStyle(.borderlessButton)
+    }
+    
+    private var scopePicker: some View {
+        Picker("Scope", selection: $service.scanMode) {
+            ForEach(StorageScanMode.allCases) { mode in
+                Text(mode == .quick ? "Quick" : "Detailed").tag(mode)
+            }
+        }
+        .pickerStyle(.segmented)
+        .frame(minWidth: 120, maxWidth: 140)
+    }
+    
+    @ViewBuilder
+    private var scanActionButton: some View {
+        if service.isScanning {
+            Button {
+                service.cancelScan()
+            } label: {
+                HStack(spacing: 6) {
+                    ProgressView().controlSize(.small)
+                    Text("Cancel")
+                }
+            }
+            .buttonStyle(.bordered)
+            .foregroundStyle(AppTheme.dangerRed)
+        } else {
+            Button {
+                service.startScan()
+            } label: {
+                HStack(spacing: 6) {
+                    Image(systemName: "arrow.clockwise")
+                    Text("Rescan")
+                }
+            }
+            .buttonStyle(.borderedProminent)
+            .tint(AppTheme.electricBlue)
         }
     }
     
@@ -175,90 +186,65 @@ public struct StorageAnalyticsDashboardView: View {
         let usedPct = vol?.usedPercentage ?? 0.0
         let largest = service.largestFiles.first
         
-        return LazyVGrid(columns: [
-            GridItem(.flexible()),
-            GridItem(.flexible()),
-            GridItem(.flexible()),
-            GridItem(.flexible())
-        ], spacing: 14) {
-            summaryCard(
+        return AdaptiveCardGrid(minColumnWidth: 175, spacing: 14) {
+            ResponsiveMetricCard(
                 title: "Total Capacity",
                 value: ByteCountFormatter.string(fromByteCount: Int64(total), countStyle: .file),
-                subtext: vol?.name ?? "Macintosh HD",
+                subvalue: vol?.name ?? "Macintosh HD",
                 icon: "internaldrive.fill",
-                color: AppTheme.electricBlue
+                tint: AppTheme.electricBlue,
+                badge: "Volume",
+                tooltip: "Total hardware capacity of the monitored volume"
             )
             
-            summaryCard(
+            ResponsiveMetricCard(
                 title: "Used / Free Space",
                 value: ByteCountFormatter.string(fromByteCount: Int64(used), countStyle: .file),
-                subtext: "\(ByteCountFormatter.string(fromByteCount: Int64(available), countStyle: .file)) Free (\(String(format: "%.1f%%", usedPct)) Used)",
-                icon: "piechart.fill",
-                color: AppTheme.neonCyan
+                subvalue: "\(ByteCountFormatter.string(fromByteCount: Int64(available), countStyle: .file)) Free (\(String(format: "%.1f%%", usedPct)))",
+                icon: "chart.pie.fill",
+                tint: AppTheme.neonCyan,
+                badge: "\(String(format: "%.0f%%", usedPct)) Used",
+                tooltip: "Used space: \(ByteCountFormatter.string(fromByteCount: Int64(used), countStyle: .file))\nFree space: \(ByteCountFormatter.string(fromByteCount: Int64(available), countStyle: .file))"
             )
             
-            summaryCard(
+            ResponsiveMetricCard(
                 title: "Largest File",
                 value: largest != nil ? ByteCountFormatter.string(fromByteCount: Int64(largest!.sizeBytes), countStyle: .file) : "—",
-                subtext: largest?.name ?? "None discovered",
+                subvalue: largest?.name ?? "None discovered",
                 icon: "doc.badge.arrow.up",
-                color: AppTheme.warningAmber
+                tint: AppTheme.warningAmber,
+                badge: "Space Hog",
+                tooltip: largest?.path ?? "No large file discovered"
             )
             
-            summaryCard(
+            ResponsiveMetricCard(
                 title: "Scanned Content",
                 value: "\(service.scanProgressCount) Files",
-                subtext: "\(service.scannedFoldersCount) Folders • \(service.lastScanTime?.formatted(date: .omitted, time: .shortened) ?? "Pending")",
+                subvalue: "\(service.scannedFoldersCount) Folders • \(service.lastScanTime?.formatted(date: .omitted, time: .shortened) ?? "Pending")",
                 icon: "sparkle.magnifyingglass",
-                color: AppTheme.matrixGreen
+                tint: AppTheme.matrixGreen,
+                badge: "Analyzed",
+                tooltip: "\(service.scanProgressCount) files across \(service.scannedFoldersCount) directories analyzed"
             )
         }
     }
     
-    private func summaryCard(title: String, value: String, subtext: String, icon: String, color: Color) -> some View {
-        VStack(alignment: .leading, spacing: 6) {
-            HStack {
-                Text(title)
-                    .font(.system(size: 11, weight: .semibold))
-                    .foregroundStyle(AppTheme.textSecondary)
-                Spacer()
-                Image(systemName: icon)
-                    .font(.system(size: 13))
-                    .foregroundStyle(color)
-            }
-            
-            Text(value)
-                .font(.system(size: 18, weight: .bold))
-                .foregroundStyle(AppTheme.textPrimary)
-                .lineLimit(1)
-            
-            Text(subtext)
-                .font(.system(size: 10))
-                .foregroundStyle(AppTheme.textTertiary)
-                .lineLimit(1)
-        }
-        .smartCard()
-    }
-    
-    // MARK: - Inaccessible Locations Warning
+    // MARK: - Inaccessible Locations Card
     private var inaccessibleLocationsCard: some View {
         VStack(alignment: .leading, spacing: 8) {
-            HStack(spacing: 6) {
-                Image(systemName: "exclamationmark.triangle.fill")
+            HStack(spacing: 8) {
+                Image(systemName: "lock.shield.fill")
                     .foregroundStyle(AppTheme.warningAmber)
-                Text("Inaccessible Filesystem Locations")
-                    .font(.system(size: 12, weight: .bold))
+                Text("Permission Notice • Protected Directories")
+                    .font(AppTypography.font(size: 13, weight: .bold))
                     .foregroundStyle(AppTheme.textPrimary)
             }
             
-            Text("The following directories were skipped because macOS System Integrity Protection (SIP) or file privacy sandbox permissions restrict access:")
-                .font(.system(size: 11))
+            Text("macOS Sandbox & TCC protect certain private locations (e.g. Safari data, system security logs) unless explicitly granted Full Disk Access in macOS System Settings.")
+                .font(AppTypography.font(size: 11))
                 .foregroundStyle(AppTheme.textSecondary)
-            
-            Text(service.inaccessibleLocations.joined(separator: ", "))
-                .font(.system(size: 10, design: .monospaced))
-                .foregroundStyle(AppTheme.textTertiary)
         }
+        .padding(14)
         .smartCard()
     }
 }

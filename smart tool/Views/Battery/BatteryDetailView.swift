@@ -79,22 +79,15 @@ public struct BatteryDetailView: View {
 
     // MARK: - Header
     private var headerView: some View {
-        HStack(alignment: .top) {
-            VStack(alignment: .leading, spacing: 4) {
-                HStack(spacing: 8) {
-                    Image(systemName: monitor.snapshot.battery.hasBattery ? (monitor.snapshot.battery.isCharging ? "bolt.batteryblock.fill" : "battery.100") : "desktopcomputer")
-                        .font(.title2)
-                        .foregroundStyle(headerColor)
-                    Text("Battery & Power Management")
-                        .font(.title.bold())
-                }
-                Text(monitor.snapshot.battery.hasBattery ? "Real-time electrical power telemetry, Li-ion workload analysis, and charger distribution" : "Desktop Mac AC power supply with unrestricted performance envelope")
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
+        AdaptivePageHeader(
+            title: "Battery & Power Management",
+            subtitle: monitor.snapshot.battery.hasBattery ? "Real-time electrical power telemetry, Li-ion workload analysis, and charger distribution" : "Desktop Mac AC power supply with unrestricted performance envelope",
+            leadingExtra: {
+                Image(systemName: monitor.snapshot.battery.hasBattery ? (monitor.snapshot.battery.isCharging ? "bolt.batteryblock.fill" : "battery.100") : "desktopcomputer")
+                    .font(.title2)
+                    .foregroundStyle(headerColor)
             }
-
-            Spacer()
-
+        ) {
             HStack(spacing: 12) {
                 if monitor.snapshot.battery.hasBattery {
                     Button {
@@ -451,7 +444,7 @@ public struct BatteryDetailView: View {
                     .foregroundStyle(.secondary)
             }
 
-            LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible()), GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
+            AdaptiveCardGrid(minColumnWidth: 165, spacing: 12) {
                 // 1. Battery Power
                 livePowerCard(
                     title: b.isCharging ? "Battery Charging" : (b.isPluggedIn ? "Battery Inflow" : "Battery Discharge"),
@@ -729,7 +722,7 @@ public struct BatteryDetailView: View {
             Text("Battery Chemistry & Telemetry")
                 .font(.headline)
 
-            LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
+            AdaptiveCardGrid(minColumnWidth: 165, spacing: 12) {
                 diagnosticCard(
                     title: "Cycle Count",
                     value: b.cycleCount != nil ? "\(b.cycleCount!) / 1000" : "Unavailable",
