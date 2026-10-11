@@ -21,6 +21,8 @@ public final class SystemMonitor: ObservableObject {
     @Published public private(set) var memoryHistory: [Double] = []
     @Published public private(set) var downloadSpeedHistory: [Double] = []
     @Published public private(set) var uploadSpeedHistory: [Double] = []
+    /// Rolling history of CPU temperature readings (°C). Only populated when sensor is available.
+    @Published public private(set) var cpuTemperatureHistory: [Double] = []
     
     private let cpuProvider = CPUProvider()
     private let gpuProvider = GPUProvider()
