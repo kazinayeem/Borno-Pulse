@@ -451,6 +451,44 @@ public final class AppSettings: ObservableObject {
             }
         }
     }
+
+    // MARK: - PDF Studio Preferences
+    @AppStorage("pdfDefaultFontName") public var pdfDefaultFontName: String = "Helvetica"
+    @AppStorage("pdfDefaultFontSize") public var pdfDefaultFontSize: Double = 14.0
+    @AppStorage("pdfDefaultStrokeWidth") public var pdfDefaultStrokeWidth: Double = 2.0
+    @AppStorage("pdfDefaultAnnotationOpacity") public var pdfDefaultAnnotationOpacity: Double = 0.45
+    @AppStorage("pdfLockImageAspectRatio") public var pdfLockImageAspectRatio: Bool = true
+    @AppStorage("pdfConfirmUnsavedChanges") public var pdfConfirmUnsavedChanges: Bool = true
+
+    // MARK: - Factory Reset Helper
+    public func resetAllSettingsToDefaults() {
+        appearanceMode = .light
+        resetTypographyToDefaults()
+        menuBarIconSymbol = .gauge
+        resetMenuBarMetrics()
+        refreshIntervalSeconds = 1.0
+        temperatureUnit = .celsius
+        hardwareSensorAccessEnabled = true
+        historyDurationPoints = 60
+        notifyHighCPU = false
+        cpuAlertThreshold = 90.0
+        notifyHighMemory = false
+        memoryAlertThreshold = 90.0
+        notifyLowBattery = true
+        batteryAlertThreshold = 20
+        notifyFullyCharged = true
+        notifyPowerDisconnected = true
+        notifyRapidDischarge = true
+        rapidDischargeThresholdRatePerHour = 30.0
+        cleanupExclusions = []
+        pdfDefaultFontName = "Helvetica"
+        pdfDefaultFontSize = 14.0
+        pdfDefaultStrokeWidth = 2.0
+        pdfDefaultAnnotationOpacity = 0.45
+        pdfLockImageAspectRatio = true
+        pdfConfirmUnsavedChanges = true
+        objectWillChange.send()
+    }
     
     private init() {
         let storedAppearance = UserDefaults.standard.string(forKey: "appearanceMode")

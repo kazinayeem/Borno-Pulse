@@ -117,7 +117,9 @@ public struct MainDashboardView: View {
         }
         .onAppear {
             MainWindowRouter.shared.register(openWindow: openWindow)
-            if let section = MainWindowRouter.shared.consumePendingSection() {
+            if CommandLine.arguments.contains("--settings") {
+                selectedSection = .settings
+            } else if let section = MainWindowRouter.shared.consumePendingSection() {
                 selectedSection = section
             }
         }

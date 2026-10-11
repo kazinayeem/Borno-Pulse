@@ -22,91 +22,82 @@ public struct MenuBarWidgetSettingsView: View {
     public init() {}
     
     public var body: some View {
-        HSplitView {
+        AdaptiveTwoColumnLayout(spacing: 20, rightWidth: 360) {
             // Left Settings Column
-            ScrollView {
-                VStack(alignment: .leading, spacing: 20) {
-                    settingsHeader
-                    
-                    // 1. Menu Bar Status Indicator
-                    menuBarIndicatorSection
-                    
-                    // 2. Widget Layout & Appearance
-                    layoutStyleSection
-                    
-                    // 3. Metric Selection by Category
-                    metricSelectionSection
-                    
-                    // 4. Metric Ordering
-                    metricOrderingSection
-                    
-                    // 5. Monitored Storage Volume
-                    storageVolumeSection
-                    
-                    // 6. Quick Action Shortcuts
-                    quickActionsSection
-                    
-                    // 7. Refresh Rate & Performance
-                    refreshRateSection
-                    
-                    // 8. Alerts & Thresholds
-                    alertThresholdsSection
-                    
-                    // Reset Button
-                    resetDefaultsBar
-                }
-                .padding(20)
+            VStack(alignment: .leading, spacing: 20) {
+                settingsHeader
+                
+                // 1. Menu Bar Status Indicator
+                menuBarIndicatorSection
+                
+                // 2. Widget Layout & Appearance
+                layoutStyleSection
+                
+                // 3. Metric Selection by Category
+                metricSelectionSection
+                
+                // 4. Metric Ordering
+                metricOrderingSection
+                
+                // 5. Monitored Storage Volume
+                storageVolumeSection
+                
+                // 6. Quick Action Shortcuts
+                quickActionsSection
+                
+                // 7. Refresh Rate & Performance
+                refreshRateSection
+                
+                // 8. Alerts & Thresholds
+                alertThresholdsSection
+                
+                // Reset Button
+                resetDefaultsBar
             }
-            .frame(minWidth: 500)
-            
+        } right: {
             // Right Column: Live Widget & Menu Bar Indicator Preview
-            ScrollView {
-                VStack(alignment: .leading, spacing: 16) {
-                    HStack {
-                        Image(systemName: "eye.fill")
-                            .foregroundStyle(AppTheme.electricBlue)
-                        Text("Live Widget Preview")
-                            .font(.system(size: 13, weight: .bold))
-                            .foregroundStyle(AppTheme.textPrimary)
-                        Spacer()
-                        Text("Real Time")
-                            .font(.system(size: 10, weight: .semibold))
-                            .foregroundStyle(AppTheme.matrixGreen)
-                            .padding(.horizontal, 6)
-                            .padding(.vertical, 2)
-                            .background(AppTheme.matrixGreen.opacity(0.12))
-                            .clipShape(Capsule())
-                    }
-                    
-                    // Live Menu Bar Simulated Preview
-                    simulatedMenuBarPreview
-                    
-                    Divider().opacity(0.15)
-                    
-                    // Live Interactive Popover Widget Preview
-                    CustomizableWidgetView(
-                        onNavigateToSection: { _ in },
-                        onQuickAction: { _ in }
-                    )
-                    .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 10, style: .continuous)
-                            .stroke(AppTheme.cardBorder, lineWidth: 0.5)
-                    )
-                    .shadow(color: Color.black.opacity(0.08), radius: 6, x: 0, y: 3)
-                    
-                    Text("This preview reflects your active metric choices, layout style, spacing, and quick actions immediately.")
-                        .font(.system(size: 10))
-                        .foregroundStyle(AppTheme.textTertiary)
-                        .multilineTextAlignment(.center)
-                        .padding(.top, 4)
+            VStack(alignment: .leading, spacing: 16) {
+                HStack {
+                    Image(systemName: "eye.fill")
+                        .foregroundStyle(AppTheme.electricBlue)
+                    Text("Live Widget Preview")
+                        .font(.system(size: 13, weight: .bold))
+                        .foregroundStyle(AppTheme.textPrimary)
+                    Spacer()
+                    Text("Real Time")
+                        .font(.system(size: 10, weight: .semibold))
+                        .foregroundStyle(AppTheme.matrixGreen)
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 2)
+                        .background(AppTheme.matrixGreen.opacity(0.12))
+                        .clipShape(Capsule())
                 }
-                .padding(20)
+                
+                // Live Menu Bar Simulated Preview
+                simulatedMenuBarPreview
+                
+                Divider().opacity(0.15)
+                
+                // Live Interactive Popover Widget Preview
+                CustomizableWidgetView(
+                    onNavigateToSection: { _ in },
+                    onQuickAction: { _ in }
+                )
+                .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 10, style: .continuous)
+                        .stroke(AppTheme.cardBorder, lineWidth: 0.5)
+                )
+                .shadow(color: Color.black.opacity(0.08), radius: 6, x: 0, y: 3)
+                
+                Text("This preview reflects your active metric choices, layout style, spacing, and quick actions immediately.")
+                    .font(.system(size: 10))
+                    .foregroundStyle(AppTheme.textTertiary)
+                    .multilineTextAlignment(.center)
+                    .padding(.top, 4)
             }
-            .frame(minWidth: 320, maxWidth: 380)
-            .background(AppTheme.sidebarBackground)
+            .smartCard()
         }
-        .background(AppTheme.background)
         .alert("Reset Widget Settings?", isPresented: $showResetConfirmation) {
             Button("Cancel", role: .cancel) {}
             Button("Reset to Defaults", role: .destructive) {
