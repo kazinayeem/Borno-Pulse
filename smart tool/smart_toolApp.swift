@@ -19,6 +19,12 @@ struct smart_toolApp: App {
         .windowToolbarStyle(.unified)
         .commands {
             CommandGroup(replacing: .newItem) {}
+            CommandGroup(replacing: .appSettings) {
+                Button("Settings…") {
+                    NotificationCenter.default.post(name: .navigateToSection, object: NavigationSection.settings)
+                }
+                .keyboardShortcut(",", modifiers: .command)
+            }
             CommandMenu("Monitoring") {
                 Button("Refresh Telemetry Now") {
                     SystemMonitor.shared.refreshNow()
@@ -58,6 +64,66 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 print(log)
             }
             exit(results.failed == 0 ? 0 : 1)
+        }
+
+        if CommandLine.arguments.contains("--capture-settings-screenshots") {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
+                MainWindowRouter.shared.showMainWindow(section: .settings)
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
+                    guard let window = NSApp.windows.first(where: { $0.identifier?.rawValue.contains("main-window") == true }) else {
+                        print("Main window not found for screenshot")
+                        exit(1)
+                    }
+                    
+                    func findScrollViews(in view: NSView) -> [NSScrollView] {
+                        var res: [NSScrollView] = []
+                        if let sv = view as? NSScrollView { res.append(sv) }
+                        for sub in view.subviews {
+                            res.append(contentsOf: findScrollViews(in: sub))
+                        }
+                        return res
+                    }
+                    
+                    guard let contentView = window.contentView else { exit(1) }
+                    let s = findScrollViews(in: contentView)
+                    let detailSV = s.max(by: { ($0.bounds.width * $0.bounds.height) < ($1.bounds.width * $1.bounds.height) })
+                    
+                    func saveWindowScreenshot(named name: String) {
+                        let path = "/Users/mohammadalinayeem/.gemini/antigravity-ide/brain/931ffc5a-fecb-4a17-856f-76f5eafd8b10/\(name).png"
+                        if let cgImage = CGWindowListCreateImage(.null, .optionIncludingWindow, CGWindowID(window.windowNumber), [.boundsIgnoreFraming, .bestResolution]) {
+                            let rep = NSBitmapImageRep(cgImage: cgImage)
+                            if let data = rep.representation(using: .png, properties: [:]) {
+                                try? data.write(to: URL(fileURLWithPath: path))
+                                print("Captured \(name).png")
+                            }
+                        }
+                    }
+                    
+                    // 1. Top
+                    saveWindowScreenshot(named: "settings_top")
+                    
+                    // 2. Middle
+                    if let sv = detailSV {
+                        let mid = (sv.documentView?.bounds.height ?? 1000) * 0.4
+                        sv.contentView.scroll(to: NSPoint(x: 0, y: mid))
+                        sv.reflectScrolledClipView(sv.contentView)
+                    }
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                        saveWindowScreenshot(named: "settings_middle")
+                        
+                        // 3. Bottom
+                        if let sv = detailSV {
+                            let bottom = max(0, (sv.documentView?.bounds.height ?? 1000) - sv.bounds.height)
+                            sv.contentView.scroll(to: NSPoint(x: 0, y: bottom))
+                            sv.reflectScrolledClipView(sv.contentView)
+                        }
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                            saveWindowScreenshot(named: "settings_bottom")
+                            exit(0)
+                        }
+                    }
+                }
+            }
         }
 
         // A second copy would add duplicate menu bar items and a second clipboard monitor.
