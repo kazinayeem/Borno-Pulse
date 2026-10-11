@@ -123,37 +123,51 @@ public enum MenuBarIconSymbol: String, CaseIterable, Identifiable, Codable, Send
 @MainActor
 public enum AppTypography {
     
-    /// Returns the active scaled font based on user preferences in AppSettings
+    public static let fontScaleRange: ClosedRange<Double> = 0.85...1.20
+
+    /// Returns the active scaled font based on user preferences in AppSettings.
+    /// `design: .monospaced` uses the chosen monospaced family; `.rounded` and `.serif` keep their
+    /// system design so numeric displays and decorative text retain their intended shape.
     public static func font(
         size: CGFloat,
         weight: Font.Weight? = nil,
+        design: Font.Design? = nil,
         isMonospaced: Bool = false
     ) -> Font {
         let settings = AppSettings.shared
-        let scaledSize = max(8.0, size * settings.fontScale)
+        let scale = min(max(settings.fontScale, fontScaleRange.lowerBound), fontScaleRange.upperBound)
+        let scaledSize = max(8.0, size * scale)
         let resolvedWeight = weight ?? settings.baseFontWeight.fontWeight
 
-        if isMonospaced {
-            let monoFamily = settings.monospacedFontFamily
-            if let postScript = monoFamily.postScriptName, monoFamily.isAvailableOnSystem {
-                return Font.custom(postScript, size: scaledSize)
-            } else {
-                return Font.system(size: scaledSize, weight: resolvedWeight, design: .monospaced)
+        if isMonospaced || design == .monospaced {
+            if let name = installedName(settings.monospacedFontFamily.postScriptName) {
+                return Font.custom(name, size: scaledSize).weight(resolvedWeight)
             }
+            return Font.system(size: scaledSize, weight: resolvedWeight, design: .monospaced)
         }
 
         let family = settings.appFontFamily
-        if family == .sfPro {
-            return Font.system(size: scaledSize, weight: resolvedWeight, design: .default)
+        if family == .sfPro || design == .rounded || design == .serif {
+            return Font.system(size: scaledSize, weight: resolvedWeight, design: design ?? .default)
         }
 
-        // Custom font resolution with graceful system fallback
-        if let psName = family.postScriptName, family.isAvailableOnSystem {
-            return Font.custom(psName, size: scaledSize)
+        if let name = installedName(family.postScriptName) ?? (family == .inter ? installedName("Inter") : nil) {
+            return Font.custom(name, size: scaledSize).weight(resolvedWeight)
         }
 
-        // Graceful fallback to native system font
         return Font.system(size: scaledSize, weight: resolvedWeight, design: .default)
+    }
+
+    private static var installedNames: [String: Bool] = [:]
+
+    /// `name` when that font is installed. Lookups are cached because every styled view calls this
+    /// on each render.
+    private static func installedName(_ name: String?) -> String? {
+        guard let name else { return nil }
+        if let known = installedNames[name] { return known ? name : nil }
+        let available = NSFont(name: name, size: 12) != nil
+        installedNames[name] = available
+        return available ? name : nil
     }
 
     /// Monospaced technical telemetry font (percentages, clock, memory, hashes)
@@ -181,17 +195,20 @@ public struct AppFontModifier: ViewModifier {
     @ObservedObject private var settings = AppSettings.shared
     let size: CGFloat
     let weight: Font.Weight?
+    var design: Font.Design? = nil
     let isMonospaced: Bool
 
     public func body(content: Content) -> some View {
         content
-            .font(AppTypography.font(size: size, weight: weight, isMonospaced: isMonospaced))
+            .font(AppTypography.font(size: size, weight: weight, design: design, isMonospaced: isMonospaced))
     }
 }
 
 public extension View {
-    func appFont(size: CGFloat, weight: Font.Weight? = nil, isMonospaced: Bool = false) -> some View {
-        self.modifier(AppFontModifier(size: size, weight: weight, isMonospaced: isMonospaced))
+    /// Applies the user's font family, scale and base weight. Use this instead of
+    /// `.font(.system(size:))` so Settings › Typography reaches the view.
+    func appFont(size: CGFloat, weight: Font.Weight? = nil, design: Font.Design? = nil, isMonospaced: Bool = false) -> some View {
+        self.modifier(AppFontModifier(size: size, weight: weight, design: design, isMonospaced: isMonospaced))
     }
 
     func appMonospaced(size: CGFloat, weight: Font.Weight = .regular) -> some View {
