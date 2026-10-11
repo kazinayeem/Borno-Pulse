@@ -1247,6 +1247,9 @@ public enum SmartToolTests {
         // 125–129. PDF Studio: geometry, safe writing, editor, canvas interaction and tools
         runPDFStudioTests(assert)
 
+        // 130. Settings: persistence, publishing, search index and layout
+        runSettingsTests(assert)
+
         return (passed, failed, logs)
     }
 }
