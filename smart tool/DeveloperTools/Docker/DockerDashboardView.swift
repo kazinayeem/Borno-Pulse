@@ -162,7 +162,7 @@ public struct DockerDashboardView: View {
                         confirmationTarget = ("start", c)
                     }
                     .buttonStyle(.borderedProminent)
-                    .tint(AppTheme.matrixGreen)
+                    .tint(AppTheme.successFill)
                     .controlSize(.small)
                 }
                 
@@ -226,7 +226,7 @@ public struct DockerDashboardView: View {
                 refresh()
             }
             .buttonStyle(.borderedProminent)
-            .tint(AppTheme.electricBlue)
+            .tint(AppTheme.accentFill)
         }
         .frame(maxWidth: .infinity, minHeight: 280)
         .smartCard()

@@ -169,7 +169,7 @@ public struct ImageCompressorView: View {
                             Label("Compress All Images", systemImage: "arrow.down.right.and.arrow.up.left")
                         }
                         .buttonStyle(.borderedProminent)
-                        .tint(AppTheme.electricBlue)
+                        .tint(AppTheme.accentFill)
                         .disabled(service.queue.isEmpty)
                     }
                 }

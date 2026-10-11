@@ -42,7 +42,7 @@ public struct LocalBackupHelperView: View {
             }
             .padding(24)
         }
-        .background(Color(NSColor.windowBackgroundColor))
+        .background(AppTheme.contentBackground)
         .sheet(item: $editingProfile) { profile in
             ProfileEditorSheet(profile: profile) { updated in
                 backupService.saveProfile(updated)
@@ -116,7 +116,7 @@ public struct LocalBackupHelperView: View {
                 }
                 .frame(maxWidth: .infinity)
                 .padding(40)
-                .background(Color(NSColor.controlBackgroundColor))
+                .background(AppTheme.cardBackground)
                 .clipShape(RoundedRectangle(cornerRadius: 12))
             } else {
                 ForEach(backupService.profiles) { profile in
@@ -176,9 +176,9 @@ public struct LocalBackupHelperView: View {
             .controlSize(.small)
         }
         .padding(12)
-        .background(Color(NSColor.controlBackgroundColor))
+        .background(AppTheme.cardBackground)
         .clipShape(RoundedRectangle(cornerRadius: 10))
-        .overlay(RoundedRectangle(cornerRadius: 10).stroke(Color.gray.opacity(0.2), lineWidth: 1))
+        .overlay(RoundedRectangle(cornerRadius: 10).stroke(AppTheme.cardBorder, lineWidth: 1))
     }
     
     // MARK: - Profile Card
@@ -286,9 +286,9 @@ public struct LocalBackupHelperView: View {
             }
         }
         .padding(16)
-        .background(Color(NSColor.controlBackgroundColor))
+        .background(AppTheme.cardBackground)
         .clipShape(RoundedRectangle(cornerRadius: 12))
-        .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color.gray.opacity(0.15), lineWidth: 1))
+        .overlay(RoundedRectangle(cornerRadius: 12).stroke(AppTheme.cardBorder, lineWidth: 1))
     }
     
     // MARK: - Restore Tab
@@ -324,7 +324,7 @@ public struct LocalBackupHelperView: View {
                 }
             }
             .padding(16)
-            .background(Color(NSColor.controlBackgroundColor))
+            .background(AppTheme.cardBackground)
             .clipShape(RoundedRectangle(cornerRadius: 10))
             
             if !restoreStatusMessage.isEmpty {

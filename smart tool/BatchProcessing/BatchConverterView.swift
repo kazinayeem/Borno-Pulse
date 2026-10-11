@@ -40,8 +40,9 @@ public struct BatchConverterView: View {
                 }
                 .padding(.horizontal, 10)
                 .padding(.vertical, 5)
-                .background(Color.white.opacity(0.04))
+                .background(AppTheme.insetBackground)
                 .clipShape(RoundedRectangle(cornerRadius: 6))
+                .overlay(RoundedRectangle(cornerRadius: 6).stroke(AppTheme.cardBorder, lineWidth: 0.5))
             }
             
             // Batch Operation Toolbar & Add Files
@@ -235,7 +236,7 @@ public struct BatchConverterView: View {
                 openFilePicker()
             }
             .buttonStyle(.borderedProminent)
-            .tint(AppTheme.electricBlue)
+            .tint(AppTheme.accentFill)
         }
         .frame(maxWidth: .infinity, minHeight: 280)
         .smartCard()
@@ -274,7 +275,7 @@ public struct BatchConverterView: View {
             Label("Add Files...", systemImage: "plus.circle.fill")
         }
         .buttonStyle(.borderedProminent)
-        .tint(AppTheme.electricBlue)
+        .tint(AppTheme.accentFill)
     }
     
     private var operationPicker: some View {
@@ -304,13 +305,13 @@ public struct BatchConverterView: View {
                 batch.cancel()
             }
             .buttonStyle(.borderedProminent)
-            .tint(AppTheme.dangerRed)
+            .tint(AppTheme.dangerFill)
         } else {
             Button("Start Batch (\(batch.queue.filter { $0.status == .queued }.count))") {
                 batch.startProcessing()
             }
             .buttonStyle(.borderedProminent)
-            .tint(AppTheme.matrixGreen)
+            .tint(AppTheme.successFill)
             .disabled(batch.queue.isEmpty)
         }
     }

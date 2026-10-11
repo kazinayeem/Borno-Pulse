@@ -41,9 +41,11 @@ public struct SignatureDrawingView: View {
 
             // Canvas
             ZStack(alignment: .bottomLeading) {
+                // The canvas stands in for the white PDF page, so it stays paper-white in Dark Mode
+                // and the default black ink remains visible.
                 RoundedRectangle(cornerRadius: 12)
-                    .fill(Color(NSColor.controlBackgroundColor))
-                    .overlay(RoundedRectangle(cornerRadius: 12).stroke(AppTheme.cardBorder, lineWidth: 1))
+                    .fill(Color.white)
+                    .overlay(RoundedRectangle(cornerRadius: 12).stroke(AppTheme.borderStrong, lineWidth: 1))
 
                 // Signature baseline guide
                 Path { path in
@@ -51,7 +53,7 @@ public struct SignatureDrawingView: View {
                     path.addLine(to: CGPoint(x: 440, y: 150))
                 }
                 .stroke(style: StrokeStyle(lineWidth: 1, dash: [4, 4]))
-                .foregroundStyle(Color.secondary.opacity(0.3))
+                .foregroundStyle(Color.black.opacity(0.25))
 
                 // Stroke Paths
                 Canvas { context, _ in
@@ -89,7 +91,7 @@ public struct SignatureDrawingView: View {
 
                 Text("Sign above this line using trackpad or mouse")
                     .font(.caption2)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Color.black.opacity(0.5))
                     .padding(12)
             }
             .frame(width: 460, height: 200)
@@ -123,7 +125,7 @@ public struct SignatureDrawingView: View {
                     }
                 }
                 .buttonStyle(.borderedProminent)
-                .tint(AppTheme.electricBlue)
+                .tint(AppTheme.accentFill)
                 .disabled(lines.isEmpty)
             }
         }

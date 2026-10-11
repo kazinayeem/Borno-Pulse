@@ -124,7 +124,7 @@ public struct JSONToolsView: View {
                         formatJSON()
                     }
                     .buttonStyle(.borderedProminent)
-                    .tint(AppTheme.electricBlue)
+                    .tint(AppTheme.accentFill)
                     
                     Button("Minify (Compact)") {
                         minifyJSON()
@@ -159,7 +159,7 @@ public struct JSONToolsView: View {
                             formatJSON()
                         }
                         .buttonStyle(.borderedProminent)
-                        .tint(AppTheme.electricBlue)
+                        .tint(AppTheme.accentFill)
                         
                         Button("Minify (Compact)") {
                             minifyJSON()
@@ -251,7 +251,7 @@ public struct JSONToolsView: View {
                         parseTree()
                     }
                     .buttonStyle(.borderedProminent)
-                    .tint(AppTheme.electricCyan)
+                    .tint(AppTheme.infoFill)
                     
                     HStack(spacing: 6) {
                         Image(systemName: "magnifyingglass")
@@ -285,7 +285,7 @@ public struct JSONToolsView: View {
                             parseTree()
                         }
                         .buttonStyle(.borderedProminent)
-                        .tint(AppTheme.electricCyan)
+                        .tint(AppTheme.infoFill)
                         
                         HStack(spacing: 6) {
                             Image(systemName: "magnifyingglass")
@@ -359,7 +359,7 @@ public struct JSONToolsView: View {
                         convertToCSV()
                     }
                     .buttonStyle(.borderedProminent)
-                    .tint(AppTheme.matrixGreen)
+                    .tint(AppTheme.successFill)
                     
                     Spacer()
                     
@@ -381,7 +381,7 @@ public struct JSONToolsView: View {
                         convertToCSV()
                     }
                     .buttonStyle(.borderedProminent)
-                    .tint(AppTheme.matrixGreen)
+                    .tint(AppTheme.successFill)
                     
                     if !outputText.isEmpty {
                         HStack {
@@ -439,7 +439,7 @@ public struct JSONToolsView: View {
                     runDiff()
                 }
                 .buttonStyle(.borderedProminent)
-                .tint(AppTheme.purpleAccent)
+                .tint(AppTheme.purpleFill)
                 
                 Spacer()
                 

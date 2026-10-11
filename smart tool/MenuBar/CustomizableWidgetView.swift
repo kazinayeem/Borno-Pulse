@@ -208,7 +208,7 @@ public struct CustomizableWidgetView: View {
                             GeometryReader { geo in
                                 ZStack(alignment: .leading) {
                                     Capsule()
-                                        .fill(Color.gray.opacity(0.15))
+                                        .fill(AppTheme.chartTrack)
                                         .frame(height: 3)
                                     
                                     Capsule()
@@ -347,8 +347,9 @@ public struct CustomizableWidgetView: View {
                     }
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 5)
-                    .background(Color.white.opacity(0.04))
+                    .background(AppTheme.subtleFill)
                     .clipShape(RoundedRectangle(cornerRadius: 5, style: .continuous))
+                    .contentShape(RoundedRectangle(cornerRadius: 5, style: .continuous))
                     .foregroundStyle(action == .quit ? AppTheme.dangerRed : AppTheme.textSecondary)
                 }
                 .buttonStyle(.plain)

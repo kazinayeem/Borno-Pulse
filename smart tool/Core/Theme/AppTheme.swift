@@ -25,9 +25,10 @@ public enum AppTheme {
 
     // MARK: - Accents
 
-    // Light values are tuned for at least 4.5:1 contrast as text on white cards.
+    // Values are tuned for at least 4.5:1 contrast as text on cards, inputs and the page canvas
+    // in both appearances (enforced by the theme contrast tests).
     public static let electricBlue = dynamic(
-        light: NSColor(red: 0.05, green: 0.44, blue: 0.90, alpha: 1.0),
+        light: NSColor(red: 0.04, green: 0.41, blue: 0.86, alpha: 1.0),
         dark: NSColor(red: 0.25, green: 0.62, blue: 1.00, alpha: 1.0)
     )
     public static let electricBlueLight = dynamic(
@@ -44,13 +45,13 @@ public enum AppTheme {
     // MARK: - Status
 
     public static let successGreen = dynamic(
-        light: NSColor(red: 0.10, green: 0.52, blue: 0.27, alpha: 1.0),
+        light: NSColor(red: 0.08, green: 0.48, blue: 0.25, alpha: 1.0),
         dark: NSColor(red: 0.25, green: 0.82, blue: 0.52, alpha: 1.0)
     )
     public static let matrixGreen = successGreen
 
     public static let warningAmber = dynamic(
-        light: NSColor(red: 0.72, green: 0.40, blue: 0.00, alpha: 1.0),
+        light: NSColor(red: 0.64, green: 0.35, blue: 0.00, alpha: 1.0),
         dark: NSColor(red: 1.00, green: 0.74, blue: 0.22, alpha: 1.0)
     )
 
@@ -74,18 +75,22 @@ public enum AppTheme {
     public static let error = dangerRed
     public static let info = electricBlue
 
-    /// Solid fills for prominent buttons. Mid-tone in both appearances so white labels stay readable.
+    /// Solid fills for prominent buttons. Mid-tone in both appearances so white labels keep 4.5:1.
     public static let accentFill = dynamic(
         light: NSColor(red: 0.05, green: 0.44, blue: 0.90, alpha: 1.0),
-        dark: NSColor(red: 0.10, green: 0.48, blue: 0.95, alpha: 1.0)
+        dark: NSColor(red: 0.05, green: 0.44, blue: 0.90, alpha: 1.0)
     )
     public static let successFill = dynamic(
         light: NSColor(red: 0.09, green: 0.50, blue: 0.26, alpha: 1.0),
-        dark: NSColor(red: 0.12, green: 0.56, blue: 0.32, alpha: 1.0)
+        dark: NSColor(red: 0.09, green: 0.50, blue: 0.26, alpha: 1.0)
     )
     public static let infoFill = dynamic(
         light: NSColor(red: 0.00, green: 0.46, blue: 0.60, alpha: 1.0),
-        dark: NSColor(red: 0.00, green: 0.52, blue: 0.66, alpha: 1.0)
+        dark: NSColor(red: 0.00, green: 0.46, blue: 0.60, alpha: 1.0)
+    )
+    public static let purpleFill = dynamic(
+        light: NSColor(red: 0.45, green: 0.22, blue: 0.78, alpha: 1.0),
+        dark: NSColor(red: 0.45, green: 0.22, blue: 0.78, alpha: 1.0)
     )
     public static let dangerFill = dynamic(
         light: NSColor(red: 0.78, green: 0.15, blue: 0.19, alpha: 1.0),
@@ -192,7 +197,7 @@ public enum AppTheme {
     )
 
     public static let textTertiary = dynamic(
-        light: NSColor(red: 0.47, green: 0.49, blue: 0.53, alpha: 1.0),
+        light: NSColor(red: 0.42, green: 0.44, blue: 0.48, alpha: 1.0),
         dark: NSColor(red: 0.54, green: 0.56, blue: 0.60, alpha: 1.0)
     )
 

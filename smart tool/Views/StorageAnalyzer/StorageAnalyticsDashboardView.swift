@@ -173,7 +173,7 @@ public struct StorageAnalyticsDashboardView: View {
                 }
             }
             .buttonStyle(.borderedProminent)
-            .tint(AppTheme.electricBlue)
+            .tint(AppTheme.accentFill)
         }
     }
     

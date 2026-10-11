@@ -214,13 +214,13 @@ public struct NetworkToolkitView: View {
                         stopPing()
                     }
                     .buttonStyle(.borderedProminent)
-                    .tint(AppTheme.dangerRed)
+                    .tint(AppTheme.dangerFill)
                 } else {
                     Button("Start Ping") {
                         startPing()
                     }
                     .buttonStyle(.borderedProminent)
-                    .tint(AppTheme.electricBlue)
+                    .tint(AppTheme.accentFill)
                     .disabled(pingHost.trimmingCharacters(in: .whitespaces).isEmpty)
                 }
             }
@@ -317,7 +317,7 @@ public struct NetworkToolkitView: View {
                     runDNSLookup()
                 }
                 .buttonStyle(.borderedProminent)
-                .tint(AppTheme.electricCyan)
+                .tint(AppTheme.infoFill)
                 .disabled(dnsLoading || dnsHost.trimmingCharacters(in: .whitespaces).isEmpty)
             }
             
@@ -414,7 +414,7 @@ public struct NetworkToolkitView: View {
                     inspectSSL()
                 }
                 .buttonStyle(.borderedProminent)
-                .tint(AppTheme.matrixGreen)
+                .tint(AppTheme.successFill)
                 .disabled(sslLoading || sslHost.trimmingCharacters(in: .whitespaces).isEmpty)
             }
             

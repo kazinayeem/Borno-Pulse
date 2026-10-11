@@ -171,7 +171,7 @@ public struct ImageConverterView: View {
                             Label("Convert All Images", systemImage: "arrow.triangle.2.circlepath")
                         }
                         .buttonStyle(.borderedProminent)
-                        .tint(AppTheme.electricBlue)
+                        .tint(AppTheme.accentFill)
                         .disabled(service.queue.isEmpty)
                     }
                 }

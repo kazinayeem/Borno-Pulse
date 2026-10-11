@@ -154,7 +154,7 @@ public struct PDFCompressorView: View {
                             Label("Compress All PDFs", systemImage: "arrow.down.doc.fill")
                         }
                         .buttonStyle(.borderedProminent)
-                        .tint(AppTheme.electricBlue)
+                        .tint(AppTheme.accentFill)
                         .disabled(service.queue.isEmpty)
                     }
                 }

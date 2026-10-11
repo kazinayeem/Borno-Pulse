@@ -68,7 +68,7 @@ public struct APIRequestTesterView: View {
                     .frame(width: 80)
                 }
                 .buttonStyle(.borderedProminent)
-                .tint(AppTheme.electricBlue)
+                .tint(AppTheme.accentFill)
                 .disabled(isLoading || urlString.trimmingCharacters(in: .whitespaces).isEmpty)
                 
                 // History Button
@@ -281,7 +281,7 @@ public struct APIRequestTesterView: View {
                 }
             }
             .buttonStyle(.borderedProminent)
-            .tint(AppTheme.purpleAccent)
+            .tint(AppTheme.purpleFill)
             
             Spacer()
         }

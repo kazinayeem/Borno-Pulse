@@ -71,7 +71,7 @@ public struct BatteryDetailView: View {
             }
             .padding(24)
         }
-        .background(Color(NSColor.windowBackgroundColor))
+        .background(AppTheme.contentBackground)
         .sheet(isPresented: $showingAlertSettingsSheet) {
             BatterySettingsSheet()
         }
@@ -225,7 +225,7 @@ public struct BatteryDetailView: View {
         .padding(20)
         .background(
             RoundedRectangle(cornerRadius: 14)
-                .fill(Color(NSColor.controlBackgroundColor))
+                .fill(AppTheme.cardBackground)
                 .overlay(
                     RoundedRectangle(cornerRadius: 14)
                         .stroke(headerColor.opacity(0.25), lineWidth: 1)
@@ -388,7 +388,7 @@ public struct BatteryDetailView: View {
             .clipShape(RoundedRectangle(cornerRadius: 8))
         }
         .padding(18)
-        .background(Color(NSColor.controlBackgroundColor))
+        .background(AppTheme.cardBackground)
         .clipShape(RoundedRectangle(cornerRadius: 12))
     }
 
@@ -524,7 +524,7 @@ public struct BatteryDetailView: View {
         }
         .padding(14)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color(NSColor.controlBackgroundColor))
+        .background(AppTheme.cardBackground)
         .clipShape(RoundedRectangle(cornerRadius: 10))
         .help(helpText)
     }
@@ -622,7 +622,7 @@ public struct BatteryDetailView: View {
                     }
                 }
                 .padding(16)
-                .background(Color(NSColor.controlBackgroundColor))
+                .background(AppTheme.cardBackground)
                 .clipShape(RoundedRectangle(cornerRadius: 12))
             } else {
                 VStack(spacing: 8) {
@@ -637,7 +637,7 @@ public struct BatteryDetailView: View {
                 }
                 .frame(maxWidth: .infinity)
                 .padding(32)
-                .background(Color(NSColor.controlBackgroundColor))
+                .background(AppTheme.cardBackground)
                 .clipShape(RoundedRectangle(cornerRadius: 12))
             }
         }
@@ -710,7 +710,7 @@ public struct BatteryDetailView: View {
             }
         }
         .padding(18)
-        .background(Color(NSColor.controlBackgroundColor))
+        .background(AppTheme.cardBackground)
         .clipShape(RoundedRectangle(cornerRadius: 12))
     }
 
@@ -812,7 +812,7 @@ public struct BatteryDetailView: View {
         }
         .padding(14)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color(NSColor.controlBackgroundColor))
+        .background(AppTheme.cardBackground)
         .clipShape(RoundedRectangle(cornerRadius: 10))
     }
 
@@ -874,7 +874,7 @@ public struct BatteryDetailView: View {
                     }
                 }
                 .padding(16)
-                .background(Color(NSColor.controlBackgroundColor))
+                .background(AppTheme.cardBackground)
                 .clipShape(RoundedRectangle(cornerRadius: 12))
             } else {
                 VStack(spacing: 10) {
@@ -891,7 +891,7 @@ public struct BatteryDetailView: View {
                 }
                 .frame(maxWidth: .infinity)
                 .padding(36)
-                .background(Color(NSColor.controlBackgroundColor))
+                .background(AppTheme.cardBackground)
                 .clipShape(RoundedRectangle(cornerRadius: 12))
             }
         }
@@ -920,7 +920,7 @@ public struct BatteryDetailView: View {
                 .foregroundStyle(.secondary)
         }
         .padding(20)
-        .background(Color(NSColor.controlBackgroundColor))
+        .background(AppTheme.cardBackground)
         .clipShape(RoundedRectangle(cornerRadius: 12))
     }
 
@@ -938,7 +938,7 @@ public struct BatteryDetailView: View {
             }
         }
         .padding(18)
-        .background(Color(NSColor.controlBackgroundColor))
+        .background(AppTheme.cardBackground)
         .clipShape(RoundedRectangle(cornerRadius: 12))
     }
 

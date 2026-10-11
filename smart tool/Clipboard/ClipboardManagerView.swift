@@ -91,7 +91,7 @@ public struct ClipboardManagerView: View {
                 clipboard.isEnabled = true
             }
             .buttonStyle(.borderedProminent)
-            .tint(AppTheme.matrixGreen)
+            .tint(AppTheme.successFill)
         }
         .padding(12)
         .smartCard()
@@ -163,6 +163,7 @@ public struct ClipboardManagerView: View {
                 }
                 .buttonStyle(.plain)
                 .help("Pin to keep forever")
+                .accessibilityLabel(item.isPinned ? "Unpin item" : "Pin item")
                 
                 // Copy Back Button
                 Button {
@@ -191,6 +192,7 @@ public struct ClipboardManagerView: View {
                 }
                 .buttonStyle(.plain)
                 .help("Delete item")
+                .accessibilityLabel("Delete item")
             }
         }
         .padding(10)
@@ -228,8 +230,8 @@ public struct ClipboardManagerView: View {
                 }
                 .buttonStyle(.borderedProminent)
             }
-            .padding(16)
-            .background(AppTheme.cardBackgroundSecondary)
+        .padding(16)
+        .background(AppTheme.toolbarBackground)
             
             Divider()
             
@@ -267,7 +269,7 @@ public struct ClipboardManagerView: View {
                         showingSettingsSheet = false
                     }
                     .buttonStyle(.borderedProminent)
-                    .tint(AppTheme.dangerRed)
+                    .tint(AppTheme.dangerFill)
                 }
                 .padding(18)
             }
@@ -322,9 +324,7 @@ public struct ClipboardManagerView: View {
         }
         .padding(.horizontal, 8)
         .padding(.vertical, 6)
-        .background(AppTheme.cardBackground)
-        .clipShape(RoundedRectangle(cornerRadius: 6))
-        .overlay(RoundedRectangle(cornerRadius: 6).stroke(AppTheme.cardBorder, lineWidth: 1))
+        .themedInputField()
         .frame(maxWidth: 280)
     }
     

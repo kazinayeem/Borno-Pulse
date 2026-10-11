@@ -69,7 +69,7 @@ public struct FocusPomodoroView: View {
             }
             .padding(.horizontal, 12)
             .padding(.vertical, 5)
-            .background(Color.white.opacity(0.04))
+            .background(AppTheme.subtleFill)
             .clipShape(Capsule())
             
             // Circular Ring & Digits
@@ -77,7 +77,7 @@ public struct FocusPomodoroView: View {
                 let progress = focus.totalSessionSeconds > 0 ? (focus.remainingSeconds / focus.totalSessionSeconds) : 0
                 
                 Circle()
-                    .stroke(Color.white.opacity(0.06), lineWidth: 10)
+                    .stroke(AppTheme.subtleFillStrong, lineWidth: 10)
                     .frame(width: 200, height: 200)
                 
                 Circle()

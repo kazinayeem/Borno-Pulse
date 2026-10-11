@@ -106,7 +106,7 @@ public struct NetworkDetailView: View {
                             StatusBadge(text: iface.isUp ? "Active" : "Down", color: iface.isUp ? AppTheme.successGreen : AppTheme.dangerRed)
                         }
                         .padding(10)
-                        .background(Color.white.opacity(0.03))
+                        .background(AppTheme.insetBackground)
                         .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
                     }
                 }

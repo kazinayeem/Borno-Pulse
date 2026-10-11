@@ -140,7 +140,7 @@ public struct PrivacySecurityWorkspaceView: View {
                     Label("Select Files to Hash...", systemImage: "plus.circle.fill")
                 }
                 .buttonStyle(.borderedProminent)
-                .tint(AppTheme.electricBlue)
+                .tint(AppTheme.accentFill)
                 
                 Spacer()
                 
@@ -181,9 +181,7 @@ public struct PrivacySecurityWorkspaceView: View {
                 }
             }
             .padding(8)
-            .background(AppTheme.cardBackground)
-            .clipShape(RoundedRectangle(cornerRadius: 6))
-            .overlay(RoundedRectangle(cornerRadius: 6).stroke(AppTheme.cardBorder, lineWidth: 1))
+            .themedInputField()
             
             // Results List
             if hashResults.isEmpty {
@@ -269,7 +267,7 @@ public struct PrivacySecurityWorkspaceView: View {
                     selectFileForMetadata()
                 }
                 .buttonStyle(.borderedProminent)
-                .tint(AppTheme.purpleAccent)
+                .tint(AppTheme.purpleFill)
                 
                 Spacer()
                 

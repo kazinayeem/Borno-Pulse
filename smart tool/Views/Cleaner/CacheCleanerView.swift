@@ -282,7 +282,7 @@ public struct CacheCleanerView: View {
                 Label("Clean Selected Items", systemImage: "trash")
             }
             .buttonStyle(.borderedProminent)
-            .tint(AppTheme.electricBlue)
+            .tint(AppTheme.accentFill)
             .disabled(service.isScanning || service.isCleaning || !service.categories.contains { $0.isSelected })
         }
         .padding(.vertical, 8)

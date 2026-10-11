@@ -185,14 +185,14 @@ public struct SensorsDetailView: View {
     private func thermalLevelCard(title: String, desc: String, active: Bool, color: Color) -> some View {
         VStack(alignment: .leading, spacing: 6) {
             HStack {
-                Circle().fill(active ? color : Color.gray.opacity(0.3)).frame(width: 8, height: 8)
+                Circle().fill(active ? color : AppTheme.disabledText).frame(width: 8, height: 8)
                 Text(title).font(.system(size: 13, weight: .bold)).foregroundStyle(active ? color : AppTheme.textSecondary)
             }
             Text(desc).font(.system(size: 10)).foregroundStyle(AppTheme.textTertiary)
         }
         .padding(12)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(active ? color.opacity(0.12) : Color.white.opacity(0.03))
+        .background(active ? color.opacity(0.12) : AppTheme.insetBackground)
         .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
         .overlay(
             RoundedRectangle(cornerRadius: 8, style: .continuous)

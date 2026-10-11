@@ -277,7 +277,7 @@ public struct PDFStudioWorkspaceView: View {
                             Label("Add Files", systemImage: "plus.circle.fill")
                         }
                         .buttonStyle(.borderedProminent)
-                        .tint(AppTheme.electricBlue)
+                        .tint(AppTheme.accentFill)
                         .controlSize(.small)
                         
                         if !assemblyService.pages.isEmpty {
@@ -327,7 +327,7 @@ public struct PDFStudioWorkspaceView: View {
                                 Label("Add Files", systemImage: "plus.circle.fill")
                             }
                             .buttonStyle(.borderedProminent)
-                            .tint(AppTheme.electricBlue)
+                            .tint(AppTheme.accentFill)
                             .controlSize(.small)
                             
                             if !assemblyService.pages.isEmpty {
@@ -402,7 +402,7 @@ public struct PDFStudioWorkspaceView: View {
                             selectFilesForAssembly()
                         }
                         .buttonStyle(.borderedProminent)
-                        .tint(AppTheme.electricBlue)
+                        .tint(AppTheme.accentFill)
                     }
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                     .padding(32)
@@ -658,7 +658,7 @@ public struct PDFStudioWorkspaceView: View {
                 Label("Export PDF", systemImage: "arrow.down.doc.fill")
             }
             .buttonStyle(.borderedProminent)
-            .tint(AppTheme.electricBlue)
+            .tint(AppTheme.accentFill)
             .controlSize(.small)
             .disabled(assemblyService.pages.isEmpty || assemblyService.isProcessing)
         }
@@ -795,7 +795,7 @@ public struct PDFStudioWorkspaceView: View {
                     saveEditedDocumentAs()
                 }
                 .buttonStyle(.borderedProminent)
-                .tint(AppTheme.electricBlue)
+                .tint(AppTheme.accentFill)
                 .controlSize(.small)
                 .disabled(editorService.document == nil)
             }
@@ -863,7 +863,7 @@ public struct PDFStudioWorkspaceView: View {
                         openPDFForEditing()
                     }
                     .buttonStyle(.borderedProminent)
-                    .tint(AppTheme.electricBlue)
+                    .tint(AppTheme.accentFill)
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
@@ -927,7 +927,7 @@ public struct PDFStudioWorkspaceView: View {
                                 convertOfficeDocument()
                             }
                             .buttonStyle(.borderedProminent)
-                            .tint(AppTheme.electricBlue)
+                            .tint(AppTheme.accentFill)
                             .disabled(officeService.isProcessing)
                             
                             if let converted = officeConvertedURL {
@@ -1000,7 +1000,7 @@ public struct PDFStudioWorkspaceView: View {
                                 runOCRExtractText()
                             }
                             .buttonStyle(.borderedProminent)
-                            .tint(AppTheme.electricBlue)
+                            .tint(AppTheme.accentFill)
                             .disabled(ocrService.isProcessing)
                             
                             Button("Generate Searchable PDF") {
@@ -1091,7 +1091,7 @@ public struct PDFStudioWorkspaceView: View {
                             executeSplitPDF()
                         }
                         .buttonStyle(.borderedProminent)
-                        .tint(AppTheme.electricBlue)
+                        .tint(AppTheme.accentFill)
                         
                         if !splitStatusMessage.isEmpty {
                             Text(splitStatusMessage)
@@ -1133,7 +1133,7 @@ public struct PDFStudioWorkspaceView: View {
                             executeExtractPages()
                         }
                         .buttonStyle(.borderedProminent)
-                        .tint(AppTheme.electricBlue)
+                        .tint(AppTheme.accentFill)
                     }
                     .padding(16)
                     .background(AppTheme.cardBackgroundSecondary)
@@ -1170,7 +1170,7 @@ public struct PDFStudioWorkspaceView: View {
                                 sanitizeMetadataCopy()
                             }
                             .buttonStyle(.borderedProminent)
-                            .tint(AppTheme.matrixGreen)
+                            .tint(AppTheme.successFill)
                         }
                         
                         Divider()
@@ -1237,7 +1237,7 @@ public struct PDFStudioWorkspaceView: View {
                 }
             }
             .buttonStyle(.borderedProminent)
-            .tint(AppTheme.electricBlue)
+            .tint(AppTheme.accentFill)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .padding(30)

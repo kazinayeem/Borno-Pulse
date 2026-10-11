@@ -98,7 +98,7 @@ public struct ImageMetadataView: View {
                             Label("Export Privacy-Clean Copy (Strip Location)", systemImage: "shield.slash.fill")
                         }
                         .buttonStyle(.borderedProminent)
-                        .tint(AppTheme.electricBlue)
+                        .tint(AppTheme.accentFill)
                         .controlSize(.small)
                         
                         if let msg = exportMessage {

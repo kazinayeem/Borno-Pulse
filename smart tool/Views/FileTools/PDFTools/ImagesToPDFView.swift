@@ -170,7 +170,7 @@ public struct ImagesToPDFView: View {
                             Label("Generate PDF Document", systemImage: "doc.text.fill")
                         }
                         .buttonStyle(.borderedProminent)
-                        .tint(AppTheme.electricBlue)
+                        .tint(AppTheme.accentFill)
                         .disabled(service.imagesQueue.isEmpty)
                     }
                 }

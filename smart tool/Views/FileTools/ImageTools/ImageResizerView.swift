@@ -167,7 +167,7 @@ public struct ImageResizerView: View {
                             Label("Resize All Images", systemImage: "arrow.up.left.and.arrow.down.right")
                         }
                         .buttonStyle(.borderedProminent)
-                        .tint(AppTheme.electricBlue)
+                        .tint(AppTheme.accentFill)
                         .disabled(service.queue.isEmpty)
                     }
                 }

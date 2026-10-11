@@ -101,7 +101,7 @@ public struct StorageDetailView: View {
                             }
                         }
                         .padding(12)
-                        .background(Color.white.opacity(0.03))
+                        .background(AppTheme.insetBackground)
                         .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
                     }
                 }
@@ -127,13 +127,8 @@ public struct StorageDetailView: View {
                                 Text("Open Storage Analytics")
                             }
                             .font(.system(size: 12, weight: .semibold))
-                            .padding(.horizontal, 14)
-                            .padding(.vertical, 7)
-                            .background(AppTheme.electricBlue)
-                            .foregroundStyle(.white)
-                            .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
                         }
-                        .buttonStyle(.plain)
+                        .buttonStyle(.themedPrimary(fill: AppTheme.accentFill, horizontalPadding: 14, verticalPadding: 7))
                     }
                 }
                 .smartCard()

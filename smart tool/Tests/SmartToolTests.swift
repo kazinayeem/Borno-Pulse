@@ -7,6 +7,7 @@ import AppKit
 import CryptoKit
 import Foundation
 import PDFKit
+import SwiftUI
 
 @MainActor
 public enum SmartToolTests {
@@ -1147,6 +1148,98 @@ public enum SmartToolTests {
             "\(component.displayName)=\(Formatters.temperature(liveSensors.temperature(for: component)?.celsius))"
         }.joined(separator: ", ") + ", \(liveSensors.readings.count) readings, fans: \(liveSensors.fansState.displayText)")
         AppSettings.shared.temperatureUnit = savedUnit
+
+        // 106. Theme: Appearance Preference Mapping & Legacy Migration
+        assert(AppAppearanceMode.light.nsAppearance?.name == .aqua, "Light preference applies the Aqua appearance app-wide")
+        assert(AppAppearanceMode.dark.nsAppearance?.name == .darkAqua, "Dark preference applies the Dark Aqua appearance app-wide")
+        assert(AppAppearanceMode.system.nsAppearance == nil, "System preference clears the override so macOS decides")
+        assert(AppAppearanceMode.migrating(storedValue: nil) == .light, "New installs default to Light Mode")
+        assert(AppAppearanceMode.migrating(storedValue: "Dark Graphite") == .dark, "Legacy 'Dark Graphite' preference is preserved as Dark")
+        assert(AppAppearanceMode.migrating(storedValue: "System Default") == .system, "Legacy 'System Default' preference is preserved as System")
+        assert(AppAppearanceMode.allCases.allSatisfy { AppAppearanceMode.migrating(storedValue: $0.rawValue) == $0 }, "Current preference values round-trip unchanged")
+        assert(AppSettings.shared.appearanceMode.rawValue == UserDefaults.standard.string(forKey: "appearanceMode"), "Stored appearance value is always readable by @AppStorage")
+
+        // 107. Theme: Live Appearance Switching
+        let savedAppearance = AppSettings.shared.appearanceMode
+        let appearanceController = AppearanceController.shared
+        for mode in [AppAppearanceMode.dark, .light, .system, .dark] {
+            appearanceController.apply(mode)
+            assert(NSApp.appearance?.name == mode.nsAppearance?.name, "Switching to \(mode.rawValue) updates NSApp.appearance immediately")
+        }
+        appearanceController.apply(.light)
+        assert(appearanceController.resolvedAppearance?.name == .aqua, "Popovers resolve to Aqua while Light is applied")
+        appearanceController.apply(.dark)
+        assert(appearanceController.resolvedAppearance?.name == .darkAqua, "Popovers resolve to Dark Aqua while Dark is applied")
+        appearanceController.apply(savedAppearance)
+
+        // 108. Theme: Semantic Tokens Adapt to Appearance
+        func resolvedColor(_ color: Color, _ name: NSAppearance.Name) -> NSColor {
+            var result = NSColor.clear
+            NSAppearance(named: name)?.performAsCurrentDrawingAppearance {
+                result = NSColor(color).usingColorSpace(.sRGB) ?? .clear
+            }
+            return result
+        }
+        func luminance(_ c: NSColor) -> Double {
+            func channel(_ v: CGFloat) -> Double {
+                let v = Double(v)
+                return v <= 0.03928 ? v / 12.92 : pow((v + 0.055) / 1.055, 2.4)
+            }
+            return 0.2126 * channel(c.redComponent) + 0.7152 * channel(c.greenComponent) + 0.0722 * channel(c.blueComponent)
+        }
+        func contrast(_ fg: Color, on bg: Color, _ name: NSAppearance.Name) -> Double {
+            let a = luminance(resolvedColor(fg, name))
+            let b = luminance(resolvedColor(bg, name))
+            return (max(a, b) + 0.05) / (min(a, b) + 0.05)
+        }
+        let adaptiveTokens: [(String, Color)] = [
+            ("contentBackground", AppTheme.contentBackground), ("cardBackground", AppTheme.cardBackground),
+            ("elevatedCardBackground", AppTheme.elevatedCardBackground), ("inputBackground", AppTheme.inputBackground),
+            ("textPrimary", AppTheme.textPrimary), ("textSecondary", AppTheme.textSecondary),
+            ("cardBorder", AppTheme.cardBorder), ("subtleFill", AppTheme.subtleFill), ("chartGrid", AppTheme.chartGrid)
+        ]
+        for (name, token) in adaptiveTokens {
+            assert(resolvedColor(token, .aqua) != resolvedColor(token, .darkAqua), "\(name) resolves differently in Light and Dark")
+        }
+        assert(luminance(resolvedColor(AppTheme.cardBackground, .aqua)) > 0.8, "Light cards are light surfaces")
+        assert(luminance(resolvedColor(AppTheme.cardBackground, .darkAqua)) < 0.05, "Dark cards are graphite surfaces")
+        assert(resolvedColor(AppTheme.subtleFill, .aqua).alphaComponent > 0, "Subtle fills stay visible in Light Mode")
+        assert(AppTheme.selectableFill(true) != AppTheme.selectableFill(false), "Selected chips are visually distinct from unselected chips")
+
+        // 109. Theme: Text Contrast (WCAG AA 4.5:1 for body text)
+        let textSurfaces: [(String, Color)] = [
+            ("card", AppTheme.cardBackground), ("canvas", AppTheme.contentBackground), ("input", AppTheme.inputBackground)
+        ]
+        let textTokens: [(String, Color, Double)] = [
+            ("textPrimary", AppTheme.textPrimary, 7.0), ("textSecondary", AppTheme.textSecondary, 4.5),
+            ("textTertiary", AppTheme.textTertiary, 4.5), ("electricBlue", AppTheme.electricBlue, 4.5),
+            ("successGreen", AppTheme.successGreen, 4.5), ("warningAmber", AppTheme.warningAmber, 4.5),
+            ("dangerRed", AppTheme.dangerRed, 4.5)
+        ]
+        for appearance in [NSAppearance.Name.aqua, .darkAqua] {
+            let label = appearance == .aqua ? "Light" : "Dark"
+            for (surfaceName, surface) in textSurfaces {
+                for (tokenName, token, minimum) in textTokens {
+                    let ratio = contrast(token, on: surface, appearance)
+                    assert(ratio >= minimum, "\(label): \(tokenName) on \(surfaceName) meets \(minimum):1 (got \(String(format: "%.2f", ratio)))")
+                }
+            }
+            let disabledRatio = contrast(AppTheme.disabledText, on: AppTheme.cardBackground, appearance)
+            assert(disabledRatio >= 2.5, "\(label): disabled text remains legible (got \(String(format: "%.2f", disabledRatio)))")
+        }
+
+        // 110. Theme: Button Label Contrast
+        let buttonFills: [(String, Color)] = [
+            ("accentFill", AppTheme.accentFill), ("successFill", AppTheme.successFill),
+            ("infoFill", AppTheme.infoFill), ("purpleFill", AppTheme.purpleFill), ("dangerFill", AppTheme.dangerFill)
+        ]
+        for appearance in [NSAppearance.Name.aqua, .darkAqua] {
+            let label = appearance == .aqua ? "Light" : "Dark"
+            for (fillName, fill) in buttonFills {
+                let ratio = contrast(AppTheme.textOnAccent, on: fill, appearance)
+                assert(ratio >= 4.5, "\(label): white label on \(fillName) meets 4.5:1 (got \(String(format: "%.2f", ratio)))")
+            }
+        }
 
         return (passed, failed, logs)
     }

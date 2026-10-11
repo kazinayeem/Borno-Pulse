@@ -844,7 +844,7 @@ public struct MenuBarPopoverView: View {
                     .font(.system(size: 11, weight: .medium))
             }
             .buttonStyle(.borderedProminent)
-            .tint(AppTheme.electricBlue)
+            .tint(AppTheme.accentFill)
             .controlSize(.small)
 
             Button {

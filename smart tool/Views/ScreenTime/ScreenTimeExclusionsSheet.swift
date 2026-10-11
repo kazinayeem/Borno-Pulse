@@ -39,7 +39,7 @@ public struct ScreenTimeExclusionsSheet: View {
                     dismiss()
                 }
                 .buttonStyle(.borderedProminent)
-                .tint(AppTheme.electricBlue)
+                .tint(AppTheme.accentFill)
             }
             .padding(18)
             .background(AppTheme.cardBackgroundSecondary)
@@ -166,7 +166,7 @@ public struct ScreenTimeExclusionsSheet: View {
                                 showingClearConfirmation = true
                             }
                             .buttonStyle(.borderedProminent)
-                            .tint(AppTheme.dangerRed)
+                            .tint(AppTheme.dangerFill)
                             
                             Spacer()
                         }

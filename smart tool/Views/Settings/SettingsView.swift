@@ -526,7 +526,7 @@ public struct SettingsView: View {
                         selectedTab = .appearanceTypography
                     }
                     .buttonStyle(.borderedProminent)
-                    .tint(AppTheme.electricBlue)
+                    .tint(AppTheme.accentFill)
                     .controlSize(.small)
                 }
                 .smartCard()
@@ -923,7 +923,7 @@ public struct SettingsView: View {
                     testResults = SmartToolTests.runAllTests()
                 }
                 .buttonStyle(.borderedProminent)
-                .tint(AppTheme.electricBlue)
+                .tint(AppTheme.accentFill)
                 .controlSize(.small)
             }
             

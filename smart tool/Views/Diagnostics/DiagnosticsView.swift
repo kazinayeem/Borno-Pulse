@@ -28,7 +28,7 @@ public struct DiagnosticsView: View {
                         Label("Export Redacted Report", systemImage: "square.and.arrow.up")
                     }
                     .buttonStyle(.borderedProminent)
-                    .tint(AppTheme.electricBlue)
+                    .tint(AppTheme.accentFill)
                 }
                 
                 if let msg = exportSuccessMessage {
@@ -138,7 +138,7 @@ public struct DiagnosticsView: View {
                     }
                 }
                 .buttonStyle(.borderedProminent)
-                .tint(AppTheme.electricBlue)
+                .tint(AppTheme.accentFill)
                 .disabled(isRunningTests)
             }
             

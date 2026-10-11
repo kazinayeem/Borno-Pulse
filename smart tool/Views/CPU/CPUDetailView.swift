@@ -74,7 +74,7 @@ public struct CPUDetailView: View {
                                 )
                             }
                             .padding(10)
-                            .background(Color.white.opacity(0.04))
+                            .background(AppTheme.insetBackground)
                             .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
                         }
                     }

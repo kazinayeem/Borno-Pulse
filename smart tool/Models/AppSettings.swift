@@ -286,12 +286,18 @@ public enum AppAppearanceMode: String, CaseIterable, Identifiable, Codable {
     
     public init(from decoder: Decoder) throws {
         let container = try decoder.singleValueContainer()
-        let raw = try container.decode(String.self)
-        switch raw.lowercased() {
-        case "light": self = .light
-        case "dark", "dark graphite": self = .dark
-        case "system", "system default": self = .system
-        default: self = .light
+        self = .migrating(storedValue: try container.decode(String.self))
+    }
+
+    /// Maps a persisted value, including the pre-1.0 "Dark Graphite" / "System Default" raw values,
+    /// to a current mode. `@AppStorage` only uses `init(rawValue:)`, so legacy values must be
+    /// rewritten before it reads them or the user's choice silently falls back to Light.
+    /// A missing value (new install) resolves to Light.
+    public static func migrating(storedValue: String?) -> AppAppearanceMode {
+        switch storedValue?.lowercased() {
+        case "dark", "dark graphite": return .dark
+        case "system", "system default": return .system
+        default: return .light
         }
     }
 }
@@ -447,8 +453,10 @@ public final class AppSettings: ObservableObject {
     }
     
     private init() {
-        if UserDefaults.standard.object(forKey: "appearanceMode") == nil {
-            UserDefaults.standard.set(AppAppearanceMode.light.rawValue, forKey: "appearanceMode")
+        let storedAppearance = UserDefaults.standard.string(forKey: "appearanceMode")
+        let normalizedAppearance = AppAppearanceMode.migrating(storedValue: storedAppearance)
+        if storedAppearance != normalizedAppearance.rawValue {
+            UserDefaults.standard.set(normalizedAppearance.rawValue, forKey: "appearanceMode")
         }
 
         // Load multi-metric bar preferences

@@ -198,7 +198,7 @@ public struct SmartToolWidgetEntryView: View {
                 StatusBadge(text: entry.healthText, color: AppTheme.successGreen)
             }
             
-            Divider().opacity(0.15)
+            Divider()
             
             HStack(spacing: 12) {
                 VStack(alignment: .leading, spacing: 4) {
@@ -207,7 +207,7 @@ public struct SmartToolWidgetEntryView: View {
                     GaugeBar(value: entry.cpuUsage / 100.0, gradient: AppTheme.blueGradient, height: 6)
                 }
                 .padding(10)
-                .background(Color.white.opacity(0.04))
+                .background(AppTheme.subtleFill)
                 .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
                 
                 VStack(alignment: .leading, spacing: 4) {
@@ -216,7 +216,7 @@ public struct SmartToolWidgetEntryView: View {
                     GaugeBar(value: entry.memoryUsage / 100.0, gradient: LinearGradient(colors: [AppTheme.electricCyan, AppTheme.electricBlue], startPoint: .leading, endPoint: .trailing), height: 6)
                 }
                 .padding(10)
-                .background(Color.white.opacity(0.04))
+                .background(AppTheme.subtleFill)
                 .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
             }
             
@@ -232,7 +232,7 @@ public struct SmartToolWidgetEntryView: View {
                 }
             }
             .padding(10)
-            .background(Color.white.opacity(0.04))
+            .background(AppTheme.subtleFill)
             .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
             
             Spacer()

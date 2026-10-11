@@ -55,7 +55,7 @@ public struct FileDropZoneView: View {
                 openFileDialog()
             }
             .buttonStyle(.borderedProminent)
-            .tint(AppTheme.electricBlue)
+            .tint(AppTheme.accentFill)
             .controlSize(.small)
         }
         .padding(.vertical, 24)

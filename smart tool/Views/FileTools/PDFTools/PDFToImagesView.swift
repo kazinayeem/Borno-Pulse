@@ -161,7 +161,7 @@ public struct PDFToImagesView: View {
                                 Label("Export Pages to Images", systemImage: "photo.stack.fill")
                             }
                             .buttonStyle(.borderedProminent)
-                            .tint(AppTheme.electricBlue)
+                            .tint(AppTheme.accentFill)
                         }
                     }
                     .padding(.top, 4)

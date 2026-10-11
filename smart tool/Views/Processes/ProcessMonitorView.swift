@@ -41,7 +41,7 @@ public struct ProcessMonitorView: View {
             }
             .padding(.horizontal, 20)
             .padding(.vertical, 12)
-            .background(AppTheme.cardBackgroundSecondary)
+            .background(AppTheme.toolbarBackground)
             
             // Adaptive Process Table Container
             AdaptiveTableContainer(minWidth: 650) {
@@ -58,7 +58,7 @@ public struct ProcessMonitorView: View {
                     }
                     .padding(.horizontal, 20)
                     .padding(.vertical, 8)
-                    .background(AppTheme.cardBackgroundSecondary)
+                    .background(AppTheme.tableHeaderBackground)
                     
                     // Process List
                     let list = service.filteredProcesses
@@ -118,16 +118,18 @@ public struct ProcessMonitorView: View {
                                 } label: {
                                     Image(systemName: "xmark.circle")
                                         .font(.system(size: 13))
-                                        .foregroundStyle(AppTheme.dangerRed)
+                                        .foregroundStyle(process.isCurrentProcess ? AppTheme.disabledText : AppTheme.dangerRed)
                                 }
                                 .buttonStyle(.plain)
                                 .disabled(process.isCurrentProcess)
                                 .frame(width: 65, alignment: .center)
                                 .help("Stop process")
+                                .accessibilityLabel("Stop \(process.name)")
                             }
                             .padding(.vertical, 3)
                         }
                         .listStyle(.inset)
+                        .alternatingRowBackgrounds()
                     }
                 }
             }
@@ -179,7 +181,7 @@ public struct ProcessMonitorView: View {
                     service.terminateProcess(force: true)
                 }
                 .buttonStyle(.borderedProminent)
-                .tint(AppTheme.dangerRed)
+                .tint(AppTheme.dangerFill)
             }
             .padding(.top, 8)
         }
@@ -205,9 +207,7 @@ public struct ProcessMonitorView: View {
             }
         }
         .padding(8)
-        .background(AppTheme.cardBackground)
-        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: 8, style: .continuous).stroke(AppTheme.cardBorder, lineWidth: 0.5))
+        .themedInputField(cornerRadius: 8)
     }
     
     private var sortPicker: some View {
