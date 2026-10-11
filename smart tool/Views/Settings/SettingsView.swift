@@ -561,11 +561,30 @@ public struct SettingsView: View {
                         }
                     
                     Divider().opacity(0.2)
-                    
-                    Picker("Menu Bar Display Metric", selection: $settings.menuBarDisplay) {
-                        ForEach(MenuBarMetricDisplay.allCases) { mode in
-                            Text(mode.rawValue).tag(mode)
+
+                    // Multi-metric menu bar status item preview
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text("Menu Bar Metrics")
+                            .font(.system(size: 12, weight: .semibold))
+                            .foregroundStyle(AppTheme.textSecondary)
+
+                        let snap = SystemMonitor.shared.snapshot
+                        let tokens = settings.menuBarStatusMetrics.prefix(settings.menuBarMaxVisible)
+                            .compactMap { $0.menuBarText(from: snap) }
+
+                        if tokens.isEmpty {
+                            Text("Icon only")
+                                .font(.system(size: 11, design: .monospaced))
+                                .foregroundStyle(AppTheme.textTertiary)
+                        } else {
+                            Text(tokens.joined(separator: "  |  "))
+                                .font(.system(size: 11, weight: .medium, design: .monospaced))
+                                .foregroundStyle(AppTheme.textPrimary)
                         }
+
+                        Text("Configure in Menu Bar & Widget Studio")
+                            .font(.system(size: 10))
+                            .foregroundStyle(AppTheme.electricBlue)
                     }
                 }
                 .smartCard()

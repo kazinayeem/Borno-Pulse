@@ -86,96 +86,44 @@ public final class MenuBarCoordinator: NSObject {
     
     private func updateStatusItemTitle(snapshot: SystemMetricsSnapshot) {
         guard let button = statusItem?.button else { return }
-        let mode = AppSettings.shared.menuBarDisplay
-        
-        let customSymbol = AppSettings.shared.menuBarIconSymbol.symbolName
-        
-        switch mode {
-        case .iconOnly:
-            button.title = ""
-            let img = NSImage(systemSymbolName: customSymbol, accessibilityDescription: "Borno Pulse")
-            img?.isTemplate = true
-            button.image = img
-        case .cpuPercentage:
-            button.title = String(format: " %.0f%%", snapshot.cpu.totalUsage)
-            let img = NSImage(systemSymbolName: customSymbol == "gauge.with.dots.needle.bottom.100percent" ? "cpu" : customSymbol, accessibilityDescription: "CPU")
-            img?.isTemplate = true
-            button.image = img
-        case .memoryPercentage:
-            button.title = String(format: " %.0f%%", snapshot.memory.usagePercentage)
-            let img = NSImage(systemSymbolName: "memorychip", accessibilityDescription: "Memory")
-            img?.isTemplate = true
-            button.image = img
-        case .networkSpeed:
-            button.title = " " + Formatters.speed(snapshot.network.downloadSpeedBytesPerSec)
-            let img = NSImage(systemSymbolName: "arrow.down", accessibilityDescription: "Download")
-            img?.isTemplate = true
-            button.image = img
-        case .cpuAndMemory:
-            button.title = String(format: " CPU: %.0f%% | RAM: %.0f%%", snapshot.cpu.totalUsage, snapshot.memory.usagePercentage)
-            let img = NSImage(systemSymbolName: customSymbol, accessibilityDescription: "Metrics")
-            img?.isTemplate = true
-            button.image = img
-        case .cpuAndNetwork:
-            button.title = String(format: " %.0f%% | %@", snapshot.cpu.totalUsage, Formatters.speed(snapshot.network.downloadSpeedBytesPerSec))
-            let img = NSImage(systemSymbolName: customSymbol, accessibilityDescription: "Metrics")
-            img?.isTemplate = true
-            button.image = img
-        case .batteryPercentage:
-            if snapshot.battery.hasBattery {
-                button.title = " \(snapshot.battery.percentage)%"
-                button.image = NSImage(systemSymbolName: snapshot.battery.isCharging ? "bolt.batteryblock.fill" : "battery.100", accessibilityDescription: "Battery")
-            } else {
-                button.title = " AC"
-                button.image = NSImage(systemSymbolName: "powerplug", accessibilityDescription: "AC Power")
+
+        let settings    = AppSettings.shared
+        let metrics     = settings.menuBarStatusMetrics
+        let maxVisible  = settings.menuBarMaxVisible
+        let customSym   = settings.menuBarIconSymbol.symbolName
+
+        // --- Multi-metric rendering ---
+        // Collect up to maxVisible non-nil text tokens from the ordered metric list.
+        var tokens: [String] = []
+        var overrideSymbol: String? = nil
+
+        let visible = Array(metrics.prefix(max(1, maxVisible)))
+
+        for metric in visible {
+            // Icon-only and battery-status produce only an image; record symbol override.
+            if let sym = metric.menuBarSymbol(from: snapshot) {
+                overrideSymbol = sym
+                // Don't add a text token for icon-only metrics.
+                continue
             }
-        case .batteryTimeRemaining:
-            if snapshot.battery.hasBattery {
-                button.title = " \(snapshot.battery.formattedTimeRemaining)"
-                button.image = NSImage(systemSymbolName: snapshot.battery.isCharging ? "bolt.fill" : "clock", accessibilityDescription: "Time Remaining")
-            } else {
-                button.title = " AC Power"
-                button.image = NSImage(systemSymbolName: "powerplug", accessibilityDescription: "AC Power")
-            }
-        case .batteryWatts:
-            if snapshot.battery.hasBattery {
-                if let chargeWatts = snapshot.battery.chargingWatts, chargeWatts > 0.05 {
-                    button.title = String(format: " +%.1fW", chargeWatts)
-                    button.image = NSImage(systemSymbolName: "bolt.batteryblock.fill", accessibilityDescription: "Charging Watts")
-                } else if let dischargeWatts = snapshot.battery.dischargingWatts, dischargeWatts > 0.05 {
-                    button.title = String(format: " -%.1fW", dischargeWatts)
-                    button.image = NSImage(systemSymbolName: "battery.100", accessibilityDescription: "Discharging Watts")
-                } else if snapshot.battery.isPluggedIn {
-                    button.title = " 0.0W"
-                    button.image = NSImage(systemSymbolName: "powerplug", accessibilityDescription: "AC Power")
-                } else if let watts = snapshot.battery.wattage {
-                    button.title = String(format: " %.1fW", abs(watts))
-                    button.image = NSImage(systemSymbolName: snapshot.battery.isCharging ? "bolt.batteryblock.fill" : "battery.100", accessibilityDescription: "Battery Watts")
-                } else {
-                    button.title = " N/A"
-                    button.image = NSImage(systemSymbolName: "bolt.slash", accessibilityDescription: "Wattage Unavailable")
-                }
-            } else {
-                button.title = " AC"
-                button.image = NSImage(systemSymbolName: "powerplug", accessibilityDescription: "AC Power")
-            }
-        case .batteryStatus:
-            button.title = ""
-            if snapshot.battery.hasBattery {
-                let symbol = snapshot.battery.isCharging ? "bolt.batteryblock.fill" : (snapshot.battery.isPluggedIn ? "powerplug" : "battery.75")
-                button.image = NSImage(systemSymbolName: symbol, accessibilityDescription: "Battery Status")
-            } else {
-                button.image = NSImage(systemSymbolName: "powerplug", accessibilityDescription: "AC Power")
-            }
-        case .batteryPercentAndTime:
-            if snapshot.battery.hasBattery {
-                button.title = " \(snapshot.battery.percentage)% (\(snapshot.battery.formattedTimeRemaining))"
-                button.image = NSImage(systemSymbolName: snapshot.battery.isCharging ? "bolt.batteryblock.fill" : "battery.100", accessibilityDescription: "Battery")
-            } else {
-                button.title = " 100% (AC)"
-                button.image = NSImage(systemSymbolName: "powerplug", accessibilityDescription: "AC Power")
+            if let text = metric.menuBarText(from: snapshot) {
+                tokens.append(text)
             }
         }
+
+        // Build the composite title string.
+        // Use a thin vertical bar (U+2006 narrow no-break space + | + space) as separator.
+        let separator = "  |  "
+        let compositeText = tokens.joined(separator: separator)
+
+        // Update button title with a leading space for visual padding.
+        button.title = compositeText.isEmpty ? "" : " " + compositeText
+
+        // Update icon: use overrideSymbol when set (e.g. for battery-status), otherwise the user's chosen symbol.
+        let symbolName = overrideSymbol ?? customSym
+        let img = NSImage(systemSymbolName: symbolName, accessibilityDescription: "Borno Pulse")
+        img?.isTemplate = true
+        button.image = img
     }
     
     public func openMainWindow(navigatingTo section: NavigationSection? = nil) {

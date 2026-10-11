@@ -129,49 +129,201 @@ public struct MenuBarWidgetSettingsView: View {
         }
     }
     
-    // MARK: - 1. Menu Bar Indicator Section
+    // MARK: - 1. Menu Bar Status Item (Multi-Metric)
     private var menuBarIndicatorSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: 14) {
             sectionHeader("Menu Bar Status Item", icon: "gauge.with.dots.needle.bottom.100percent", color: AppTheme.electricBlue)
-            
-            Picker("Display Mode", selection: $settings.menuBarDisplay) {
-                ForEach(MenuBarMetricDisplay.allCases) { mode in
-                    Text(mode.rawValue).tag(mode)
+
+            // Max-visible stepper
+            HStack(spacing: 8) {
+                Image(systemName: "number.circle.fill")
+                    .foregroundStyle(AppTheme.electricBlue)
+                    .font(.system(size: 13))
+                Text("Max visible metrics")
+                    .font(.system(size: 12))
+                    .foregroundStyle(AppTheme.textSecondary)
+                Spacer()
+                Stepper("\(settings.menuBarMaxVisible)", value: $settings.menuBarMaxVisible, in: 1...4)
+                    .labelsHidden()
+                Text("\(settings.menuBarMaxVisible)")
+                    .font(.system(size: 13, weight: .bold, design: .monospaced))
+                    .foregroundStyle(AppTheme.electricBlue)
+                    .frame(width: 18)
+            }
+
+            Divider().opacity(0.15)
+
+            // Selected metrics (reorderable)
+            if settings.menuBarStatusMetrics.isEmpty {
+                Text("No metrics selected. Add one below.")
+                    .font(.system(size: 11))
+                    .foregroundStyle(AppTheme.textTertiary)
+                    .frame(maxWidth: .infinity, alignment: .center)
+                    .padding(.vertical, 8)
+            } else {
+                VStack(spacing: 4) {
+                    ForEach(Array(settings.menuBarStatusMetrics.enumerated()), id: \.element.id) { index, metric in
+                        HStack(spacing: 8) {
+                            // Rank badge
+                            Text("\(index + 1)")
+                                .font(.system(size: 10, weight: .bold))
+                                .foregroundStyle(AppTheme.textTertiary)
+                                .frame(width: 16)
+
+                            Image(systemName: metric.icon)
+                                .font(.system(size: 12))
+                                .foregroundStyle(AppTheme.electricBlue)
+                                .frame(width: 16)
+
+                            Text(metric.displayName)
+                                .font(.system(size: 12))
+                                .foregroundStyle(AppTheme.textPrimary)
+                                .lineLimit(1)
+
+                            Spacer()
+
+                            // Up
+                            Button {
+                                settings.moveMenuBarMetric(from: index, to: max(0, index - 1))
+                            } label: {
+                                Image(systemName: "chevron.up")
+                                    .font(.system(size: 10))
+                                    .foregroundStyle(index == 0 ? AppTheme.textTertiary : AppTheme.electricBlue)
+                            }
+                            .buttonStyle(.plain)
+                            .disabled(index == 0)
+
+                            // Down
+                            Button {
+                                settings.moveMenuBarMetric(from: index, to: min(settings.menuBarStatusMetrics.count - 1, index + 1))
+                            } label: {
+                                Image(systemName: "chevron.down")
+                                    .font(.system(size: 10))
+                                    .foregroundStyle(index == settings.menuBarStatusMetrics.count - 1 ? AppTheme.textTertiary : AppTheme.electricBlue)
+                            }
+                            .buttonStyle(.plain)
+                            .disabled(index == settings.menuBarStatusMetrics.count - 1)
+
+                            // Remove
+                            Button {
+                                settings.removeMenuBarMetric(metric)
+                            } label: {
+                                Image(systemName: "minus.circle.fill")
+                                    .font(.system(size: 13))
+                                    .foregroundStyle(AppTheme.dangerRed.opacity(0.8))
+                            }
+                            .buttonStyle(.plain)
+                        }
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 6)
+                        .background(AppTheme.cardBackgroundSecondary)
+                        .clipShape(RoundedRectangle(cornerRadius: 7))
+                    }
                 }
             }
-            .pickerStyle(.menu)
-            
-            Text("Controls what appears directly in your macOS top menu bar status item.")
+
+            Divider().opacity(0.15)
+
+            // Add metrics grid
+            let canAdd = settings.menuBarStatusMetrics.count < 4
+            Text("Add metric" + (canAdd ? " (\(4 - settings.menuBarStatusMetrics.count) slot(s) free)" : " — maximum 4 reached"))
+                .font(.system(size: 10, weight: .semibold))
+                .foregroundStyle(canAdd ? AppTheme.textSecondary : AppTheme.warningAmber)
+
+            LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 6) {
+                ForEach(MenuBarStatusMetric.allCases) { metric in
+                    let isSelected = settings.menuBarStatusMetrics.contains(metric)
+                    Button {
+                        if isSelected {
+                            settings.removeMenuBarMetric(metric)
+                        } else if settings.menuBarStatusMetrics.count < 4 {
+                            settings.addMenuBarMetric(metric)
+                        }
+                    } label: {
+                        HStack(spacing: 5) {
+                            Image(systemName: metric.icon)
+                                .font(.system(size: 11))
+                                .foregroundStyle(isSelected ? AppTheme.electricBlue : AppTheme.textTertiary)
+                            Text(metric.displayName)
+                                .font(.system(size: 10))
+                                .lineLimit(1)
+                            Spacer()
+                            Image(systemName: isSelected ? "checkmark.circle.fill" : "plus.circle")
+                                .font(.system(size: 12))
+                                .foregroundStyle(isSelected ? AppTheme.electricBlue : (canAdd ? AppTheme.matrixGreen : AppTheme.textTertiary))
+                        }
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 6)
+                        .background(isSelected ? AppTheme.electricBlue.opacity(0.12) : AppTheme.cardBackgroundSecondary)
+                        .clipShape(RoundedRectangle(cornerRadius: 6))
+                        .opacity((!isSelected && !canAdd) ? 0.45 : 1.0)
+                    }
+                    .buttonStyle(.plain)
+                    .disabled(!isSelected && !canAdd)
+                }
+            }
+
+            Divider().opacity(0.15)
+
+            // Reset defaults
+            Button("Reset to Default Metrics") {
+                settings.resetMenuBarMetrics()
+            }
+            .font(.system(size: 11))
+            .foregroundStyle(AppTheme.dangerRed)
+            .buttonStyle(.plain)
+
+            Text("Controls what metrics appear simultaneously in your macOS top menu bar.")
                 .font(.system(size: 11))
                 .foregroundStyle(AppTheme.textTertiary)
         }
         .smartCard()
     }
     
-    // MARK: - Simulated Menu Bar Item Preview
+    // MARK: - Simulated Menu Bar Preview (multi-metric)
     private var simulatedMenuBarPreview: some View {
         VStack(alignment: .leading, spacing: 6) {
             Text("Menu Bar Status Item Preview")
                 .font(.system(size: 10, weight: .semibold))
                 .foregroundStyle(AppTheme.textSecondary)
-            
-            HStack(spacing: 6) {
-                Image(systemName: iconForMenuBarMode(settings.menuBarDisplay))
-                    .font(.system(size: 12))
-                    .foregroundStyle(AppTheme.textPrimary)
-                
-                let text = textForMenuBarMode(settings.menuBarDisplay)
-                if !text.isEmpty {
-                    Text(text)
-                        .font(.system(size: 11, weight: .medium, design: .monospaced))
+
+            let snap = monitor.snapshot
+            let metrics = settings.menuBarStatusMetrics
+            let maxVisible = settings.menuBarMaxVisible
+
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 4) {
+                    // App icon
+                    Image(systemName: settings.menuBarIconSymbol.symbolName)
+                        .font(.system(size: 12))
                         .foregroundStyle(AppTheme.textPrimary)
+
+                    let tokens: [String] = Array(metrics.prefix(max(1, maxVisible))).compactMap {
+                        $0.menuBarText(from: snap)
+                    }
+
+                    if tokens.isEmpty {
+                        // Icon-only or battery-status
+                        EmptyView()
+                    } else {
+                        ForEach(Array(tokens.enumerated()), id: \.offset) { idx, tok in
+                            if idx > 0 {
+                                Text("|")
+                                    .font(.system(size: 10))
+                                    .foregroundStyle(AppTheme.textTertiary)
+                            }
+                            Text(tok)
+                                .font(.system(size: 11, weight: .medium, design: .monospaced))
+                                .foregroundStyle(AppTheme.textPrimary)
+                        }
+                    }
                 }
+                .padding(.horizontal, 10)
+                .padding(.vertical, 6)
+                .background(Color.white.opacity(0.08))
+                .clipShape(RoundedRectangle(cornerRadius: 6))
+                .overlay(RoundedRectangle(cornerRadius: 6).stroke(AppTheme.cardBorder, lineWidth: 0.5))
             }
-            .padding(.horizontal, 10)
-            .padding(.vertical, 6)
-            .background(Color.white.opacity(0.08))
-            .clipShape(RoundedRectangle(cornerRadius: 6))
-            .overlay(RoundedRectangle(cornerRadius: 6).stroke(AppTheme.cardBorder, lineWidth: 0.5))
         }
     }
     
@@ -548,41 +700,6 @@ public struct MenuBarWidgetSettingsView: View {
             Text(title)
                 .font(.system(size: 13, weight: .bold))
                 .foregroundStyle(AppTheme.textPrimary)
-        }
-    }
-    
-    private func iconForMenuBarMode(_ mode: MenuBarMetricDisplay) -> String {
-        switch mode {
-        case .iconOnly: return "gauge.with.dots.needle.bottom.100percent"
-        case .cpuPercentage: return "cpu"
-        case .memoryPercentage: return "memorychip"
-        case .networkSpeed: return "arrow.down"
-        case .cpuAndMemory, .cpuAndNetwork: return "gauge.with.dots.needle.bottom.100percent"
-        case .batteryPercentage, .batteryPercentAndTime: return "battery.100.bolt"
-        case .batteryTimeRemaining: return "clock"
-        case .batteryWatts: return "bolt.fill"
-        case .batteryStatus: return "battery.100"
-        }
-    }
-    
-    private func textForMenuBarMode(_ mode: MenuBarMetricDisplay) -> String {
-        let snap = monitor.snapshot
-        switch mode {
-        case .iconOnly: return ""
-        case .cpuPercentage: return String(format: "%.0f%%", snap.cpu.totalUsage)
-        case .memoryPercentage: return String(format: "%.0f%%", snap.memory.usagePercentage)
-        case .networkSpeed: return Formatters.speed(snap.network.downloadSpeedBytesPerSec)
-        case .cpuAndMemory: return String(format: "CPU: %.0f%% | RAM: %.0f%%", snap.cpu.totalUsage, snap.memory.usagePercentage)
-        case .cpuAndNetwork: return String(format: "%.0f%% | %@", snap.cpu.totalUsage, Formatters.speed(snap.network.downloadSpeedBytesPerSec))
-        case .batteryPercentage: return snap.battery.hasBattery ? "\(snap.battery.percentage)%" : "AC"
-        case .batteryTimeRemaining: return snap.battery.hasBattery ? snap.battery.formattedTimeRemaining : "AC Power"
-        case .batteryPercentAndTime: return snap.battery.hasBattery ? "\(snap.battery.percentage)% (\(snap.battery.formattedTimeRemaining))" : "100% (AC)"
-        case .batteryWatts:
-            if let w = snap.battery.chargingWatts ?? snap.battery.dischargingWatts {
-                return String(format: "%.1fW", w)
-            }
-            return "0.0W"
-        case .batteryStatus: return ""
         }
     }
 }
