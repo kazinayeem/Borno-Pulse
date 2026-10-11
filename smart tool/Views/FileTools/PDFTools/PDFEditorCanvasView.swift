@@ -83,7 +83,7 @@ final class PDFEditorCanvasView: PDFView, NSMenuItemValidation {
             }
         })
         observers.append(center.addObserver(forName: NSControl.textDidChangeNotification, object: nil, queue: .main) { [weak self] note in
-            nonisolated(unsafe) let field = note.object as? NSView
+            let field = note.object as? NSView
             MainActor.assumeIsolated {
                 guard let self, let field, field.isDescendant(of: self) else { return }
                 self.service?.markDocumentEdited()

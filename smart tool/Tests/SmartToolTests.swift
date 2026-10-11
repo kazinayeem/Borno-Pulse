@@ -1244,6 +1244,9 @@ public enum SmartToolTests {
         // 111–124. Clipboard history, global shortcut, picker, paste and lifecycle
         runClipboardTests(assert)
 
+        // 125–129. PDF Studio: geometry, safe writing, editor, canvas interaction and tools
+        runPDFStudioTests(assert)
+
         return (passed, failed, logs)
     }
 }

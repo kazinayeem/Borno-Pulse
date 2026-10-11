@@ -80,6 +80,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         ClipboardBackgroundController.shared.start()
     }
     
+    func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
+        let proceed = MainActor.assumeIsolated {
+            PDFEditorService.shared.confirmProceedWithUnsavedChanges(before: "quitting")
+        }
+        return proceed ? .terminateNow : .terminateCancel
+    }
+
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
         // Keep running in menu bar even when main dashboard window is closed!
         return false

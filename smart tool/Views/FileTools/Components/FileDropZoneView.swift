@@ -16,6 +16,7 @@ public struct FileDropZoneView: View {
     public let onFilesSelected: ([URL]) -> Void
     
     @State private var isTargeted = false
+    @State private var rejectedMessage: String?
     
     public init(
         title: String = "Drag & Drop Files Here",
@@ -49,6 +50,13 @@ public struct FileDropZoneView: View {
                 Text(subtitle)
                     .font(.system(size: 11))
                     .foregroundStyle(AppTheme.textSecondary)
+
+                if let rejectedMessage {
+                    Label(rejectedMessage, systemImage: "exclamationmark.triangle.fill")
+                        .font(.system(size: 11))
+                        .foregroundStyle(AppTheme.warningAmber)
+                        .multilineTextAlignment(.center)
+                }
             }
             
             Button("Select Files...") {
@@ -93,12 +101,27 @@ public struct FileDropZoneView: View {
                 lock.lock()
                 let result = collected
                 lock.unlock()
-                if !result.isEmpty {
-                    onFilesSelected(result)
+                let accepted = result.filter(isAllowed)
+                let rejected = result.filter { !isAllowed($0) }
+                rejectedMessage = rejected.isEmpty ? nil : "Skipped unsupported file\(rejected.count == 1 ? "" : "s"): " + rejected.map(\.lastPathComponent).joined(separator: ", ")
+                if !accepted.isEmpty {
+                    onFilesSelected(allowsMultiple ? accepted : Array(accepted.prefix(1)))
                 }
             }
             return true
         }
+    }
+
+    private func isAllowed(_ url: URL) -> Bool {
+        Self.accepts(url, allowedTypes: allowedTypes)
+    }
+
+    static func accepts(_ url: URL, allowedTypes: [UTType]) -> Bool {
+        if allowedTypes.contains(.item) || allowedTypes.isEmpty { return true }
+        let type = (try? url.resourceValues(forKeys: [.contentTypeKey]))?.contentType
+            ?? UTType(filenameExtension: url.pathExtension)
+        guard let type else { return false }
+        return allowedTypes.contains { type.conforms(to: $0) }
     }
     
     private func openFileDialog() {
@@ -110,6 +133,7 @@ public struct FileDropZoneView: View {
         openPanel.prompt = "Select"
         
         if openPanel.runModal() == .OK {
+            rejectedMessage = nil
             onFilesSelected(openPanel.urls)
         }
     }

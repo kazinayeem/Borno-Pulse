@@ -24,6 +24,7 @@ struct PDFEditorWorkspaceView: View {
     @State private var passwordFailed = false
     @State private var pageField = "1"
     @State private var isDropTargeted = false
+    @State private var isCompact = false
 
     var body: some View {
         VStack(spacing: 0) {
@@ -35,14 +36,21 @@ struct PDFEditorWorkspaceView: View {
             }
             if service.document != nil {
                 HStack(spacing: 0) {
-                    PDFEditorCanvasRepresentable(service: service, showsThumbnails: showThumbnails)
-                        .frame(minWidth: 300, maxWidth: .infinity, maxHeight: .infinity)
+                    PDFEditorCanvasRepresentable(service: service, showsThumbnails: showThumbnails && !isCompact)
+                        .frame(minWidth: 260, maxWidth: .infinity, maxHeight: .infinity)
                     if showInspector {
                         Divider()
                         PDFEditorInspectorView(service: service)
-                            .frame(width: 264)
+                            .frame(width: isCompact ? 236 : 264)
                     }
                 }
+                .background(
+                    GeometryReader { proxy in
+                        Color.clear
+                            .onAppear { isCompact = proxy.size.width < 760 }
+                            .onChange(of: proxy.size.width) { _, width in isCompact = width < 760 }
+                    }
+                )
             } else {
                 emptyState
             }
@@ -176,7 +184,8 @@ struct PDFEditorWorkspaceView: View {
 
                     Toggle(isOn: $showThumbnails) { Image(systemName: "sidebar.left") }
                         .toggleStyle(.button)
-                        .help("Show or hide page thumbnails")
+                        .disabled(isCompact)
+                        .help(isCompact ? "Thumbnails are hidden while the window is narrow" : "Show or hide page thumbnails")
                     Toggle(isOn: $showInspector) { Image(systemName: "sidebar.right") }
                         .toggleStyle(.button)
                         .help("Show or hide the inspector")
@@ -875,7 +884,7 @@ struct PDFEditorInspectorView: View {
                     .font(.system(size: 10, design: .monospaced))
                     .foregroundStyle(AppTheme.textSecondary)
             }
-            Slider(value: Binding(get: { value }, set: onChange), in: range)
+            Slider(value: Binding(get: { value }, set: { newValue in onChange(newValue) }), in: range)
                 .controlSize(.small)
         }
     }

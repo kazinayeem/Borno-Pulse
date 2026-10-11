@@ -2,16 +2,85 @@
 //  PDFAssemblyService.swift
 //  Borno Pulse
 //
-//  Unified document assembly, drag-and-drop page reordering, and mixed PDF/image merger engine.
+//  Document assembly for Images to PDF, Merge PDFs, Merge Images & PDFs, Page Organizer and
+//  Rotate & Reorder, plus split/extract. PDF pages are copied (never moved out of their
+//  source document), keeping text, vectors, annotations and links. Images are drawn at full
+//  resolution with EXIF orientation applied.
 //
 
 import AppKit
 import Foundation
+import ImageIO
 import PDFKit
+import UniformTypeIdentifiers
+
+public struct PDFAssemblyImportReport: Sendable {
+    public var addedPages = 0
+    public var skippedUnsupported: [String] = []
+    public var failed: [String] = []
+
+    public var message: String? {
+        var parts: [String] = []
+        if !skippedUnsupported.isEmpty {
+            parts.append("Not supported by this tool: " + skippedUnsupported.joined(separator: ", "))
+        }
+        if !failed.isEmpty {
+            parts.append("Could not open: " + failed.joined(separator: ", "))
+        }
+        return parts.isEmpty ? nil : parts.joined(separator: ". ")
+    }
+}
+
+public struct PDFAssemblyBuildItem: Sendable {
+    public let sourceURL: URL
+    public let sourceType: DocumentPageSourceType
+    public let pageIndex: Int
+    public let rotation: Int
+}
+
+public struct PDFAssemblyBuildSettings: Sendable {
+    public var pageSize: CGSize
+    public var margin: CGFloat
+    public var landscape: Bool
+    public var fitMode: ImageFitMode
+}
 
 @MainActor
 public final class PDFAssemblyService: ObservableObject {
     public static let shared = PDFAssemblyService()
+
+    private static var workspaces: [PDFStudioTool: PDFAssemblyService] = [:]
+
+    /// Each assembly-style tool keeps its own page list so switching tools never mixes inputs.
+    public static func workspace(for tool: PDFStudioTool) -> PDFAssemblyService {
+        if let existing = workspaces[tool] { return existing }
+        let service = PDFAssemblyService()
+        service.acceptedTypes = acceptedTypes(for: tool)
+        service.outputFilename = defaultFilename(for: tool)
+        workspaces[tool] = service
+        return service
+    }
+
+    public static func acceptedTypes(for tool: PDFStudioTool) -> Set<DocumentPageSourceType> {
+        switch tool {
+        case .imagesToPDF: return [.image]
+        case .mergeMixed: return [.image, .pdfPage]
+        default: return [.pdfPage]
+        }
+    }
+
+    static func defaultFilename(for tool: PDFStudioTool) -> String {
+        switch tool {
+        case .imagesToPDF: return "Images.pdf"
+        case .mergePDFs: return "Merged.pdf"
+        case .mergeMixed: return "Combined.pdf"
+        case .pageOrganizer: return "Organized.pdf"
+        case .rotateReorder: return "Rotated.pdf"
+        default: return "Assembled_Document.pdf"
+        }
+    }
+
+    public static let imageExtensions: Set<String> = ["png", "jpg", "jpeg", "heic", "heif", "tif", "tiff", "bmp", "gif", "webp"]
 
     @Published public var pages: [PDFStudioPageItem] = []
     @Published public var pageSizePreset: PDFPageSizePreset = .a4
@@ -23,68 +92,95 @@ public final class PDFAssemblyService: ObservableObject {
     @Published public var isProcessing: Bool = false
     @Published public var currentProgress: Double = 0.0
     @Published public var statusMessage: String = "Ready"
-
-    private let thumbnailCache = NSCache<NSString, NSImage>()
+    @Published public var importIssues: String?
+    public var acceptedTypes: Set<DocumentPageSourceType> = [.pdfPage, .image]
 
     public init() {
         self.outputDirectory = FileManager.default.urls(for: .downloadsDirectory, in: .userDomainMask).first
-        self.thumbnailCache.countLimit = 200
     }
 
-    // MARK: - Import Files
-    public func addFiles(urls: [URL]) {
+    // MARK: - Import
+
+    @discardableResult
+    public func addFiles(urls: [URL]) -> PDFAssemblyImportReport {
+        var report = PDFAssemblyImportReport()
         for url in urls {
             let ext = url.pathExtension.lowercased()
             if ext == "pdf" {
-                addPDFFile(url: url)
-            } else if ["png", "jpg", "jpeg", "heic", "heif", "tiff", "tif", "bmp", "webp"].contains(ext) {
-                addImageFile(url: url)
+                guard acceptedTypes.contains(.pdfPage) else {
+                    report.skippedUnsupported.append(url.lastPathComponent)
+                    continue
+                }
+                guard let doc = PDFDocument(url: url) else {
+                    report.failed.append("\(url.lastPathComponent) (damaged)")
+                    continue
+                }
+                guard !doc.isLocked else {
+                    report.failed.append("\(url.lastPathComponent) (password-protected)")
+                    continue
+                }
+                report.addedPages += addPDF(doc, url: url)
+            } else if Self.imageExtensions.contains(ext) {
+                guard acceptedTypes.contains(.image) else {
+                    report.skippedUnsupported.append(url.lastPathComponent)
+                    continue
+                }
+                if addImageFile(url: url) {
+                    report.addedPages += 1
+                } else {
+                    report.failed.append("\(url.lastPathComponent) (unreadable image)")
+                }
+            } else {
+                report.skippedUnsupported.append(url.lastPathComponent)
             }
         }
-        statusMessage = "Workspace contains \(pages.count) total pages"
+        importIssues = report.message
+        statusMessage = report.addedPages > 0
+            ? "Added \(report.addedPages) page(s). Workspace contains \(pages.count) page(s)."
+            : "No pages added."
+        return report
     }
 
-    private func addPDFFile(url: URL) {
-        guard let doc = PDFDocument(url: url) else { return }
+    private func addPDF(_ doc: PDFDocument, url: URL) -> Int {
+        var added = 0
         for index in 0..<doc.pageCount {
             guard let page = doc.page(at: index) else { continue }
-            let bounds = page.bounds(for: .mediaBox)
-            let item = PDFStudioPageItem(
+            let bounds = page.bounds(for: .cropBox)
+            var item = PDFStudioPageItem(
                 sourceURL: url,
                 sourceType: .pdfPage,
                 originalPageIndex: index,
                 rotationAngle: page.rotation,
                 customWidth: bounds.width,
                 customHeight: bounds.height,
-                cachedThumbnail: generatePDFThumbnail(page: page),
+                cachedThumbnail: page.thumbnail(of: CGSize(width: 150, height: 190), for: .cropBox),
                 pageTitle: "\(url.deletingPathExtension().lastPathComponent) (p. \(index + 1))"
             )
+            item.thumbnailRotation = page.rotation
             pages.append(item)
+            added += 1
         }
+        return added
     }
 
-    private func addImageFile(url: URL) {
-        var dimensions: CGSize? = nil
-        var thumb: NSImage? = nil
-        if let image = NSImage(contentsOf: url) {
-            dimensions = image.size
-            thumb = createThumbnail(from: image, size: CGSize(width: 120, height: 160))
-        }
-
-        let item = PDFStudioPageItem(
+    private func addImageFile(url: URL) -> Bool {
+        guard let image = Self.orientedImage(url: url, maxPixel: 300) else { return false }
+        let pixels = Self.orientedPixelSize(url: url) ?? CGSize(width: image.width, height: image.height)
+        pages.append(PDFStudioPageItem(
             sourceURL: url,
             sourceType: .image,
             originalPageIndex: 0,
             rotationAngle: 0,
-            customWidth: dimensions?.width,
-            customHeight: dimensions?.height,
-            cachedThumbnail: thumb,
+            customWidth: pixels.width,
+            customHeight: pixels.height,
+            cachedThumbnail: NSImage(cgImage: image, size: NSSize(width: image.width, height: image.height)),
             pageTitle: url.lastPathComponent
-        )
-        pages.append(item)
+        ))
+        return true
     }
 
-    // MARK: - Reordering & Operations
+    // MARK: - Page Operations
+
     public func movePages(fromOffsets source: IndexSet, toOffset destination: Int) {
         pages.move(fromOffsets: source, toOffset: destination)
         statusMessage = "Reordered pages"
@@ -99,17 +195,47 @@ public final class PDFAssemblyService: ObservableObject {
         statusMessage = "Moved page to position \(toIndex + 1)"
     }
 
+    public func movePage(id: UUID, by offset: Int) {
+        guard let index = pages.firstIndex(where: { $0.id == id }) else { return }
+        movePage(fromIndex: index, toIndex: max(0, min(pages.count - 1, index + offset)))
+    }
+
+    public func movePage(id: UUID, before targetID: UUID) {
+        guard id != targetID,
+              let from = pages.firstIndex(where: { $0.id == id }),
+              let to = pages.firstIndex(where: { $0.id == targetID }) else { return }
+        movePage(fromIndex: from, toIndex: to)
+    }
+
+    public func reverseOrder() {
+        pages.reverse()
+        statusMessage = "Reversed page order"
+    }
+
     public func rotatePage(id: UUID, delta: Int = 90) {
         if let idx = pages.firstIndex(where: { $0.id == id }) {
-            pages[idx].rotationAngle = (pages[idx].rotationAngle + delta) % 360
+            pages[idx].rotationAngle = Self.normalizedRotation(pages[idx].rotationAngle + delta)
             statusMessage = "Rotated page \(idx + 1)"
         }
+    }
+
+    /// Rotates the selected pages, or every page when nothing is selected.
+    public func rotateSelectedOrAll(delta: Int) {
+        let targetAll = !pages.contains(where: \.isSelected)
+        for index in pages.indices where targetAll || pages[index].isSelected {
+            pages[index].rotationAngle = Self.normalizedRotation(pages[index].rotationAngle + delta)
+        }
+        statusMessage = targetAll ? "Rotated all pages by \(delta)°" : "Rotated selected pages by \(delta)°"
+    }
+
+    nonisolated static func normalizedRotation(_ value: Int) -> Int {
+        ((value % 360) + 360) % 360
     }
 
     public func duplicatePage(id: UUID) {
         if let idx = pages.firstIndex(where: { $0.id == id }) {
             let original = pages[idx]
-            let duplicate = PDFStudioPageItem(
+            var duplicate = PDFStudioPageItem(
                 sourceURL: original.sourceURL,
                 sourceType: original.sourceType,
                 originalPageIndex: original.originalPageIndex,
@@ -119,6 +245,7 @@ public final class PDFAssemblyService: ObservableObject {
                 cachedThumbnail: original.cachedThumbnail,
                 pageTitle: "\(original.pageTitle) (Copy)"
             )
+            duplicate.thumbnailRotation = original.thumbnailRotation
             pages.insert(duplicate, at: idx + 1)
             statusMessage = "Duplicated page \(idx + 1)"
         }
@@ -132,12 +259,12 @@ public final class PDFAssemblyService: ObservableObject {
     public func removeSelectedPages() {
         let countBefore = pages.count
         pages.removeAll { $0.isSelected }
-        let removed = countBefore - pages.count
-        statusMessage = "Removed \(removed) selected page(s)"
+        statusMessage = "Removed \(countBefore - pages.count) selected page(s)"
     }
 
     public func clearAllPages() {
         pages.removeAll()
+        importIssues = nil
         statusMessage = "Workspace cleared"
     }
 
@@ -148,167 +275,277 @@ public final class PDFAssemblyService: ObservableObject {
     }
 
     public func selectAllPages() {
-        for idx in pages.indices {
-            pages[idx].isSelected = true
-        }
+        for idx in pages.indices { pages[idx].isSelected = true }
     }
 
     public func deselectAllPages() {
-        for idx in pages.indices {
-            pages[idx].isSelected = false
-        }
+        for idx in pages.indices { pages[idx].isSelected = false }
     }
 
-    // MARK: - Document Building & Rendering
+    // MARK: - Building
+
+    public var buildItems: [PDFAssemblyBuildItem] {
+        pages.map { PDFAssemblyBuildItem(sourceURL: $0.sourceURL, sourceType: $0.sourceType, pageIndex: $0.originalPageIndex, rotation: $0.rotationAngle) }
+    }
+
+    public var buildSettings: PDFAssemblyBuildSettings {
+        PDFAssemblyBuildSettings(pageSize: pageSizePreset.pointSize, margin: pageMargin.inset, landscape: isLandscape, fitMode: imageFitMode)
+    }
+
     public func buildMergedDocument() -> PDFDocument {
-        let doc = PDFDocument()
-        let presetSize = pageSizePreset.pointSize
-        let margin = pageMargin.inset
-        let isLand = isLandscape
-        let fit = imageFitMode
-
-        for item in pages {
-            if item.sourceType == .pdfPage {
-                // Native PDF Page: preserve selectable text and vector graphics!
-                if let sourceDoc = PDFDocument(url: item.sourceURL),
-                   let page = sourceDoc.page(at: item.originalPageIndex) {
-                    page.rotation = item.rotationAngle
-                    doc.insert(page, at: doc.pageCount)
-                }
-            } else if item.sourceType == .image {
-                // Image Page: Render into PDF Page context with specified dimensions
-                if let image = NSImage(contentsOf: item.sourceURL) {
-                    var targetSize = presetSize == .zero ? image.size : presetSize
-                    if isLand && targetSize.width < targetSize.height {
-                        targetSize = CGSize(width: targetSize.height, height: targetSize.width)
-                    }
-
-                    if let pdfPage = renderImageToPDFPage(
-                        image: image,
-                        targetSize: targetSize,
-                        margin: margin,
-                        fitMode: fit,
-                        rotation: item.rotationAngle
-                    ) {
-                        doc.insert(pdfPage, at: doc.pageCount)
-                    }
-                }
-            }
-        }
-        return doc
+        (try? Self.buildDocument(items: buildItems, settings: buildSettings)) ?? PDFDocument()
     }
 
-    // MARK: - Export Merged Document
-    public func exportMergedDocument(to destinationURL: URL? = nil) -> Result<URL, Error> {
-        guard !pages.isEmpty else {
-            return .failure(NSError(domain: "PDFAssemblyService", code: 1, userInfo: [NSLocalizedDescriptionKey: "No pages to assemble."]))
-        }
-
-        let targetURL: URL
-        if let explicit = destinationURL {
-            targetURL = explicit
-        } else if let outDir = outputDirectory {
-            let filename = outputFilename.hasSuffix(".pdf") ? outputFilename : "\(outputFilename).pdf"
-            targetURL = outDir.appendingPathComponent(filename)
-        } else {
-            let savePanel = NSSavePanel()
-            savePanel.title = "Save Assembled PDF"
-            savePanel.nameFieldStringValue = outputFilename.hasSuffix(".pdf") ? outputFilename : "\(outputFilename).pdf"
-            guard savePanel.runModal() == .OK, let url = savePanel.url else {
-                return .failure(NSError(domain: "PDFAssemblyService", code: 2, userInfo: [NSLocalizedDescriptionKey: "Export cancelled."]))
+    public nonisolated static func buildDocument(
+        items: [PDFAssemblyBuildItem],
+        settings: PDFAssemblyBuildSettings,
+        progress: ((Int) -> Void)? = nil
+    ) throws -> PDFDocument {
+        let output = PDFDocument()
+        var sources: [URL: PDFDocument] = [:]
+        for (index, item) in items.enumerated() {
+            switch item.sourceType {
+            case .pdfPage, .officeDocument:
+                let source: PDFDocument
+                if let cached = sources[item.sourceURL] {
+                    source = cached
+                } else {
+                    source = try PDFSafeWriter.openReadable(item.sourceURL)
+                    sources[item.sourceURL] = source
+                }
+                guard let page = source.page(at: item.pageIndex), let copy = page.copy() as? PDFPage else {
+                    throw PDFStudioError.failed("Page \(item.pageIndex + 1) of “\(item.sourceURL.lastPathComponent)” is no longer available.")
+                }
+                copy.rotation = normalizedRotation(item.rotation)
+                output.insert(copy, at: output.pageCount)
+            case .image:
+                guard let image = orientedImage(url: item.sourceURL, maxPixel: nil) else {
+                    throw PDFStudioError.unreadableFile(item.sourceURL.lastPathComponent)
+                }
+                let pixelSize = CGSize(width: image.width, height: image.height)
+                var target = settings.pageSize == .zero ? imagePointSize(url: item.sourceURL, pixelSize: pixelSize) : settings.pageSize
+                if settings.pageSize != .zero, settings.landscape, target.width < target.height {
+                    target = CGSize(width: target.height, height: target.width)
+                }
+                let margin = settings.pageSize == .zero ? 0 : settings.margin
+                guard let page = renderImagePage(image, pageSize: target, margin: margin, fitMode: settings.fitMode) else {
+                    throw PDFStudioError.failed("Could not render “\(item.sourceURL.lastPathComponent)” into a PDF page.")
+                }
+                page.rotation = normalizedRotation(item.rotation)
+                output.insert(page, at: output.pageCount)
             }
-            targetURL = url
+            progress?(index + 1)
         }
+        guard output.pageCount == items.count else {
+            throw PDFStudioError.failed("Only \(output.pageCount) of \(items.count) pages could be assembled.")
+        }
+        return output
+    }
 
+    // MARK: - Export
+
+    /// Builds and writes the document off the main thread, reporting progress. The output is
+    /// written atomically and verified to reopen with the expected page count.
+    public func export(to destinationURL: URL) async -> Result<URL, Error> {
+        guard !pages.isEmpty else {
+            return .failure(PDFStudioError.emptyResult("Add at least one page before exporting."))
+        }
+        let items = buildItems
+        let settings = buildSettings
         isProcessing = true
-        currentProgress = 0.5
-        statusMessage = "Generating assembled PDF..."
+        currentProgress = 0
+        statusMessage = "Assembling \(items.count) page(s)…"
+        let total = Double(items.count)
 
-        let document = buildMergedDocument()
-        let success = document.write(to: targetURL)
+        let result = await Task.detached(priority: .userInitiated) { () -> Result<URL, Error> in
+            do {
+                let document = try PDFAssemblyService.buildDocument(items: items, settings: settings) { done in
+                    Task { @MainActor in
+                        PDFAssemblyService.reportProgress(Double(done) / total)
+                    }
+                }
+                try PDFSafeWriter.write(document, to: destinationURL, expectedPageCount: items.count)
+                return .success(destinationURL)
+            } catch {
+                return .failure(error)
+            }
+        }.value
 
         isProcessing = false
-        currentProgress = 1.0
+        currentProgress = 1
+        switch result {
+        case .success(let url):
+            statusMessage = "Exported \(items.count) page(s) to \(url.lastPathComponent)"
+        case .failure(let error):
+            statusMessage = "Export failed: \(error.localizedDescription)"
+        }
+        return result
+    }
 
-        if success {
+    private static func reportProgress(_ value: Double) {
+        for service in workspaces.values where service.isProcessing {
+            service.currentProgress = value
+        }
+        if shared.isProcessing { shared.currentProgress = value }
+    }
+
+    /// Synchronous export kept for callers that do not need progress.
+    public func exportMergedDocument(to destinationURL: URL? = nil) -> Result<URL, Error> {
+        guard !pages.isEmpty else {
+            return .failure(PDFStudioError.emptyResult("No pages to assemble."))
+        }
+        let filename = outputFilename.lowercased().hasSuffix(".pdf") ? outputFilename : "\(outputFilename).pdf"
+        guard let targetURL = destinationURL ?? outputDirectory?.appendingPathComponent(filename) else {
+            return .failure(PDFStudioError.failed("Choose a destination folder."))
+        }
+        do {
+            let document = try Self.buildDocument(items: buildItems, settings: buildSettings)
+            try PDFSafeWriter.write(document, to: targetURL, expectedPageCount: pages.count)
             statusMessage = "Exported \(document.pageCount) pages to \(targetURL.lastPathComponent)"
             return .success(targetURL)
-        } else {
-            statusMessage = "Failed writing PDF to destination."
-            return .failure(NSError(domain: "PDFAssemblyService", code: 3, userInfo: [NSLocalizedDescriptionKey: "Failed writing PDF file."]))
+        } catch {
+            statusMessage = "Export failed: \(error.localizedDescription)"
+            return .failure(error)
         }
     }
 
-    // MARK: - Helper Thumbnail & Rendering
-    private func generatePDFThumbnail(page: PDFPage) -> NSImage {
-        let bounds = page.bounds(for: .mediaBox)
-        let thumbSize = CGSize(width: 120, height: 160)
-        return page.thumbnail(of: thumbSize, for: .mediaBox)
+    // MARK: - Image Helpers
+
+    /// Full-resolution (or `maxPixel`-limited) image with EXIF orientation applied.
+    public nonisolated static func orientedImage(url: URL, maxPixel: Int?) -> CGImage? {
+        guard let source = CGImageSourceCreateWithURL(url as CFURL, nil), CGImageSourceGetCount(source) > 0 else { return nil }
+        let properties = CGImageSourceCopyPropertiesAtIndex(source, 0, nil) as? [CFString: Any]
+        let width = (properties?[kCGImagePropertyPixelWidth] as? NSNumber)?.intValue ?? 0
+        let height = (properties?[kCGImagePropertyPixelHeight] as? NSNumber)?.intValue ?? 0
+        let longest = max(width, height)
+        guard longest > 0 else { return CGImageSourceCreateImageAtIndex(source, 0, nil) }
+        let options: [CFString: Any] = [
+            kCGImageSourceCreateThumbnailFromImageAlways: true,
+            kCGImageSourceCreateThumbnailWithTransform: true,
+            kCGImageSourceThumbnailMaxPixelSize: min(longest, maxPixel ?? longest),
+            kCGImageSourceShouldCacheImmediately: true
+        ]
+        return CGImageSourceCreateThumbnailAtIndex(source, 0, options as CFDictionary)
     }
 
-    private func createThumbnail(from image: NSImage, size: CGSize) -> NSImage {
-        let img = NSImage(size: size)
-        img.lockFocus()
-        image.draw(in: CGRect(origin: .zero, size: size), from: .zero, operation: .copy, fraction: 1.0)
-        img.unlockFocus()
-        return img
+    nonisolated static func orientedPixelSize(url: URL) -> CGSize? {
+        guard let source = CGImageSourceCreateWithURL(url as CFURL, nil),
+              let properties = CGImageSourceCopyPropertiesAtIndex(source, 0, nil) as? [CFString: Any],
+              let width = (properties[kCGImagePropertyPixelWidth] as? NSNumber)?.doubleValue,
+              let height = (properties[kCGImagePropertyPixelHeight] as? NSNumber)?.doubleValue else { return nil }
+        let orientation = (properties[kCGImagePropertyOrientation] as? NSNumber)?.intValue ?? 1
+        return orientation >= 5 ? CGSize(width: height, height: width) : CGSize(width: width, height: height)
     }
 
-    private func renderImageToPDFPage(
-        image: NSImage,
-        targetSize: CGSize,
-        margin: CGFloat,
-        fitMode: ImageFitMode,
-        rotation: Int
-    ) -> PDFPage? {
+    /// Page size in points for “Match Image Dimensions”, honoring the image's DPI (72 if absent).
+    nonisolated static func imagePointSize(url: URL, pixelSize: CGSize) -> CGSize {
+        var dpi: Double = 72
+        if let source = CGImageSourceCreateWithURL(url as CFURL, nil),
+           let properties = CGImageSourceCopyPropertiesAtIndex(source, 0, nil) as? [CFString: Any],
+           let value = (properties[kCGImagePropertyDPIWidth] as? NSNumber)?.doubleValue, value >= 36 {
+            dpi = value
+        }
+        let scale = CGFloat(72 / dpi)
+        return CGSize(width: max(1, pixelSize.width * scale), height: max(1, pixelSize.height * scale))
+    }
+
+    nonisolated static func renderImagePage(_ image: CGImage, pageSize: CGSize, margin: CGFloat, fitMode: ImageFitMode) -> PDFPage? {
         let pdfData = NSMutableData()
-        var pageRect = CGRect(origin: .zero, size: targetSize)
-
+        var pageRect = CGRect(origin: .zero, size: pageSize)
         guard let consumer = CGDataConsumer(data: pdfData as CFMutableData),
-              let context = CGContext(consumer: consumer, mediaBox: &pageRect, nil) else {
-            return nil
-        }
-
+              let context = CGContext(consumer: consumer, mediaBox: &pageRect, nil) else { return nil }
         context.beginPDFPage(nil)
 
-        let printableRect = pageRect.insetBy(dx: margin, dy: margin)
-        let imageSize = image.size
-        var drawRect: CGRect
-
+        let printable = pageRect.insetBy(dx: margin, dy: margin)
+        let imageSize = CGSize(width: image.width, height: image.height)
+        let drawRect: CGRect
         switch fitMode {
-        case .contain:
-            let scale = min(printableRect.width / imageSize.width, printableRect.height / imageSize.height)
-            let scaledW = imageSize.width * scale
-            let scaledH = imageSize.height * scale
-            let originX = printableRect.minX + (printableRect.width - scaledW) / 2.0
-            let originY = printableRect.minY + (printableRect.height - scaledH) / 2.0
-            drawRect = CGRect(x: originX, y: originY, width: scaledW, height: scaledH)
-        case .cover:
-            let scale = max(printableRect.width / imageSize.width, printableRect.height / imageSize.height)
-            let scaledW = imageSize.width * scale
-            let scaledH = imageSize.height * scale
-            let originX = printableRect.minX + (printableRect.width - scaledW) / 2.0
-            let originY = printableRect.minY + (printableRect.height - scaledH) / 2.0
-            drawRect = CGRect(x: originX, y: originY, width: scaledW, height: scaledH)
+        case .contain, .cover:
+            let scale = fitMode == .contain
+                ? min(printable.width / imageSize.width, printable.height / imageSize.height)
+                : max(printable.width / imageSize.width, printable.height / imageSize.height)
+            let size = CGSize(width: imageSize.width * scale, height: imageSize.height * scale)
+            drawRect = CGRect(x: printable.midX - size.width / 2, y: printable.midY - size.height / 2, width: size.width, height: size.height)
         case .stretch:
-            drawRect = printableRect
+            drawRect = printable
         }
-
-        if let cgImage = image.cgImage(forProposedRect: nil, context: nil, hints: nil) {
-            context.draw(cgImage, in: drawRect)
-        }
-
+        context.saveGState()
+        context.clip(to: printable)
+        context.interpolationQuality = .high
+        context.draw(image, in: drawRect)
+        context.restoreGState()
         context.endPDFPage()
         context.closePDF()
-
-        if let renderedDoc = PDFDocument(data: pdfData as Data), let page = renderedDoc.page(at: 0) {
-            page.rotation = rotation
-            return page
-        }
-        return nil
+        return PDFDocument(data: pdfData as Data)?.page(at: 0)
     }
 
-    // MARK: - Split & Extraction
+    // MARK: - Split & Extract
+
+    /// Splits `sourceURL` into separate files. Ranges are validated; output names never overwrite
+    /// existing files. Returns the written files.
+    public nonisolated static func split(
+        sourceURL: URL,
+        mode: String,
+        interval: Int = 1,
+        rangesText: String = "",
+        destinationFolder: URL
+    ) throws -> [URL] {
+        let doc = try PDFSafeWriter.openReadable(sourceURL)
+        try PDFSafeWriter.ensureWritableFolder(destinationFolder)
+        let baseName = sourceURL.deletingPathExtension().lastPathComponent
+        let groups: [(name: String, pages: [Int])]
+        switch mode {
+        case "each":
+            groups = (0..<doc.pageCount).map { ("\(baseName)_page_\($0 + 1)", [$0]) }
+        case "interval":
+            let step = max(1, interval)
+            groups = stride(from: 0, to: doc.pageCount, by: step).enumerated().map { part, start in
+                ("\(baseName)_part_\(part + 1)", Array(start..<min(start + step, doc.pageCount)))
+            }
+        case "range":
+            groups = try PDFSafeWriter.parsePageRanges(rangesText, pageCount: doc.pageCount).map { pages in
+                let label = pages.count == 1 ? "\(pages[0] + 1)" : "\(pages[0] + 1)-\(pages[pages.count - 1] + 1)"
+                return ("\(baseName)_pages_\(label)", pages)
+            }
+        default:
+            throw PDFStudioError.failed("Unknown split mode “\(mode)”.")
+        }
+
+        var written: [URL] = []
+        for group in groups {
+            let part = PDFDocument()
+            for pageIndex in group.pages {
+                if let copy = doc.page(at: pageIndex)?.copy() as? PDFPage {
+                    part.insert(copy, at: part.pageCount)
+                }
+            }
+            let url = PDFSafeWriter.uniqueURL(for: destinationFolder.appendingPathComponent("\(group.name).pdf"))
+            try PDFSafeWriter.write(part, to: url, expectedPageCount: group.pages.count)
+            written.append(url)
+        }
+        return written
+    }
+
+    /// Writes the pages listed in `pageRangesText` (in the order given) to `destinationURL`.
+    @discardableResult
+    public nonisolated static func extract(sourceURL: URL, pageRangesText: String, destinationURL: URL) throws -> Int {
+        if destinationURL.standardizedFileURL == sourceURL.standardizedFileURL {
+            throw PDFStudioError.failed("Choose a different file name. Extracting into the source document would overwrite it.")
+        }
+        let doc = try PDFSafeWriter.openReadable(sourceURL)
+        let indices = try PDFSafeWriter.parsePageRanges(pageRangesText, pageCount: doc.pageCount).flatMap { $0 }
+        let output = PDFDocument()
+        for pageIndex in indices {
+            if let copy = doc.page(at: pageIndex)?.copy() as? PDFPage {
+                output.insert(copy, at: output.pageCount)
+            }
+        }
+        try PDFSafeWriter.write(output, to: destinationURL, expectedPageCount: indices.count)
+        return indices.count
+    }
+
+    // Backwards-compatible wrappers.
+
     public func splitDocument(
         sourceURL: URL,
         splitMode: String,
@@ -316,94 +553,10 @@ public final class PDFAssemblyService: ObservableObject {
         splitRangesText: String = "",
         destinationFolder: URL
     ) -> [URL] {
-        guard let doc = PDFDocument(url: sourceURL) else { return [] }
-        var outputURLs: [URL] = []
-        let baseName = sourceURL.deletingPathExtension().lastPathComponent
-
-        if splitMode == "each" {
-            for i in 0..<doc.pageCount {
-                guard let page = doc.page(at: i) else { continue }
-                let newDoc = PDFDocument()
-                newDoc.insert(page, at: 0)
-                let outURL = destinationFolder.appendingPathComponent("\(baseName)_page_\(i + 1).pdf")
-                if newDoc.write(to: outURL) {
-                    outputURLs.append(outURL)
-                }
-            }
-        } else if splitMode == "interval" {
-            let interval = max(1, splitInterval)
-            var part = 1
-            var pageIndex = 0
-            while pageIndex < doc.pageCount {
-                let newDoc = PDFDocument()
-                for _ in 0..<interval {
-                    if pageIndex < doc.pageCount, let page = doc.page(at: pageIndex) {
-                        newDoc.insert(page, at: newDoc.pageCount)
-                        pageIndex += 1
-                    }
-                }
-                let outURL = destinationFolder.appendingPathComponent("\(baseName)_part_\(part).pdf")
-                if newDoc.write(to: outURL) {
-                    outputURLs.append(outURL)
-                }
-                part += 1
-            }
-        } else if splitMode == "range" {
-            let ranges = parsePageRanges(splitRangesText, maxPages: doc.pageCount)
-            for (idx, pageIndices) in ranges.enumerated() {
-                let newDoc = PDFDocument()
-                for pIdx in pageIndices {
-                    if let page = doc.page(at: pIdx) {
-                        newDoc.insert(page, at: newDoc.pageCount)
-                    }
-                }
-                let outURL = destinationFolder.appendingPathComponent("\(baseName)_range_\(idx + 1).pdf")
-                if newDoc.write(to: outURL) {
-                    outputURLs.append(outURL)
-                }
-            }
-        }
-        return outputURLs
+        (try? Self.split(sourceURL: sourceURL, mode: splitMode, interval: splitInterval, rangesText: splitRangesText, destinationFolder: destinationFolder)) ?? []
     }
 
-    public func extractPages(
-        sourceURL: URL,
-        pageRangesText: String,
-        destinationURL: URL
-    ) -> Bool {
-        guard let doc = PDFDocument(url: sourceURL) else { return false }
-        let ranges = parsePageRanges(pageRangesText, maxPages: doc.pageCount)
-        let newDoc = PDFDocument()
-        for pageIndices in ranges {
-            for pIdx in pageIndices {
-                if let page = doc.page(at: pIdx) {
-                    newDoc.insert(page, at: newDoc.pageCount)
-                }
-            }
-        }
-        return newDoc.write(to: destinationURL)
-    }
-
-    private func parsePageRanges(_ text: String, maxPages: Int) -> [[Int]] {
-        var result: [[Int]] = []
-        let parts = text.components(separatedBy: ",")
-        for part in parts {
-            let trimmed = part.trimmingCharacters(in: .whitespacesAndNewlines)
-            if trimmed.contains("-") {
-                let bounds = trimmed.components(separatedBy: "-")
-                if bounds.count == 2,
-                   let start = Int(bounds[0].trimmingCharacters(in: .whitespacesAndNewlines)),
-                   let end = Int(bounds[1].trimmingCharacters(in: .whitespacesAndNewlines)) {
-                    let clampedStart = max(1, min(start, maxPages))
-                    let clampedEnd = max(1, min(end, maxPages))
-                    let range = (min(clampedStart, clampedEnd)...max(clampedStart, clampedEnd)).map { $0 - 1 }
-                    result.append(range)
-                }
-            } else if let single = Int(trimmed) {
-                let clamped = max(1, min(single, maxPages))
-                result.append([clamped - 1])
-            }
-        }
-        return result.isEmpty ? [Array(0..<maxPages)] : result
+    public func extractPages(sourceURL: URL, pageRangesText: String, destinationURL: URL) -> Bool {
+        (try? Self.extract(sourceURL: sourceURL, pageRangesText: pageRangesText, destinationURL: destinationURL)) != nil
     }
 }

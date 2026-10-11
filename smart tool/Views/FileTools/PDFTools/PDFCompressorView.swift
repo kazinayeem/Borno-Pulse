@@ -64,11 +64,38 @@ public struct PDFCompressorView: View {
                         }
                     }
                     
-                    Text("Optimization Guarantee: Page structure, aspect ratios, and orientations are strictly preserved. If a PDF is primarily vector/text and contains no heavy images, further compression yields minimal size reduction.")
+                    HStack(alignment: .top, spacing: 6) {
+                        Image(systemName: service.selectedPreset.preservesText ? "checkmark.shield" : "exclamationmark.triangle.fill")
+                            .foregroundStyle(service.selectedPreset.preservesText ? AppTheme.successGreen : AppTheme.warningAmber)
+                        Text(service.selectedPreset.detail)
+                            .font(.system(size: 11))
+                            .foregroundStyle(service.selectedPreset.preservesText ? AppTheme.textSecondary : AppTheme.warningAmber)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+
+                    Text("Originals are never modified. Results are saved as “name_compressed.pdf”, verified by reopening, and skipped when they would not be smaller. Text-heavy PDFs with few images usually cannot shrink much.")
                         .font(.system(size: 11))
                         .foregroundStyle(AppTheme.textTertiary)
+                        .fixedSize(horizontal: false, vertical: true)
+
+                    HStack {
+                        Text("Destination:")
+                            .font(.system(size: 11))
+                            .foregroundStyle(AppTheme.textSecondary)
+                        Button(service.outputDirectory?.lastPathComponent ?? "Choose…") {
+                            service.selectOutputDirectory()
+                        }
+                        .controlSize(.small)
+                        .help(service.outputDirectory?.path ?? "Choose a destination folder")
+                    }
                 }
                 .smartCard()
+
+                if let rejected = service.rejectedFilesMessage {
+                    Label(rejected, systemImage: "exclamationmark.triangle.fill")
+                        .font(.system(size: 11))
+                        .foregroundStyle(AppTheme.warningAmber)
+                }
                 
                 // Queue
                 if !service.queue.isEmpty {
@@ -99,6 +126,12 @@ public struct PDFCompressorView: View {
                                     Text("\(item.pageCount) pages • Original: \(Formatters.bytes(item.fileSize))")
                                         .font(.system(size: 10))
                                         .foregroundStyle(AppTheme.textTertiary)
+                                    if let note = item.errorMessage {
+                                        Text(note)
+                                            .font(.system(size: 10))
+                                            .foregroundStyle(item.status == .failed ? AppTheme.dangerRed : AppTheme.textSecondary)
+                                            .lineLimit(2)
+                                    }
                                 }
                                 
                                 Spacer()
@@ -155,7 +188,7 @@ public struct PDFCompressorView: View {
                         }
                         .buttonStyle(.borderedProminent)
                         .tint(AppTheme.accentFill)
-                        .disabled(service.queue.isEmpty)
+                        .disabled(service.queue.allSatisfy { $0.isEncrypted })
                     }
                 }
                 .padding(.top, 4)

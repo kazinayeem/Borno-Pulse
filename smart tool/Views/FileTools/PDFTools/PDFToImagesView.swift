@@ -19,7 +19,7 @@ public struct PDFToImagesView: View {
                     Text("PDF to Images Converter")
                         .font(.system(size: 20, weight: .bold))
                         .foregroundStyle(AppTheme.textPrimary)
-                    Text("Render PDF pages into high-resolution PNG or JPG images with configurable DPI and page ranges")
+                    Text("Render PDF pages into high-resolution PNG, JPG or TIFF images with configurable DPI and page ranges. Page rotation and crop boxes are applied exactly as displayed.")
                         .font(.system(size: 12))
                         .foregroundStyle(AppTheme.textSecondary)
                 }
@@ -35,6 +35,12 @@ public struct PDFToImagesView: View {
                     if let first = urls.first {
                         service.loadPDF(url: first)
                     }
+                }
+
+                if service.pdfDocument == nil, let error = service.lastError {
+                    Label(error, systemImage: "exclamationmark.triangle.fill")
+                        .font(.system(size: 11))
+                        .foregroundStyle(AppTheme.dangerRed)
                 }
                 
                 if let doc = service.pdfDocument, let inURL = service.selectedPDFURL {
@@ -70,6 +76,7 @@ public struct PDFToImagesView: View {
                                     Picker("", selection: $service.targetFormat) {
                                         Text("PNG (Lossless)").tag(ImageFormat.png)
                                         Text("JPG (Compressed)").tag(ImageFormat.jpeg)
+                                        Text("TIFF (Lossless)").tag(ImageFormat.tiff)
                                     }
                                     .labelsHidden()
                                     .frame(width: 160)
@@ -93,6 +100,7 @@ public struct PDFToImagesView: View {
                                     Picker("", selection: $service.targetFormat) {
                                         Text("PNG (Lossless)").tag(ImageFormat.png)
                                         Text("JPG (Compressed)").tag(ImageFormat.jpeg)
+                                        Text("TIFF (Lossless)").tag(ImageFormat.tiff)
                                     }
                                     .labelsHidden()
                                     .frame(maxWidth: .infinity)
@@ -117,6 +125,15 @@ public struct PDFToImagesView: View {
                             Toggle("Export All Pages (\(doc.pageCount) pages)", isOn: $service.exportAllPages)
                                 .font(.system(size: 12))
                             
+                            HStack(spacing: 8) {
+                                Text("Output Folder:").font(.system(size: 11)).foregroundStyle(AppTheme.textSecondary)
+                                Button(service.outputDirectory?.lastPathComponent ?? "Choose…") {
+                                    service.selectOutputDirectory()
+                                }
+                                .controlSize(.small)
+                                .help(service.outputDirectory?.path ?? "Choose where images are saved")
+                            }
+
                             if !service.exportAllPages {
                                 HStack(spacing: 12) {
                                     Text("From Page:").font(.system(size: 11)).foregroundStyle(AppTheme.textSecondary)
@@ -133,6 +150,12 @@ public struct PDFToImagesView: View {
                     }
                     .smartCard()
                     
+                    if let error = service.lastError {
+                        Label(error, systemImage: "exclamationmark.triangle.fill")
+                            .font(.system(size: 11))
+                            .foregroundStyle(AppTheme.dangerRed)
+                    }
+
                     // Action Toolbar
                     HStack {
                         if service.isProcessing {
@@ -149,9 +172,9 @@ public struct PDFToImagesView: View {
                                 .font(.system(size: 12))
                                 .foregroundStyle(AppTheme.textSecondary)
                             Spacer()
-                            if service.exportedCount > 0, let dir = service.outputDirectory {
-                                Button("Open Output Folder") {
-                                    NSWorkspace.shared.open(dir)
+                            if !service.exportedURLs.isEmpty {
+                                Button("Reveal in Finder") {
+                                    NSWorkspace.shared.activateFileViewerSelecting(service.exportedURLs)
                                 }
                                 .buttonStyle(.bordered)
                             }

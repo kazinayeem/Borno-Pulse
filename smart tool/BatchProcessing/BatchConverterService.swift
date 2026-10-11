@@ -175,16 +175,15 @@ public final class BatchConverterService: ObservableObject {
                         }
                         
                     case .compressPDF:
-                        let result = PDFCompressorService.compressSinglePDF(
+                        let result = PDFCompressorService.compress(
                             inputURL: source,
                             outputDir: destFolder,
                             preset: .balanced
                         )
                         switch result {
-                        case .success(let outBytes):
-                            let defaultOut = destFolder.appendingPathComponent("\(source.deletingPathExtension().lastPathComponent)_compressed.pdf")
-                            queue[i].destinationURL = defaultOut
-                            queue[i].outputSize = Int64(outBytes)
+                        case .success(let output):
+                            queue[i].destinationURL = output.url
+                            queue[i].outputSize = Int64(output.bytes)
                             queue[i].status = .completed
                             queue[i].progress = 1.0
                         case .failure(let err):

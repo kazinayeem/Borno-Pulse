@@ -26,19 +26,40 @@ public struct PDFFileQueueItem: Identifiable, Sendable {
 }
 
 public enum PDFCompressionPreset: String, CaseIterable, Identifiable, Sendable {
-    case highQuality = "Maximum Quality (150 DPI)"
-    case balanced = "Balanced Quality (100 DPI)"
-    case compact = "Compact / Email (72 DPI)"
-    
+    case highQuality = "Lossless Re-save"
+    case balanced = "Balanced (JPEG Images)"
+    case compact = "Smallest (Screen Images)"
+    case flatten = "Flatten to Images"
+
     public var id: String { rawValue }
-    
-    public var dpi: CGFloat {
+
+    /// What the preset actually does, shown in the UI.
+    public var detail: String {
         switch self {
-        case .highQuality: return 150.0
-        case .balanced: return 100.0
-        case .compact: return 72.0
+        case .highQuality:
+            return "Rewrites the file structure only. Text, vectors and images are untouched."
+        case .balanced:
+            return "Re-encodes embedded images as JPEG (quality 75%, up to 150 ppi). Text, vectors, links and annotations are preserved."
+        case .compact:
+            return "Re-encodes images as JPEG (quality 50%) and downsamples them to 96 ppi for on-screen viewing. Text, vectors, links and annotations are preserved."
+        case .flatten:
+            return "Renders every page to a 110 DPI JPEG. Removes selectable text, links, form fields and annotations. Use only for scans."
         }
     }
+
+    public var preservesText: Bool { self != .flatten }
+
+    /// JPEG quality and maximum image resolution applied by the image-recompression presets.
+    public var imageSettings: (quality: Double, resolution: Int)? {
+        switch self {
+        case .balanced: return (0.75, 150)
+        case .compact: return (0.5, 96)
+        case .highQuality, .flatten: return nil
+        }
+    }
+
+    /// Rendering resolution for the flatten preset.
+    public var dpi: CGFloat { 110 }
 }
 
 public enum PDFPageSizePreset: String, CaseIterable, Identifiable, Sendable {

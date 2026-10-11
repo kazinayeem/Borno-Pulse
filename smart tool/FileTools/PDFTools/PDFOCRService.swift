@@ -2,17 +2,36 @@
 //  PDFOCRService.swift
 //  Borno Pulse
 //
-//  On-device Apple Vision text recognition and Searchable PDF generator engine.
+//  On-device Apple Vision text recognition and searchable-PDF generation.
+//
+//  Searchable PDFs keep each page's original vector content and add an invisible text layer
+//  positioned on Vision's line bounding boxes, so search/selection lines up with the visible
+//  text. Pages that already contain a text layer are copied unchanged, never duplicated.
 //
 
 import AppKit
+import CoreText
 import Foundation
 import PDFKit
 import Vision
 
+public struct PDFOCRLine: Sendable {
+    public let text: String
+    /// Normalized (0...1) bounding box, origin bottom-left, as returned by Vision.
+    public let boundingBox: CGRect
+}
+
+public struct PDFSearchableReport: Sendable {
+    public let outputURL: URL
+    public let recognizedPages: Int
+    public let preservedTextPages: Int
+    public let recognizedLines: Int
+}
+
 @MainActor
 public final class PDFOCRService: ObservableObject {
     public static let shared = PDFOCRService()
+    public nonisolated static let automaticLanguage = "Automatic"
 
     @Published public var isProcessing: Bool = false
     @Published public var currentProgress: Double = 0.0
@@ -20,210 +39,232 @@ public final class PDFOCRService: ObservableObject {
     @Published public var recognizedText: String = ""
     @Published public var selectedLanguage: String = "en-US"
     @Published public var supportedLanguages: [String] = ["en-US", "fr-FR", "de-DE", "es-ES", "it-IT", "zh-Hans", "ja-JP"]
+    @Published public var forceOCROnTextPages: Bool = false
+
+    private var task: Task<Void, Never>?
 
     public init() {
-        let req = VNRecognizeTextRequest()
-        if let langs = try? req.supportedRecognitionLanguages() {
-            self.supportedLanguages = langs
+        let request = VNRecognizeTextRequest()
+        request.recognitionLevel = .accurate
+        if let languages = try? request.supportedRecognitionLanguages(), !languages.isEmpty {
+            supportedLanguages = languages
         }
     }
 
-    // MARK: - Recognize Text from Image
-    public func recognizeText(from image: NSImage) async -> Result<String, Error> {
-        guard let cgImage = image.cgImage(forProposedRect: nil, context: nil, hints: nil) else {
-            return .failure(NSError(domain: "PDFOCRService", code: 1, userInfo: [NSLocalizedDescriptionKey: "Invalid image format for OCR."]))
-        }
+    public var languageChoices: [String] { [Self.automaticLanguage] + supportedLanguages }
 
-        isProcessing = true
-        currentProgress = 0.3
-        statusMessage = "Analyzing text with Apple Vision engine..."
+    // MARK: - Vision
 
-        return await withCheckedContinuation { continuation in
-            let request = VNRecognizeTextRequest { [weak self] req, err in
-                Task { @MainActor in
-                    self?.isProcessing = false
-                    self?.currentProgress = 1.0
-
-                    if let error = err {
-                        self?.statusMessage = "OCR error: \(error.localizedDescription)"
-                        continuation.resume(returning: .failure(error))
-                        return
-                    }
-
-                    guard let observations = req.results as? [VNRecognizedTextObservation] else {
-                        self?.statusMessage = "No text recognized."
-                        continuation.resume(returning: .success(""))
-                        return
-                    }
-
-                    let lines = observations.compactMap { $0.topCandidates(1).first?.string }
-                    let fullText = lines.joined(separator: "\n")
-                    self?.recognizedText = fullText
-                    self?.statusMessage = "Recognized \(lines.count) text lines"
-                    continuation.resume(returning: .success(fullText))
-                }
-            }
-
-            request.recognitionLevel = .accurate
-            request.recognitionLanguages = [self.selectedLanguage]
-            request.usesLanguageCorrection = true
-
-            let handler = VNImageRequestHandler(cgImage: cgImage, options: [:])
-            do {
-                try handler.perform([request])
-            } catch {
-                self.isProcessing = false
-                self.statusMessage = "Failed executing OCR request: \(error.localizedDescription)"
-                continuation.resume(returning: .failure(error))
-            }
-        }
-    }
-
-    // MARK: - Recognize Text from PDF Document
-    public func recognizeText(from pdfURL: URL) async -> Result<String, Error> {
-        guard let doc = PDFDocument(url: pdfURL) else {
-            return .failure(NSError(domain: "PDFOCRService", code: 2, userInfo: [NSLocalizedDescriptionKey: "Unable to open PDF document."]))
-        }
-
-        isProcessing = true
-        currentProgress = 0.0
-        statusMessage = "Performing OCR across \(doc.pageCount) pages..."
-
-        var allPageTexts: [String] = []
-
-        for i in 0..<doc.pageCount {
-            currentProgress = Double(i) / Double(doc.pageCount)
-            statusMessage = "Recognizing text on page \(i + 1) of \(doc.pageCount)..."
-
-            guard let page = doc.page(at: i) else { continue }
-            let pageSize = page.bounds(for: .mediaBox).size
-            let img = page.thumbnail(of: CGSize(width: pageSize.width * 2, height: pageSize.height * 2), for: .mediaBox)
-
-            if case .success(let pageText) = await recognizeText(from: img), !pageText.isEmpty {
-                allPageTexts.append("--- Page \(i + 1) ---\n" + pageText)
-            }
-        }
-
-        let combined = allPageTexts.joined(separator: "\n\n")
-        self.recognizedText = combined
-        self.isProcessing = false
-        self.currentProgress = 1.0
-        self.statusMessage = "Completed OCR across \(doc.pageCount) pages"
-        return .success(combined)
-    }
-
-    // MARK: - Generate Searchable PDF
-    public func generateSearchablePDF(from sourceURL: URL, outputURL: URL) async -> Result<URL, Error> {
-        let ext = sourceURL.pathExtension.lowercased()
-        if ext == "pdf" {
-            guard let doc = PDFDocument(url: sourceURL) else {
-                return .failure(NSError(domain: "PDFOCRService", code: 3, userInfo: [NSLocalizedDescriptionKey: "Cannot open PDF."]))
-            }
-
-            let searchableDoc = PDFDocument()
-
-            for i in 0..<doc.pageCount {
-                guard let page = doc.page(at: i) else { continue }
-                let pageSize = page.bounds(for: .mediaBox).size
-                let img = page.thumbnail(of: CGSize(width: pageSize.width * 2, height: pageSize.height * 2), for: .mediaBox)
-
-                // Recognize text
-                if case .success(let text) = await recognizeText(from: img) {
-                    // Create page with original image and invisible searchable text annotations
-                    if let newPage = createSearchablePage(image: img, text: text, size: pageSize) {
-                        searchableDoc.insert(newPage, at: searchableDoc.pageCount)
-                    } else {
-                        searchableDoc.insert(page, at: searchableDoc.pageCount)
-                    }
-                } else {
-                    searchableDoc.insert(page, at: searchableDoc.pageCount)
-                }
-            }
-
-            if searchableDoc.write(to: outputURL) {
-                statusMessage = "Created Searchable PDF at \(outputURL.lastPathComponent)"
-                return .success(outputURL)
-            }
+    public nonisolated static func recognize(_ image: CGImage, language: String) throws -> [PDFOCRLine] {
+        let request = VNRecognizeTextRequest()
+        request.recognitionLevel = .accurate
+        request.usesLanguageCorrection = true
+        if language == automaticLanguage {
+            request.automaticallyDetectsLanguage = true
         } else {
-            // Image source
-            guard let img = NSImage(contentsOf: sourceURL) else {
-                return .failure(NSError(domain: "PDFOCRService", code: 4, userInfo: [NSLocalizedDescriptionKey: "Cannot open image."]))
+            request.recognitionLanguages = [language]
+        }
+        let handler = VNImageRequestHandler(cgImage: image, options: [:])
+        try handler.perform([request])
+        return (request.results ?? []).compactMap { observation in
+            guard let candidate = observation.topCandidates(1).first else { return nil }
+            let text = candidate.string.trimmingCharacters(in: .whitespacesAndNewlines)
+            return text.isEmpty ? nil : PDFOCRLine(text: text, boundingBox: observation.boundingBox)
+        }
+    }
+
+    // MARK: - Text Extraction
+
+    public func extractText(from url: URL) {
+        guard !isProcessing else { return }
+        let language = selectedLanguage
+        let force = forceOCROnTextPages
+        isProcessing = true
+        recognizedText = ""
+        currentProgress = 0
+        statusMessage = "Preparing…"
+
+        task = Task { [weak self] in
+            guard let self else { return }
+            do {
+                if url.pathExtension.lowercased() == "pdf" {
+                    let doc = try PDFSafeWriter.openReadable(url)
+                    var sections: [String] = []
+                    var ocrPages = 0
+                    for index in 0..<doc.pageCount {
+                        if Task.isCancelled { throw PDFStudioError.cancelled }
+                        self.statusMessage = "Reading page \(index + 1) of \(doc.pageCount)…"
+                        self.currentProgress = Double(index) / Double(doc.pageCount)
+                        let existing = doc.page(at: index)?.string?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+                        let text: String
+                        if !existing.isEmpty && !force {
+                            text = existing
+                        } else {
+                            ocrPages += 1
+                            text = try await Task.detached(priority: .userInitiated) { () throws -> String in
+                                guard let page = PDFDocument(url: url)?.page(at: index),
+                                      let image = PDFToImagesService.renderImage(of: page, dpi: 200) else { return "" }
+                                return try PDFOCRService.recognize(image, language: language).map(\.text).joined(separator: "\n")
+                            }.value
+                        }
+                        if !text.isEmpty { sections.append("--- Page \(index + 1) ---\n\(text)") }
+                    }
+                    self.recognizedText = sections.joined(separator: "\n\n")
+                    self.statusMessage = self.recognizedText.isEmpty
+                        ? "No text was found in this document."
+                        : "Extracted text from \(doc.pageCount) page(s) (\(ocrPages) recognized with OCR, \(doc.pageCount - ocrPages) from the existing text layer)."
+                } else {
+                    let text = try await Task.detached(priority: .userInitiated) { () throws -> String in
+                        guard let image = PDFAssemblyService.orientedImage(url: url, maxPixel: 4000) else {
+                            throw PDFStudioError.unreadableFile(url.lastPathComponent)
+                        }
+                        return try PDFOCRService.recognize(image, language: language).map(\.text).joined(separator: "\n")
+                    }.value
+                    self.recognizedText = text
+                    self.statusMessage = text.isEmpty ? "No text was recognized in this image." : "Recognized \(text.split(separator: "\n").count) line(s)."
+                }
+            } catch {
+                self.statusMessage = "Text extraction failed: \(error.localizedDescription)"
             }
-            if case .success(let text) = await recognizeText(from: img) {
-                let searchableDoc = PDFDocument()
-                if let newPage = createSearchablePage(image: img, text: text, size: img.size) {
-                    searchableDoc.insert(newPage, at: 0)
-                    if searchableDoc.write(to: outputURL) {
-                        return .success(outputURL)
+            self.isProcessing = false
+            self.currentProgress = 1
+        }
+    }
+
+    public func cancel() {
+        task?.cancel()
+    }
+
+    // MARK: - Searchable PDF
+
+    public func makeSearchablePDF(from sourceURL: URL, to destinationURL: URL) async -> Result<PDFSearchableReport, Error> {
+        guard !isProcessing else { return .failure(PDFStudioError.failed("OCR is already running.")) }
+        if destinationURL.standardizedFileURL == sourceURL.standardizedFileURL {
+            return .failure(PDFStudioError.failed("Choose a different file name. The searchable PDF is saved as a new file and never replaces the original."))
+        }
+        let language = selectedLanguage
+        let force = forceOCROnTextPages
+        isProcessing = true
+        currentProgress = 0
+        statusMessage = "Creating searchable PDF…"
+        defer {
+            isProcessing = false
+            currentProgress = 1
+        }
+        do {
+            let report = try await Task.detached(priority: .userInitiated) { () throws -> PDFSearchableReport in
+                try PDFOCRService.buildSearchablePDF(source: sourceURL, destination: destinationURL, language: language, forceOCR: force) { done, total in
+                    Task { @MainActor in
+                        PDFOCRService.shared.currentProgress = Double(done) / Double(max(1, total))
+                        PDFOCRService.shared.statusMessage = "Recognizing page \(min(done + 1, total)) of \(total)…"
                     }
                 }
+            }.value
+            statusMessage = "Searchable PDF saved: \(report.recognizedPages) page(s) recognized, \(report.preservedTextPages) page(s) already had text and were kept unchanged."
+            return .success(report)
+        } catch {
+            statusMessage = "Searchable PDF failed: \(error.localizedDescription)"
+            return .failure(error)
+        }
+    }
+
+    public nonisolated static func buildSearchablePDF(
+        source: URL,
+        destination: URL,
+        language: String,
+        forceOCR: Bool,
+        progress: ((Int, Int) -> Void)? = nil
+    ) throws -> PDFSearchableReport {
+        if source.standardizedFileURL == destination.standardizedFileURL {
+            throw PDFStudioError.failed("Choose a different file name. The searchable PDF is saved as a new file.")
+        }
+        let output = PDFDocument()
+        var recognizedPages = 0
+        var preservedPages = 0
+        var lineCount = 0
+
+        if source.pathExtension.lowercased() == "pdf" {
+            let doc = try PDFSafeWriter.openReadable(source)
+            for index in 0..<doc.pageCount {
+                progress?(index, doc.pageCount)
+                guard let page = doc.page(at: index) else { continue }
+                let hasText = !(page.string?.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ?? true)
+                if hasText && !forceOCR {
+                    if let copy = page.copy() as? PDFPage { output.insert(copy, at: output.pageCount) }
+                    preservedPages += 1
+                    continue
+                }
+                guard let image = PDFToImagesService.renderImage(of: page, dpi: 200) else {
+                    throw PDFStudioError.failed("Page \(index + 1) could not be rendered for recognition.")
+                }
+                let lines = try recognize(image, language: language)
+                let size = PDFEditorGeometry.displayedPageSize(page.bounds(for: .cropBox).size, rotation: page.rotation)
+                guard let newPage = makePage(size: size, lines: lines, drawContent: { context in
+                    page.draw(with: .cropBox, to: context)
+                }) else {
+                    throw PDFStudioError.failed("Page \(index + 1) could not be rebuilt.")
+                }
+                output.insert(newPage, at: output.pageCount)
+                recognizedPages += 1
+                lineCount += lines.count
             }
-        }
-
-        return .failure(NSError(domain: "PDFOCRService", code: 5, userInfo: [NSLocalizedDescriptionKey: "Failed generating searchable PDF."]))
-    }
-
-    // MARK: - Convenience Wrappers
-    public func performOCR(url: URL, languages: [String] = []) {
-        if let first = languages.first {
-            self.selectedLanguage = first
-        }
-        let ext = url.pathExtension.lowercased()
-        Task {
-            if ext == "pdf" {
-                _ = await recognizeText(from: url)
-            } else if let img = NSImage(contentsOf: url) {
-                _ = await recognizeText(from: img)
+            progress?(doc.pageCount, doc.pageCount)
+        } else {
+            guard let image = PDFAssemblyService.orientedImage(url: source, maxPixel: nil) else {
+                throw PDFStudioError.unreadableFile(source.lastPathComponent)
             }
+            let lines = try recognize(image, language: language)
+            let size = PDFAssemblyService.imagePointSize(url: source, pixelSize: CGSize(width: image.width, height: image.height))
+            guard let page = makePage(size: size, lines: lines, drawContent: { context in
+                context.interpolationQuality = .high
+                context.draw(image, in: CGRect(origin: .zero, size: size))
+            }) else {
+                throw PDFStudioError.failed("The image could not be converted.")
+            }
+            output.insert(page, at: 0)
+            recognizedPages = 1
+            lineCount = lines.count
+            progress?(1, 1)
         }
+
+        try PDFSafeWriter.write(output, to: destination, expectedPageCount: output.pageCount)
+        return PDFSearchableReport(outputURL: destination, recognizedPages: recognizedPages, preservedTextPages: preservedPages, recognizedLines: lineCount)
     }
 
-    public func createSearchablePDF(
-        from sourceURL: URL,
-        destinationURL: URL,
-        languages: [String] = [],
-        completion: @escaping (Result<URL, Error>) -> Void
-    ) {
-        if let first = languages.first {
-            self.selectedLanguage = first
-        }
-        Task {
-            let res = await generateSearchablePDF(from: sourceURL, outputURL: destinationURL)
-            completion(res)
-        }
-    }
-
-    private func createSearchablePage(image: NSImage, text: String, size: CGSize) -> PDFPage? {
-        let pdfData = NSMutableData()
-        var pageRect = CGRect(origin: .zero, size: size)
-
-        guard let consumer = CGDataConsumer(data: pdfData as CFMutableData),
-              let context = CGContext(consumer: consumer, mediaBox: &pageRect, nil) else {
-            return nil
-        }
-
+    /// Draws the visible content, then each recognized line as invisible text fitted to its box.
+    nonisolated static func makePage(size: CGSize, lines: [PDFOCRLine], drawContent: (CGContext) -> Void) -> PDFPage? {
+        let data = NSMutableData()
+        var mediaBox = CGRect(origin: .zero, size: size)
+        guard let consumer = CGDataConsumer(data: data as CFMutableData),
+              let context = CGContext(consumer: consumer, mediaBox: &mediaBox, nil) else { return nil }
         context.beginPDFPage(nil)
+        context.saveGState()
+        drawContent(context)
+        context.restoreGState()
 
-        // Draw original scan
-        if let cgImage = image.cgImage(forProposedRect: nil, context: nil, hints: nil) {
-            context.draw(cgImage, in: pageRect)
+        context.saveGState()
+        context.setTextDrawingMode(.invisible)
+        for line in lines {
+            let box = CGRect(
+                x: line.boundingBox.minX * size.width,
+                y: line.boundingBox.minY * size.height,
+                width: line.boundingBox.width * size.width,
+                height: line.boundingBox.height * size.height
+            )
+            guard box.width > 1, box.height > 1 else { continue }
+            let fontSize = max(1, box.height * 0.82)
+            let font = CTFontCreateWithName("Helvetica" as CFString, fontSize, nil)
+            let attributed = NSAttributedString(string: line.text, attributes: [.font: font])
+            let ctLine = CTLineCreateWithAttributedString(attributed)
+            let naturalWidth = CGFloat(CTLineGetTypographicBounds(ctLine, nil, nil, nil))
+            guard naturalWidth > 0 else { continue }
+            context.textMatrix = CGAffineTransform(scaleX: box.width / naturalWidth, y: 1)
+            context.textPosition = CGPoint(x: box.minX, y: box.minY + box.height * 0.18)
+            CTLineDraw(ctLine, context)
         }
-
+        context.restoreGState()
         context.endPDFPage()
         context.closePDF()
-
-        guard let renderedDoc = PDFDocument(data: pdfData as Data), let page = renderedDoc.page(at: 0) else {
-            return nil
-        }
-
-        // Overlay transparent text annotation to make page text selectable & searchable
-        let textAnnot = PDFAnnotation(bounds: pageRect, forType: .freeText, withProperties: nil)
-        textAnnot.contents = text
-        textAnnot.font = NSFont.systemFont(ofSize: 12)
-        textAnnot.fontColor = NSColor.clear
-        textAnnot.color = NSColor.clear
-        page.addAnnotation(textAnnot)
-
-        return page
+        return PDFDocument(data: data as Data)?.page(at: 0)
     }
 }

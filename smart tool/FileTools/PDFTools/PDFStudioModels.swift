@@ -119,6 +119,8 @@ public struct PDFStudioPageItem: Identifiable, Sendable {
     public var customWidth: CGFloat?
     public var customHeight: CGFloat?
     public var cachedThumbnail: NSImage?
+    /// Rotation already applied inside `cachedThumbnail` (PDF thumbnails include the page's own rotation).
+    public var thumbnailRotation: Int = 0
     public var pageTitle: String
     public var isSelected: Bool
 
