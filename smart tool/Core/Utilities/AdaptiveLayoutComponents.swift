@@ -89,20 +89,20 @@ public extension AdaptivePageHeader where LeadingExtra == AnyView {
         iconColor: Color = .accentColor,
         @ViewBuilder trailing: () -> Trailing
     ) {
+        let view: AnyView
+        if let icon = icon {
+            view = AnyView(
+                Image(systemName: icon)
+                    .font(.system(size: 16, weight: .bold))
+                    .foregroundStyle(iconColor)
+            )
+        } else {
+            view = AnyView(EmptyView())
+        }
         self.init(
             title: title,
             subtitle: subtitle,
-            leadingExtra: {
-                if let icon = icon {
-                    AnyView(
-                        Image(systemName: icon)
-                            .font(.system(size: 16, weight: .bold))
-                            .foregroundStyle(iconColor)
-                    )
-                } else {
-                    AnyView(EmptyView())
-                }
-            },
+            leadingExtra: { view },
             trailing: trailing
         )
     }

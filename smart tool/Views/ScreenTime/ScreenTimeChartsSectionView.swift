@@ -151,7 +151,6 @@ public struct ScreenTimeChartsSectionView: View {
                         )
                         .foregroundStyle(AppTheme.matrixGreen.gradient)
                         .cornerRadius(3)
-                        .help("\(point.label)\nActive: \(String(format: "%.1f", point.activeDurationHours))h\nIdle: \(String(format: "%.1f", point.idleDurationHours))h")
                         
                         if point.idleDurationHours > 0 {
                             BarMark(
@@ -160,7 +159,6 @@ public struct ScreenTimeChartsSectionView: View {
                             )
                             .foregroundStyle(AppTheme.warningAmber.opacity(0.55).gradient)
                             .cornerRadius(3)
-                            .help("\(point.label)\nActive: \(String(format: "%.1f", point.activeDurationHours))h\nIdle: \(String(format: "%.1f", point.idleDurationHours))h")
                         }
                     }
                 }
