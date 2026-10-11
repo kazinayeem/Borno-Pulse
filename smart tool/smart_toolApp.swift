@@ -47,6 +47,16 @@ struct smart_toolApp: App {
 
 final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
+        if CommandLine.arguments.contains("--run-tests") {
+            let results = SmartToolTests.runAllTests()
+            print("--- INVARIANT TESTS COMPLETED ---")
+            print("Passed: \(results.passed), Failed: \(results.failed)")
+            for log in results.logs {
+                print(log)
+            }
+            exit(results.failed == 0 ? 0 : 1)
+        }
+        
         // Setup Menu Bar Status Item & Popover
         MenuBarCoordinator.shared.setup()
         

@@ -46,4 +46,30 @@ public enum Formatters {
     public static func rpm(_ value: Double) -> String {
         return String(format: "%.0f RPM", value)
     }
+    
+    public static func duration(_ seconds: TimeInterval, showSeconds: Bool = false) -> String {
+        let totalSeconds = max(0, Int(seconds))
+        let hours = totalSeconds / 3600
+        let minutes = (totalSeconds % 3600) / 60
+        let secs = totalSeconds % 60
+        
+        if hours > 0 {
+            if showSeconds && secs > 0 {
+                return "\(hours)h \(minutes)m \(secs)s"
+            }
+            return "\(hours)h \(minutes)m"
+        } else if minutes > 0 {
+            if showSeconds && secs > 0 {
+                return "\(minutes)m \(secs)s"
+            }
+            return "\(minutes)m"
+        } else {
+            return "\(secs)s"
+        }
+    }
+    
+    public static func durationPrecise(_ seconds: TimeInterval) -> String {
+        return duration(seconds, showSeconds: true)
+    }
 }
+

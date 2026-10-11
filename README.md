@@ -106,6 +106,12 @@ smart tool/
 │   ├── StorageAnalyticsService.swift    # Background scanning, mounted volumes, tree builder & cleanup
 │   ├── TreemapLayoutEngine.swift        # Pure Swift squarified treemap partition algorithm
 │   └── HistoricalStorageService.swift   # Lightweight local snapshot persistence & user consent
+├── ScreenTime/
+│   ├── ScreenTimeModels.swift           # Categories, AppSessionRecord, DailyAppUsageSummary & stats
+│   ├── ScreenTimeTrackerService.swift   # NSWorkspace activation listener, pulse engine, CSV exporter
+│   ├── IdleDetector.swift               # IOHIDSystem nanoseconds & CGEventSource hardware idle detection
+│   ├── WebsiteInspectionHelper.swift    # Safe Apple Events domain sampler (zero extensions)
+│   └── ScreenTimePDFReportGenerator.swift # Native CoreGraphics vector PDF report exporter
 ├── Views/
 │   ├── MainDashboardView.swift          # Primary NavigationSplitView with sidebar
 │   ├── Overview/OverviewView.swift      # 7-card hardware snapshot with live sparklines
@@ -127,6 +133,14 @@ smart tool/
 │   │   ├── StorageCompositionBarView.swift # Filesystem used vs scanned files vs available space bar
 │   │   ├── HistoricalStorageTrendView.swift# Swift Charts line/area chart over scan history
 │   │   └── StorageExplorerTableView.swift # Searchable, sortable table, CSV export & safe cleanup
+│   ├── ScreenTime/                      # Screen Time Analytics Suite Views
+│   │   ├── ScreenTimeDashboardView.swift # Summary metrics, live session bar, controls & hub
+│   │   ├── ScreenTimeSummaryCardsView.swift # Today's focus, 7D/30D avg, top app & uptime comparison
+│   │   ├── ScreenTimeChartsSectionView.swift # Swift Charts hourly/daily bars & category donut
+│   │   ├── ScreenTimeTimelineView.swift # 24h Gantt session bar & transition feed
+│   │   ├── ScreenTimeWebsiteNoticeCard.swift # Native web domain sampler status & privacy guarantees
+│   │   ├── ScreenTimeExplorerTableView.swift # Searchable, sortable table, Finder reveal & app exclusion
+│   │   └── ScreenTimeExclusionsSheet.swift # Privacy governance, app exclusion list & history purge
 │   ├── FileTools/                       # File Tools Workspace Views
 │   │   ├── FileToolsDashboardView.swift # Central Hub & quick launch view
 │   │   ├── Components/FileDropZoneView.swift # Universal drag-and-drop zone
@@ -137,7 +151,7 @@ smart tool/
 │   └── Settings/SettingsView.swift      # Preferences, thresholds, exclusions & test suite runner
 └── Tests/
     ├── MockProviders.swift              # Mock providers for CPU, Sensors, and Storage
-    └── SmartToolTests.swift             # 21 In-app and terminal unit test suites
+    └── SmartToolTests.swift             # 28 In-app and terminal unit test suites (68 assertions)
 ```
 
 ---
@@ -259,7 +273,29 @@ A collection of native macOS file tools built with `ImageIO`, `CoreGraphics`, `P
 
 ---
 
-## 5. Security & Privacy Guarantees
+---
+
+## 5. Screen Time Analytics Suite
+
+Naem Smart Tool features a privacy-centric, standalone **Screen Time Analytics** module built natively with Swift 6 and AppKit:
+
+- **Foreground Application Tracking**: Listens to native `NSWorkspace` application lifecycle notifications (`didActivateApplicationNotification`, `didDeactivateApplicationNotification`, `screensDidSleepNotification`, `sessionDidResignActiveNotification`).
+- **Hardware Attention vs. Idle Separation**: Utilizes kernel `IOHIDSystem` (`HIDIdleTime` nanoseconds) and `CGEventSource` state to detect keyboard/trackpad idle intervals (>120s) and distinguish genuine active focus from passive power-on time.
+- **Standalone Website Tracking (No Extensions)**: Samples frontmost browser window domains (Safari, Google Chrome, Brave, Arc, Edge) using AppleScript Apple Events without installing any browser extensions, scraping private browsing databases, or collecting page contents.
+- **Interactive Visualizations**:
+  - Today's Hourly Distribution & 7/30-Day Daily Activity Bars with stacked Active vs Idle time
+  - Interactive Application Category Donut (`SectorMark`) with 9 categorized sectors
+  - 24-Hour Chronological Session Gantt Timeline
+  - Searchable and sortable Applications Explorer Table with Finder reveals and exclusion toggles
+- **Data Governance & Export**:
+  - 100% on-device storage in `~/Library/Application Support/NaemSmartTool/ScreenTime/screen_time_history.json`
+  - Instant CSV export with customizable date ranges
+  - Locally generated vector PDF audit reports via CoreGraphics
+  - Zero cloud syncing, zero keystroke logging, zero screen recording
+
+---
+
+## 6. Security & Privacy Guarantees
 
 1. **No Root / No Sudo Required**: The app never asks for administrator credentials or executes privileged helper daemons.
 2. **Safe Cache Cleaner**:
@@ -267,11 +303,11 @@ A collection of native macOS file tools built with `ImageIO`, `CoreGraphics`, `P
    - Never touches personal files, documents, photos, databases, keychains, or system binaries.
    - Dry-Run mode allows inspecting exact file lists and byte sizes prior to deletion.
 3. **Privacy Redaction**: Exported diagnostic reports automatically scrub usernames, hardware serial numbers, and home folder structures.
-4. **Zero Telemetry**: All data is processed locally in RAM. No network requests are made outside of local interface telemetry queries.
+4. **Zero Telemetry**: All data is processed locally in RAM and stored on-device. No network requests are made outside of local interface telemetry queries.
 
 ---
 
-## 6. Build & Testing Instructions
+## 7. Build & Testing Instructions
 
 ### Requirements
 - macOS 14.0 (Sonoma) or newer
@@ -298,23 +334,21 @@ open "$HOME/Library/Developer/Xcode/DerivedData/smart_tool-"*/Build/Products/Deb
 ### Running Unit Tests
 1. **In-App Test Runner**:
    - Open Naem Smart Tool.
-   - Select **Settings** from the sidebar.
+   - Select **Diagnostics** or **Settings** from the sidebar.
    - Scroll to **Built-in Diagnostic & Unit Test Suite** and click **Run Test Suite**.
    - All tests run live, displaying green pass checkmarks.
 2. **Command Line Verification**:
-   - Run the included test suite directly in terminal:
+   - Run the automated CLI test runner directly on the compiled app:
    ```bash
-   swift -e '
-   import Foundation
-   // Runs assertion logic covering metric bounds, formatters, and safety rules
-   print("Testing Formatters, CPU, Storage, and Memory algorithms...")
-   '
+   "$HOME/Library/Developer/Xcode/DerivedData/smart_tool-"*/Build/Products/Debug/"smart tool.app/Contents/MacOS/smart tool" --run-tests
    ```
+   - Validates all 68 invariant test suites covering CPU load, APFS purgeable capacity, thermal state thresholds, squarified treemap layouts, Screen Time category classification, idle subtraction math, and CSV generation.
 
 ---
 
-## 7. Product Details
+## 8. Product Details
 - **Product Name**: Naem Smart Tool
 - **Tagline**: *Your Mac. Fully Understood.*
 - **Version**: 1.0.0
 - **License**: MIT-compatible open architecture
+

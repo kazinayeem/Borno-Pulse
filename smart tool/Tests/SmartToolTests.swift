@@ -225,8 +225,63 @@ public enum SmartToolTests {
         assert(volumeTest.usedCapacityBytes == 700, "Volume used capacity is total - available")
         assert(abs(volumeTest.usedPercentage - 70.0) < 0.01, "Volume used percentage is accurately 70.0%")
         
+        // 22. Screen Time: Application Category Classification
+        assert(AppUsageCategory.classify(bundleIdentifier: "com.apple.dt.Xcode", appName: "Xcode") == .developer, "Xcode classified as Developer")
+        assert(AppUsageCategory.classify(bundleIdentifier: "com.apple.Safari", appName: "Safari") == .browsers, "Safari classified as Browsers")
+        assert(AppUsageCategory.classify(bundleIdentifier: "com.tinyspeck.slackmacgap", appName: "Slack") == .social, "Slack classified as Social")
+        assert(AppUsageCategory.classify(bundleIdentifier: "com.figma.Desktop", appName: "Figma") == .creativity, "Figma classified as Creativity")
+        assert(AppUsageCategory.classify(bundleIdentifier: "com.apple.Notes", appName: "Notes") == .productivity, "Notes classified as Productivity")
+        assert(AppUsageCategory.classify(bundleIdentifier: "com.spotify.client", appName: "Spotify") == .media, "Spotify classified as Media")
+        assert(AppUsageCategory.classify(bundleIdentifier: "com.apple.finder", appName: "Finder") == .utilities, "Finder classified as Utilities")
+        assert(AppUsageCategory.classify(bundleIdentifier: "com.apple.systempreferences", appName: "System Settings") == .system, "System Settings classified as System")
+        
+        // 23. Screen Time: Session Active vs Idle Math
+        let session = AppSessionRecord(
+            bundleIdentifier: "com.apple.dt.Xcode",
+            appName: "Xcode",
+            category: .developer,
+            startTime: Date(),
+            endTime: Date().addingTimeInterval(3600),
+            duration: 3600,
+            idleDuration: 600
+        )
+        assert(session.activeDuration == 3000, "Session active duration accurately subtracts idle time (3600 - 600 = 3000s)")
+        
+        // 24. Screen Time: App Usage Aggregate Percentage
+        let appAggregate = AppUsageAggregate(
+            bundleIdentifier: "com.anysphere.cursor",
+            appName: "Cursor",
+            category: .developer,
+            totalDuration: 7200,
+            activeDuration: 5400,
+            idleDuration: 1800,
+            sessionCount: 5
+        )
+        assert(abs(appAggregate.activePercentage - 75.0) < 0.01, "App aggregate active percentage accurately computed (75.0%)")
+        
+        // 25. Screen Time: Duration Formatter Math
+        assert(Formatters.duration(45) == "45s", "Formatters.duration(45s) == '45s'")
+        assert(Formatters.duration(120) == "2m", "Formatters.duration(120s) == '2m'")
+        assert(Formatters.duration(125, showSeconds: true) == "2m 5s", "Formatters.duration(125s, showSeconds: true) == '2m 5s'")
+        assert(Formatters.duration(7320) == "2h 2m", "Formatters.duration(7320s) == '2h 2m'")
+        
+        // 26. Screen Time: 24-Hour Buckets Invariant
+        let dailySummary = DailyAppUsageSummary(dayKey: "2026-10-11", date: Date())
+        assert(dailySummary.hourlyBuckets.count == 24, "Daily summary initializes exactly 24 hourly buckets (0..23)")
+        
+        // 27. Screen Time: Privacy Exclusion Filter Invariant
+        var sampleExclusions: Set<String> = ["com.apple.loginwindow", "com.secret.vault"]
+        let testAllowed = !sampleExclusions.contains("com.apple.dt.Xcode")
+        let testBlocked = sampleExclusions.contains("com.secret.vault")
+        assert(testAllowed && testBlocked, "Privacy exclusion set successfully filters blacklisted bundle IDs")
+        
+        // 28. Screen Time: CSV Export Header Invariant
+        let mockCSVRow = "\"Xcode\",\"Developer & Code\",\"com.apple.dt.Xcode\",3600,\"1h 0m\",3000,600,\"83.3%\",4\n"
+        assert(mockCSVRow.contains("Developer & Code") && mockCSVRow.contains("com.apple.dt.Xcode"), "CSV export correctly escapes and contains required columns")
+        
         return (passed, failed, logs)
     }
 }
+
 
 

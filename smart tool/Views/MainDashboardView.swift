@@ -16,6 +16,7 @@ public enum NavigationSection: String, CaseIterable, Identifiable {
     case battery = "Battery & Energy"
     case processes = "Processes"
     case cleaner = "Cache Cleaner"
+    case screenTime = "Screen Time"
     case storageAnalytics = "Storage Analytics"
     case fileTools = "File Tools"
     case diagnostics = "Diagnostics"
@@ -35,6 +36,7 @@ public enum NavigationSection: String, CaseIterable, Identifiable {
         case .battery: return "battery.100.bolt"
         case .processes: return "list.bullet.rectangle.portrait"
         case .cleaner: return "sparkles"
+        case .screenTime: return "clock.badge.checkmark"
         case .storageAnalytics: return "chart.pie.fill"
         case .fileTools: return "folder.badge.gearshape"
         case .diagnostics: return "waveform.path.ecg.rectangle"
@@ -42,6 +44,7 @@ public enum NavigationSection: String, CaseIterable, Identifiable {
         }
     }
 }
+
 
 public struct MainDashboardView: View {
     @State private var selectedSection: NavigationSection? = .overview
@@ -79,6 +82,7 @@ public struct MainDashboardView: View {
             }
             
             Section("System Utilities") {
+                sidebarItem(.screenTime)
                 sidebarItem(.storageAnalytics)
                 sidebarItem(.processes)
                 sidebarItem(.cleaner)
@@ -117,6 +121,7 @@ public struct MainDashboardView: View {
         case .battery: return AppTheme.successGreen
         case .processes: return AppTheme.electricBlueLight
         case .cleaner: return AppTheme.electricCyan
+        case .screenTime: return AppTheme.matrixGreen
         case .storageAnalytics: return AppTheme.neonCyan
         case .fileTools: return AppTheme.matrixGreen
         case .diagnostics: return AppTheme.electricBlue
@@ -179,6 +184,8 @@ public struct MainDashboardView: View {
             ProcessMonitorView()
         case .cleaner:
             CacheCleanerView()
+        case .screenTime:
+            ScreenTimeDashboardView()
         case .storageAnalytics:
             StorageAnalyticsDashboardView()
         case .fileTools:
@@ -190,3 +197,4 @@ public struct MainDashboardView: View {
         }
     }
 }
+
