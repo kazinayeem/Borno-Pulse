@@ -1,6 +1,6 @@
 //
 //  MockProviders.swift
-//  Naem Smart Tool Tests
+//  Borno Pulse Tests
 //
 
 import Foundation

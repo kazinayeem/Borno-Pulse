@@ -1,6 +1,6 @@
 //
 //  StorageAnalyticsDashboardView.swift
-//  Naem Smart Tool
+//  Borno Pulse
 //
 
 import AppKit
@@ -123,8 +123,9 @@ public struct StorageAnalyticsDashboardView: View {
                     }
                     .padding(.horizontal, 10)
                     .padding(.vertical, 5)
-                    .background(Color.white.opacity(0.04))
+                    .background(AppTheme.cardBackgroundSecondary)
                     .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
+                    .overlay(RoundedRectangle(cornerRadius: 6, style: .continuous).stroke(AppTheme.cardBorder, lineWidth: 0.5))
                 }
                 .menuStyle(.borderlessButton)
                 

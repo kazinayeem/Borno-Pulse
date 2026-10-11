@@ -1,11 +1,12 @@
 //
 //  MainDashboardView.swift
-//  Naem Smart Tool
+//  Borno Pulse
 //
 
 import SwiftUI
 
-public enum NavigationSection: String, CaseIterable, Identifiable {
+public enum NavigationSection: String, CaseIterable, Identifiable, Sendable {
+    // Hardware & Monitoring
     case overview = "Overview"
     case cpu = "CPU"
     case gpu = "GPU & Neural Engine"
@@ -14,11 +15,27 @@ public enum NavigationSection: String, CaseIterable, Identifiable {
     case storage = "Storage"
     case network = "Network"
     case battery = "Battery & Energy"
-    case processes = "Processes"
-    case cleaner = "Cache Cleaner"
+    
+    // Developer & Network Toolkit
+    case developerToolbox = "Developer Toolbox"
+    case networkToolkit = "Network Toolkit"
+    
+    // Productivity & Utilities
+    case clipboard = "Clipboard Manager"
+    case focusPomodoro = "Focus & Pomodoro"
+    case batchConverter = "Batch File Converter"
+    case pdfStudio = "PDF Studio"
+    case fileTools = "File Tools"
+    
+    // Privacy & Backup
+    case privacySecurity = "Privacy & Security"
+    case localBackup = "Local Backup Helper"
+    
+    // System Utilities
     case screenTime = "Screen Time"
     case storageAnalytics = "Storage Analytics"
-    case fileTools = "File Tools"
+    case processes = "Processes"
+    case cleaner = "Cache Cleaner"
     case diagnostics = "Diagnostics"
     case settings = "Settings"
     
@@ -34,20 +51,28 @@ public enum NavigationSection: String, CaseIterable, Identifiable {
         case .storage: return "internaldrive.fill"
         case .network: return "network"
         case .battery: return "battery.100.bolt"
-        case .processes: return "list.bullet.rectangle.portrait"
-        case .cleaner: return "sparkles"
+        case .developerToolbox: return "wrench.and.screwdriver.fill"
+        case .networkToolkit: return "antenna.radiowaves.left.and.right"
+        case .clipboard: return "doc.on.clipboard"
+        case .focusPomodoro: return "timer"
+        case .batchConverter: return "arrow.triangle.2.circlepath"
+        case .pdfStudio: return "doc.richtext.fill"
+        case .fileTools: return "folder.badge.gearshape"
+        case .privacySecurity: return "shield.lefthalf.filled"
+        case .localBackup: return "externaldrive.badge.timemachine"
         case .screenTime: return "clock.badge.checkmark"
         case .storageAnalytics: return "chart.pie.fill"
-        case .fileTools: return "folder.badge.gearshape"
+        case .processes: return "list.bullet.rectangle.portrait"
+        case .cleaner: return "sparkles"
         case .diagnostics: return "waveform.path.ecg.rectangle"
         case .settings: return "gearshape.fill"
         }
     }
 }
 
-
 public struct MainDashboardView: View {
     @State private var selectedSection: NavigationSection? = .overview
+    @State private var showingQuickLauncher: Bool = false
     @ObservedObject var settings = AppSettings.shared
     @ObservedObject var monitor = SystemMonitor.shared
     
@@ -60,12 +85,57 @@ public struct MainDashboardView: View {
             detailContent
         }
         .preferredColorScheme(settings.appearanceMode.colorScheme)
-        .frame(minWidth: 950, minHeight: 620)
+        .frame(minWidth: 1000, minHeight: 650)
+        .toolbar {
+            ToolbarItem(placement: .navigation) {
+                Button {
+                    showingQuickLauncher = true
+                } label: {
+                    Label("Command Palette", systemImage: "command")
+                }
+                .help("Quick Launcher (⌘K)")
+                .keyboardShortcut("k", modifiers: [.command])
+            }
+        }
+        .sheet(isPresented: $showingQuickLauncher) {
+            QuickLauncherView(
+                onSelect: { section in
+                    selectedSection = section
+                    showingQuickLauncher = false
+                },
+                onDismiss: {
+                    showingQuickLauncher = false
+                }
+            )
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .navigateToSection)) { notification in
+            if let section = notification.object as? NavigationSection {
+                selectedSection = section
+            }
+        }
     }
     
     // MARK: - Sidebar
     private var sidebarContent: some View {
         List(selection: $selectedSection) {
+            // App Brand Header
+            Section {
+                HStack(spacing: 10) {
+                    Image(systemName: "gauge.with.dots.needle.bottom.100percent")
+                        .font(.system(size: 20, weight: .bold))
+                        .foregroundStyle(AppTheme.electricBlue)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Borno Pulse")
+                            .font(.system(size: 14, weight: .bold))
+                            .foregroundStyle(AppTheme.textPrimary)
+                        Text("Smart Mac Utilities & System Monitor")
+                            .font(.system(size: 10, weight: .medium))
+                            .foregroundStyle(AppTheme.textSecondary)
+                    }
+                }
+                .padding(.vertical, 4)
+            }
+            
             Section("Hardware & Monitoring") {
                 sidebarItem(.overview)
                 sidebarItem(.cpu)
@@ -77,8 +147,22 @@ public struct MainDashboardView: View {
                 sidebarItem(.battery)
             }
             
-            Section("File Tools") {
+            Section("Developer & Network") {
+                sidebarItem(.developerToolbox)
+                sidebarItem(.networkToolkit)
+            }
+            
+            Section("Productivity & Files") {
+                sidebarItem(.clipboard)
+                sidebarItem(.focusPomodoro)
+                sidebarItem(.batchConverter)
+                sidebarItem(.pdfStudio)
                 sidebarItem(.fileTools)
+            }
+            
+            Section("Privacy & Safety") {
+                sidebarItem(.privacySecurity)
+                sidebarItem(.localBackup)
             }
             
             Section("System Utilities") {
@@ -91,7 +175,7 @@ public struct MainDashboardView: View {
             }
         }
         .listStyle(.sidebar)
-        .navigationSplitViewColumnWidth(min: 220, ideal: 240, max: 300)
+        .navigationSplitViewColumnWidth(min: 220, ideal: 250, max: 320)
         .safeAreaInset(edge: .bottom) {
             sidebarFooter
         }
@@ -101,63 +185,78 @@ public struct MainDashboardView: View {
         NavigationLink(value: section) {
             Label {
                 Text(section.rawValue)
-                    .font(.system(size: 13, weight: .medium))
+                    .font(.system(size: 13, weight: selectedSection == section ? .semibold : .regular))
+                    .foregroundStyle(AppTheme.textPrimary)
             } icon: {
                 Image(systemName: section.icon)
-                    .foregroundStyle(iconColor(for: section))
+                    .font(.system(size: 13))
+                    .foregroundStyle(selectedSection == section ? AppTheme.electricBlue : AppTheme.textSecondary)
             }
-        }
-    }
-    
-    private func iconColor(for section: NavigationSection) -> Color {
-        switch section {
-        case .overview: return AppTheme.electricBlue
-        case .cpu: return AppTheme.electricBlue
-        case .gpu: return AppTheme.purpleAccent
-        case .memory: return AppTheme.electricCyan
-        case .sensors: return AppTheme.orangeAccent
-        case .storage: return AppTheme.warningAmber
-        case .network: return AppTheme.successGreen
-        case .battery: return AppTheme.successGreen
-        case .processes: return AppTheme.electricBlueLight
-        case .cleaner: return AppTheme.electricCyan
-        case .screenTime: return AppTheme.matrixGreen
-        case .storageAnalytics: return AppTheme.neonCyan
-        case .fileTools: return AppTheme.matrixGreen
-        case .diagnostics: return AppTheme.electricBlue
-        case .settings: return AppTheme.textSecondary
         }
     }
     
     private var sidebarFooter: some View {
-        HStack(spacing: 8) {
-            Circle()
-                .fill(monitor.isMonitoring ? AppTheme.successGreen : AppTheme.dangerRed)
-                .frame(width: 8, height: 8)
-            
-            Text(monitor.isMonitoring ? "Engine Active (\(String(format: "%.1fs", settings.refreshIntervalSeconds)))" : "Engine Paused")
-                .font(.system(size: 11, weight: .medium))
+        VStack(spacing: 8) {
+            HStack(spacing: 8) {
+                Circle()
+                    .fill(monitor.isMonitoring ? AppTheme.successGreen : AppTheme.dangerRed)
+                    .frame(width: 7, height: 7)
+                
+                Text(monitor.isMonitoring ? "Engine (\(String(format: "%.1fs", settings.refreshIntervalSeconds)))" : "Engine Paused")
+                    .font(.system(size: 11, weight: .medium))
+                    .foregroundStyle(AppTheme.textSecondary)
+                
+                Spacer()
+                
+                Button {
+                    if monitor.isPaused {
+                        monitor.resumeMonitoring()
+                    } else {
+                        monitor.pauseMonitoring()
+                    }
+                } label: {
+                    Image(systemName: monitor.isPaused ? "play.fill" : "pause.fill")
+                        .font(.system(size: 10))
+                }
+                .buttonStyle(.plain)
                 .foregroundStyle(AppTheme.textSecondary)
-            
-            Spacer()
+                .help(monitor.isPaused ? "Resume live polling" : "Pause live polling")
+            }
             
             Button {
-                if monitor.isPaused {
-                    monitor.resumeMonitoring()
-                } else {
-                    monitor.pauseMonitoring()
-                }
+                showingQuickLauncher = true
             } label: {
-                Image(systemName: monitor.isPaused ? "play.fill" : "pause.fill")
-                    .font(.system(size: 10))
+                HStack {
+                    Image(systemName: "command")
+                        .font(.system(size: 11))
+                    Text("Quick Launcher")
+                        .font(.system(size: 11, weight: .medium))
+                    Spacer()
+                    Text("⌘K")
+                        .font(.system(size: 10, weight: .semibold))
+                        .foregroundStyle(AppTheme.textTertiary)
+                }
+                .padding(.horizontal, 10)
+                .padding(.vertical, 6)
+                .background(AppTheme.cardBackground)
+                .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 6, style: .continuous)
+                        .stroke(AppTheme.cardBorder, lineWidth: 0.5)
+                )
             }
             .buttonStyle(.plain)
-            .foregroundStyle(AppTheme.textSecondary)
-            .help(monitor.isPaused ? "Resume live polling" : "Pause live polling")
+            .foregroundStyle(AppTheme.textPrimary)
         }
-        .padding(.horizontal, 16)
+        .padding(.horizontal, 12)
         .padding(.vertical, 10)
-        .background(Color.black.opacity(0.15))
+        .background(AppTheme.sidebarBackground)
+        .overlay(
+            Rectangle()
+                .frame(height: 0.5)
+                .foregroundStyle(AppTheme.cardBorder),
+            alignment: .top
+        )
     }
     
     // MARK: - Detail Content
@@ -180,16 +279,32 @@ public struct MainDashboardView: View {
             NetworkDetailView()
         case .battery:
             BatteryDetailView()
-        case .processes:
-            ProcessMonitorView()
-        case .cleaner:
-            CacheCleanerView()
+        case .developerToolbox:
+            DeveloperToolboxView()
+        case .networkToolkit:
+            NetworkToolkitView()
+        case .clipboard:
+            ClipboardManagerView()
+        case .focusPomodoro:
+            FocusPomodoroView()
+        case .batchConverter:
+            BatchConverterView()
+        case .pdfStudio:
+            PDFStudioWorkspaceView()
+        case .fileTools:
+            FileToolsDashboardView()
+        case .privacySecurity:
+            PrivacySecurityWorkspaceView()
+        case .localBackup:
+            LocalBackupHelperView()
         case .screenTime:
             ScreenTimeDashboardView()
         case .storageAnalytics:
             StorageAnalyticsDashboardView()
-        case .fileTools:
-            FileToolsDashboardView()
+        case .processes:
+            ProcessMonitorView()
+        case .cleaner:
+            CacheCleanerView()
         case .diagnostics:
             DiagnosticsView()
         case .settings:
@@ -197,4 +312,3 @@ public struct MainDashboardView: View {
         }
     }
 }
-

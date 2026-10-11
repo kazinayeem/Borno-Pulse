@@ -1,6 +1,6 @@
 //
 //  TreemapView.swift
-//  Naem Smart Tool
+//  Borno Pulse
 //
 
 import SwiftUI
@@ -193,7 +193,7 @@ public struct TreemapView: View {
         VStack(spacing: 3) {
             Text(tile.name)
                 .font(.system(size: 11, weight: .bold))
-                .foregroundStyle(.white)
+                .foregroundStyle(AppTheme.textPrimary)
                 .lineLimit(1)
             
             HStack(spacing: 6) {
@@ -202,7 +202,7 @@ public struct TreemapView: View {
                     .foregroundStyle(AppTheme.neonCyan)
                 Text("•")
                     .font(.system(size: 8))
-                    .foregroundStyle(.gray)
+                    .foregroundStyle(AppTheme.textTertiary)
                 Text(String(format: "%.1f%% of view", tile.percentage))
                     .font(.system(size: 9))
                     .foregroundStyle(tile.category.color)
@@ -210,12 +210,12 @@ public struct TreemapView: View {
         }
         .padding(.horizontal, 10)
         .padding(.vertical, 6)
-        .background(Color.black.opacity(0.85))
+        .background(AppTheme.cardBackground)
         .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
         .overlay(
             RoundedRectangle(cornerRadius: 8, style: .continuous)
-                .stroke(Color.white.opacity(0.2), lineWidth: 1)
+                .stroke(AppTheme.cardBorder, lineWidth: 1)
         )
-        .shadow(color: .black.opacity(0.4), radius: 6, x: 0, y: 3)
+        .shadow(color: Color.black.opacity(0.18), radius: 6, x: 0, y: 3)
     }
 }

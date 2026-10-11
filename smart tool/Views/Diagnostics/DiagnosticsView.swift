@@ -1,6 +1,6 @@
 //
 //  DiagnosticsView.swift
-//  Naem Smart Tool
+//  Borno Pulse
 //
 
 import AppKit
@@ -150,8 +150,9 @@ public struct DiagnosticsView: View {
                     }
                 }
                 .padding(10)
-                .background(Color.black.opacity(0.2))
+                .background(AppTheme.cardBackgroundSecondary)
                 .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
+                .overlay(RoundedRectangle(cornerRadius: 6, style: .continuous).stroke(AppTheme.cardBorder, lineWidth: 0.5))
             } else {
                 Text("Verify system calculation invariants, image format conversion math, no-upscaling guards, PDF split/merge ranges, batch renamer collision detectors, and cryptographic hashing routines.")
                     .font(.system(size: 11))
@@ -180,9 +181,9 @@ public struct DiagnosticsView: View {
     private func exportDiagnosticReport() {
         let snap = monitor.snapshot
         let report = """
-        # Naem Smart Tool — Diagnostic System Report
+        # Borno Pulse — Diagnostic System Report
         Generated: \(Date().description)
-        Product: Naem Smart Tool (v1.0.0)
+        Product: Borno Pulse (v1.0.0) — Smart Mac Utilities & System Monitor
         Privacy Posture: Redacted Local Export
         
         ## 1. Hardware Summary

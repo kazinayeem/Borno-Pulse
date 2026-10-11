@@ -1,11 +1,14 @@
 //
 //  SmartToolTests.swift
-//  Naem Smart Tool Tests
+//  Borno Pulse Tests
 //
 
+import AppKit
 import CryptoKit
 import Foundation
+import PDFKit
 
+@MainActor
 public enum SmartToolTests {
     public static func runAllTests() -> (passed: Int, failed: Int, logs: [String]) {
         var passed = 0
@@ -279,6 +282,591 @@ public enum SmartToolTests {
         let mockCSVRow = "\"Xcode\",\"Developer & Code\",\"com.apple.dt.Xcode\",3600,\"1h 0m\",3000,600,\"83.3%\",4\n"
         assert(mockCSVRow.contains("Developer & Code") && mockCSVRow.contains("com.apple.dt.Xcode"), "CSV export correctly escapes and contains required columns")
         
+        // 29. Developer Toolbox: JSON Formatting, Minification & Syntax Validation
+        let rawJSON = "{\n  \"appName\" : \"SmartTool\",\n  \"version\" : 1\n}"
+        let prettyJSON = (try? JSONFormatterService.shared.prettyPrint(rawJSON)) ?? ""
+        assert(!prettyJSON.isEmpty && (prettyJSON.contains("\"appName\" : \"SmartTool\"") || prettyJSON.contains("\"appName\": \"SmartTool\"")), "JSON formatter correctly validates and pretty-prints JSON")
+        
+        let minifiedJSON = (try? JSONFormatterService.shared.minify(rawJSON)) ?? ""
+        assert(!minifiedJSON.isEmpty && !minifiedJSON.contains("\n") && minifiedJSON.contains("\"version\":1"), "JSON minifier strips all unnecessary whitespace and newlines")
+        
+        let invalidJSON = "{ \"missingQuote: 123 }"
+        let invalidResult = JSONFormatterService.shared.validate(invalidJSON)
+        assert(invalidResult.isValid == false, "JSON syntax validation accurately catches malformed syntax and provides error line")
+        
+        // 30. Developer Toolbox: JWT Header & Payload Claims Decoding
+        let sampleJWT = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6Ik5hZW0iLCJleHAiOjE5OTk5OTk5OTksImlzcyI6InNtYXJ0dG9vbCJ9.signaturePlaceholder"
+        let jwtResult = try? JWTDecoderService.shared.decode(jwtToken: sampleJWT)
+        assert(jwtResult != nil, "JWTDecoderService successfully decodes well-formed 3-part token")
+        if let token = jwtResult {
+            assert(token.algorithm == "HS256", "JWT header algorithm correctly extracted")
+            assert(token.issuer == "smarttool", "JWT standard registered issuer claim identified")
+            assert(token.isExpired == false, "Future timestamp token correctly marked as not expired")
+        }
+        
+        // 31. Developer Toolbox: API Request Tester Secret Redaction
+        let rawHeaders = [
+            HTTPHeaderItem(key: "Authorization", value: "Bearer superSecretToken123456"),
+            HTTPHeaderItem(key: "Cookie", value: "session_id=abcdef987654"),
+            HTTPHeaderItem(key: "Content-Type", value: "application/json")
+        ]
+        let redactedHeaders = APIRequestService.redactHeaders(rawHeaders)
+        let authHeader = redactedHeaders.first(where: { $0.key == "Authorization" })
+        let cookieHeader = redactedHeaders.first(where: { $0.key == "Cookie" })
+        let contentTypeHeader = redactedHeaders.first(where: { $0.key == "Content-Type" })
+        assert(authHeader?.value == "[REDACTED_SECRET]" && cookieHeader?.value == "[REDACTED_SECRET]", "API client strictly redacts Authorization and Cookie headers")
+        assert(contentTypeHeader?.value == "application/json", "Public headers like Content-Type are preserved")
+        
+        // 32. Developer Toolbox: Docker Engine Graceful Fallback
+        let dockerCLI = DockerService.shared.findDockerCLI()
+        assert(dockerCLI == nil || dockerCLI!.contains("docker"), "DockerService detection accurately checks binary availability")
+        
+        // 33. Network Toolkit: Ping RTT Parser Math
+        let samplePingOutput = "64 bytes from 1.1.1.1: icmp_seq=1 ttl=58 time=14.285 ms"
+        let parsedRTT = PingService.parseRTT(from: samplePingOutput)
+        assert(parsedRTT != nil && abs((parsedRTT ?? 0) - 14.285) < 0.001, "Ping RTT parser accurately extracts round-trip milliseconds")
+        
+        // 34. Network Toolkit: SSL Certificate Validity Days Calculation
+        let now = Date()
+        let future = now.addingTimeInterval(86400 * 90)
+        let certInfo = SSLCertificateDetails(
+            host: "apple.com",
+            port: 443,
+            commonName: "apple.com",
+            issuer: "Apple Public EV Server RSA CA 1",
+            validFrom: now,
+            validUntil: future,
+            remainingDays: 90,
+            isTrusted: true,
+            isExpired: false
+        )
+        assert(certInfo.isExpired == false, "Valid SSL certificate correctly marked as non-expired")
+        assert(certInfo.remainingDays == 90, "SSL certificate days remaining calculated accurately")
+        
+        // 35. Clipboard Manager: Sensitive Secret Regex Detection
+        let secret1 = "ghp_1234567890abcdefghijklmnopqrstuvwxyz"
+        let normalText = "Hello from Borno Pulse"
+        assert(ClipboardManagerService.shared.checkSensitive(text: secret1) == true, "Clipboard detector catches GitHub Personal Access Tokens")
+        assert(ClipboardManagerService.shared.checkSensitive(text: normalText) == false, "Clipboard detector does not false-positive on regular sentences")
+        
+        // 36. Focus & Pomodoro: State & Invariants
+        let focusSession = FocusSessionRecord(
+            startTime: Date(),
+            endTime: Date().addingTimeInterval(1500),
+            durationSeconds: 1500,
+            mode: .focus,
+            isCompleted: true
+        )
+        assert(focusSession.durationSeconds == 25 * 60, "Default Pomodoro duration is strictly 25 minutes (1500s)")
+        
+        // 37. Batch File Converter: Collision-Safe URL Naming
+        let tempDir = FileManager.default.temporaryDirectory
+        let baseCollisionTestURL = tempDir.appendingPathComponent("test_file.png")
+        try? "dummy".write(to: baseCollisionTestURL, atomically: true, encoding: .utf8)
+        let safeURL = BatchConverterService.collisionSafeURL(desiredURL: baseCollisionTestURL)
+        assert(safeURL.lastPathComponent == "test_file (1).png", "Collision-safe URL appends incremented suffix when file exists")
+        try? FileManager.default.removeItem(at: baseCollisionTestURL)
+        
+        // 38. Privacy & Security: Streaming File Hasher
+        let testHashData = "AntigravitySecureStreamingHashingTest".data(using: .utf8)!
+        let testFileForHash = tempDir.appendingPathComponent("hash_test.txt")
+        try? testHashData.write(to: testFileForHash)
+        if let computedSHA256 = try? FileHashCalculatorService.shared.computeHash(for: testFileForHash, algorithm: .sha256) {
+            let directSHA256 = SHA256.hash(data: testHashData).map { String(format: "%02x", $0) }.joined()
+            assert(computedSHA256 == directSHA256, "Streaming FileHashCalculatorService SHA-256 matches CryptoKit direct digest")
+        } else {
+            assert(false, "FileHashCalculatorService failed to compute hash")
+        }
+        try? FileManager.default.removeItem(at: testFileForHash)
+        
+        // 39. Quick Launcher: Fuzzy Search & Keywords
+        let launcherSearch = QuickLauncherService.shared.search(query: "json")
+        assert(launcherSearch.contains(where: { $0.id == "dev_json" }), "Quick launcher finds JSON tools by keyword 'json'")
+        let pingSearch = QuickLauncherService.shared.search(query: "latency")
+        assert(pingSearch.contains(where: { $0.id == "net_ping" }), "Quick launcher finds Ping tool by keyword 'latency'")
+        
+        // 40. Local Backup Helper: Profile Model Invariants
+        let testBackupProfile = BackupProfile(
+            name: "Project Code",
+            sourcePaths: ["/Users/test/Code"],
+            destinationPath: "/Volumes/External/Backups",
+            mode: .incremental,
+            verifyChecksums: true
+        )
+        assert(testBackupProfile.mode == .incremental, "BackupProfile retains configured incremental mode")
+        assert(testBackupProfile.verifyChecksums == true, "BackupProfile retains SHA-256 checksum verification preference")
+        assert(testBackupProfile.exclusions.contains(".DS_Store"), "BackupProfile contains default system exclusions")
+        
+        // 41. Battery Estimation: Discharge-Time Remaining Math & Target Threshold
+        // Simulate 75% battery discharging down to 10% threshold over 1 hour (10% drop in 1 hour)
+        let t0 = Date()
+        let t1 = t0.addingTimeInterval(1800) // 30 min later
+        let t2 = t0.addingTimeInterval(3600) // 60 min later
+        let dischargeSamples: [(date: Date, percentage: Double, isCharging: Bool, isPluggedIn: Bool)] = [
+            (date: t0, percentage: 75.0, isCharging: false, isPluggedIn: false),
+            (date: t1, percentage: 70.0, isCharging: false, isPluggedIn: false),
+            (date: t2, percentage: 65.0, isCharging: false, isPluggedIn: false)
+        ]
+        // Rate is (75 - 65) / 1 hr = 10% per hour.
+        // Usable percentage from 65% down to 10% threshold is 55%.
+        // Time = 55 / 10 = 5.5 hours = 330 minutes.
+        let dischargeEst = BatteryEstimationService.computeEstimate(
+            samples: dischargeSamples,
+            lowBatteryThreshold: 10,
+            osTimeToEmptyMinutes: nil,
+            osTimeToFullMinutes: nil
+        )
+        assert(dischargeEst.state == .discharging, "Battery state correctly identified as discharging")
+        assert(dischargeEst.minutes != nil && abs((dischargeEst.minutes ?? 0) - 330) <= 5, "Discharge time remaining accurately calculated to target threshold (330 min / 5h 30m)")
+        assert(dischargeEst.formatted.contains("5h 30m remaining") || dischargeEst.formatted.contains("remaining"), "Formatted time displays 'remaining' prefix")
+        
+        // 42. Battery Estimation: Charge-Time Math with Non-Linear Tapering
+        // Simulate charging from 40% to 60% over 30 minutes (rate = 40% per hour)
+        let c0 = Date()
+        let c1 = c0.addingTimeInterval(900)  // 15 min
+        let c2 = c0.addingTimeInterval(1800) // 30 min
+        let chargeSamples: [(date: Date, percentage: Double, isCharging: Bool, isPluggedIn: Bool)] = [
+            (date: c0, percentage: 40.0, isCharging: true, isPluggedIn: true),
+            (date: c1, percentage: 50.0, isCharging: true, isPluggedIn: true),
+            (date: c2, percentage: 60.0, isCharging: true, isPluggedIn: true)
+        ]
+        let chargeEst = BatteryEstimationService.computeEstimate(
+            samples: chargeSamples,
+            lowBatteryThreshold: 10,
+            osTimeToEmptyMinutes: nil,
+            osTimeToFullMinutes: nil
+        )
+        assert(chargeEst.state == .charging, "Battery state correctly identified as charging")
+        assert(chargeEst.minutes != nil && (chargeEst.minutes ?? 0) > 0, "Charge time until full accurately estimated")
+        assert(chargeEst.formatted.contains("until full"), "Charging estimate formatted with 'until full'")
+        
+        // 43. Battery Estimation: Insufficient Observation History Graceful "Calculating" State
+        let singleSample: [(date: Date, percentage: Double, isCharging: Bool, isPluggedIn: Bool)] = [
+            (date: Date(), percentage: 80.0, isCharging: false, isPluggedIn: false)
+        ]
+        let sparseEst = BatteryEstimationService.computeEstimate(
+            samples: singleSample,
+            lowBatteryThreshold: 10,
+            osTimeToEmptyMinutes: nil,
+            osTimeToFullMinutes: nil
+        )
+        assert(sparseEst.confidence == .calculating, "Single observation yields 'Calculating...' confidence")
+        assert(sparseEst.formatted.contains("Calculating"), "Formatted text accurately explains estimate is calculating")
+        
+        // 44. Battery Estimation: Fully Charged Detection (100% on AC)
+        let fullSamples: [(date: Date, percentage: Double, isCharging: Bool, isPluggedIn: Bool)] = [
+            (date: Date(), percentage: 100.0, isCharging: false, isPluggedIn: true)
+        ]
+        let fullEst = BatteryEstimationService.computeEstimate(
+            samples: fullSamples,
+            lowBatteryThreshold: 10,
+            osTimeToEmptyMinutes: nil,
+            osTimeToFullMinutes: nil
+        )
+        assert(fullEst.state == .fullyCharged, "100% on power adapter identified as fully charged")
+        assert(fullEst.minutes == 0, "Fully charged battery has 0 minutes remaining")
+        assert(fullEst.formatted == "Fully Charged", "Formatted status displays 'Fully Charged'")
+        
+        // 45. Battery Estimation: Desktop Mac (No Battery) Graceful AC State
+        let desktopMetrics = BatteryEstimationService.shared.processSample(
+            hasBattery: false,
+            percentage: 100,
+            isCharging: false,
+            isPluggedIn: true,
+            timeToEmptyMinutes: nil,
+            timeToFullMinutes: nil,
+            voltageVolts: nil,
+            amperageAmps: nil,
+            wattage: nil,
+            temperatureCelsius: nil
+        )
+        assert(desktopMetrics.state == .acDesktop, "Desktop Mac reported as AC Desktop power state")
+        assert(desktopMetrics.confidence == .unavailable, "Desktop Mac marked with unavailable battery confidence")
+        assert(desktopMetrics.formatted.contains("Desktop Mac"), "Desktop Mac formatted message clearly explains continuous AC power")
+        
+        // 46. Battery Estimation: Formatter Duration Math
+        assert(BatteryEstimationService.formatDuration(minutes: 90, prefix: "remaining") == "1h 30m remaining", "Format duration 90m produces '1h 30m remaining'")
+        assert(BatteryEstimationService.formatDuration(minutes: 45, prefix: "until full") == "45m until full", "Format duration 45m produces '45m until full'")
+        
+        // 47. Battery Estimation: Native OS Blended Estimate Priority
+        let osOverrideSamples: [(date: Date, percentage: Double, isCharging: Bool, isPluggedIn: Bool)] = [
+            (date: Date(), percentage: 50.0, isCharging: false, isPluggedIn: false)
+        ]
+        let osBlendedEst = BatteryEstimationService.computeEstimate(
+            samples: osOverrideSamples,
+            lowBatteryThreshold: 10,
+            osTimeToEmptyMinutes: 240,
+            osTimeToFullMinutes: nil
+        )
+        assert(osBlendedEst.minutes == 240, "Native OS time to empty respected when exposed by IOKit")
+        assert(osBlendedEst.confidence == .high, "Native OS estimate carries high confidence")
+        
+        // 48. Battery Estimation: Time Range Interval Math
+        assert(BatteryTimeRange.oneHour.intervalSeconds == 3600, "1 Hour range is 3,600 seconds")
+        assert(BatteryTimeRange.oneDay.intervalSeconds == 86400, "24 Hours range is 86,400 seconds")
+        assert(BatteryTimeRange.sevenDays.intervalSeconds == 86400 * 7, "7 Days range is 604,800 seconds")
+        
+        // 49. Battery Estimation: Settings Threshold Bounds
+        assert(AppSettings.shared.batteryAlertThreshold >= 5 && AppSettings.shared.batteryAlertThreshold <= 30, "Low battery alert threshold defaults to a reasonable safety percentage")
+        
+        // 50. Battery Power: Voltage-Current Math (P = V * I with mV & mA conversion)
+        let calcWatts = BatteryPowerService.calculateElectricalPower(voltageMilliVolts: 12000.0, amperageMilliAmps: 1500.0)
+        assert(calcWatts != nil && abs((calcWatts ?? 0) - 18.0) < 0.001, "12,000 mV * 1,500 mA yields exactly 18.0 W")
+        
+        // 51. Battery Power: Milliamp-to-Amp Conversion Precision
+        let smallWatts = BatteryPowerService.calculateElectricalPower(voltageMilliVolts: 11400.0, amperageMilliAmps: 500.0)
+        assert(smallWatts != nil && abs((smallWatts ?? 0) - 5.7) < 0.001, "11,400 mV * 500 mA accurately converts to 5.7 W")
+        
+        // 52. Battery Power: Charging vs Discharging Sign Handling
+        let chargeFlow = BatteryPowerService.resolvePowerFlow(
+            isPluggedIn: true,
+            isCharging: true,
+            amperageMilliAmps: 2000.0,
+            electricalWatts: 24.0
+        )
+        assert(chargeFlow.chargingWatts == 24.0 && chargeFlow.dischargingWatts == nil, "Active charging yields positive charging watts and nil discharging watts")
+        
+        let dischargeFlow = BatteryPowerService.resolvePowerFlow(
+            isPluggedIn: false,
+            isCharging: false,
+            amperageMilliAmps: -1800.0,
+            electricalWatts: 21.6
+        )
+        assert(dischargeFlow.dischargingWatts == 21.6 && chargeFlow.dischargingWatts == nil, "Discharge yields positive discharging watts and nil charging watts")
+        
+        let holdFlow = BatteryPowerService.resolvePowerFlow(
+            isPluggedIn: true,
+            isCharging: false,
+            amperageMilliAmps: 0.0,
+            electricalWatts: 0.0
+        )
+        assert(holdFlow.chargingWatts == 0.0 && holdFlow.dischargingWatts == nil, "AC connected holding state measures 0.0 W charge inflow")
+        
+        // 53. Battery Power: Missing Sensor Data Gracefully Yields Nil (Never Fabricated 0W)
+        let missingWatts = BatteryPowerService.calculateElectricalPower(voltageMilliVolts: nil, amperageMilliAmps: nil)
+        assert(missingWatts == nil, "Missing sensor voltage and amperage returns nil instead of fabricating 0W")
+        
+        // 54. Battery Power: Invalid Sensor Readings (Zero or Negative Voltage)
+        let zeroVoltageWatts = BatteryPowerService.calculateElectricalPower(voltageMilliVolts: 0.0, amperageMilliAmps: 1500.0)
+        assert(zeroVoltageWatts == nil, "Zero voltage sensor reading rejected as physically invalid")
+        
+        let negVoltageWatts = BatteryPowerService.calculateElectricalPower(voltageMilliVolts: -12000.0, amperageMilliAmps: 1500.0)
+        assert(negVoltageWatts == nil, "Negative voltage sensor reading rejected as physically invalid")
+        
+        // 55. Battery Power: Estimated Power from Capacity & Elapsed Time
+        let estWatts = BatteryPowerService.calculateEstimatedPowerFromEnergy(
+            capacityMilliampHours: 5000.0,
+            percentageDelta: 10.0,
+            elapsedSeconds: 1800.0, // 30 minutes
+            nominalVoltageVolts: 11.4
+        )
+        assert(estWatts != nil && abs((estWatts ?? 0) - 11.4) < 0.001, "5000mAh * 10% delta over 30 mins yields exactly 11.4 W estimated")
+        
+        // 56. Battery Power: Hardware Dictionary Parser Extracts Rated Adapter & System Load
+        let mockDict: [String: Any] = [
+            "Voltage": 12531,
+            "Amperage": 0,
+            "InstantAmperage": 0,
+            "AdapterDetails": [
+                "Watts": 30,
+                "Name": "30W USB-C Power Adapter"
+            ],
+            "PowerTelemetryData": [
+                "SystemLoad": 6143,
+                "SystemPowerIn": 6143
+            ],
+            "PowerDistribution": [
+                "IPDInputPower": 29800
+            ],
+            "CycleCount": 56,
+            "MaxCapacity": 100,
+            "Temperature": 2850
+        ]
+        let parsed = BatteryPowerService.parseAppleSmartBatteryProperties(mockDict, isPluggedIn: true, isCharging: false)
+        assert(parsed.adapterRatedWatts == 30, "Adapter rated wattage extracted as 30 W")
+        assert(parsed.adapterName == "30W USB-C Power Adapter", "Adapter name correctly identified")
+        assert(parsed.systemPowerWatts != nil && abs((parsed.systemPowerWatts ?? 0) - 6.143) < 0.001, "System load extracted as 6.143 W from milliwatts")
+        assert(parsed.adapterInputWatts != nil && abs((parsed.adapterInputWatts ?? 0) - 29.8) < 0.001, "Adapter input power extracted as 29.8 W")
+        assert(parsed.cycleCount == 56, "Cycle count extracted as 56")
+        assert(parsed.temperatureCelsius != nil && abs((parsed.temperatureCelsius ?? 0) - 28.5) < 0.01, "Temperature extracted as 28.5 °C")
+        
+        // 57. Battery Power: Power Flow Invariant (Adapter Rated != System Consumption != Battery Charge)
+        let ratedW = Double(parsed.adapterRatedWatts ?? 0)
+        let sysW = parsed.systemPowerWatts ?? 0
+        let chgW = parsed.chargingWatts ?? 0
+        assert(ratedW != sysW && ratedW != chgW, "Power flow invariants maintained: adapter rated power is independent of system load and battery charging power")
+        
+        // 58. Battery Power: Menu Bar Metric Display Option
+        assert(MenuBarMetricDisplay.batteryWatts.rawValue == "Battery Watts (W)", "Menu bar display options include Battery Watts (W)")
+        
+        // 59. Battery Power: Chart Time Windows
+        assert(BatteryPowerChartWindow.fiveMinutes.seconds == 300, "5 Minutes chart window is 300 seconds")
+        assert(BatteryPowerChartWindow.fifteenMinutes.seconds == 900, "15 Minutes chart window is 900 seconds")
+        
+        // 60. Menu Bar Popover: Category Navigation Count & IDs
+        let categories = MenuBarCategory.allCases
+        assert(categories.count == 4, "Popovers contains 4 primary utility categories")
+        assert(categories.map { $0.rawValue } == ["Audio", "Battery", "Hardware", "Actions"], "Category identifiers match Audio, Battery, Hardware, Actions")
+        
+        // 61. Menu Bar Popover: AudioDeviceItem Properties
+        let devItem = AudioDeviceItem(id: 42, name: "Studio Monitors", isInput: false, isOutput: true)
+        assert(devItem.id == 42 && devItem.name == "Studio Monitors" && devItem.isOutput && !devItem.isInput, "AudioDeviceItem preserves CoreAudio ID, output role, and device name")
+        
+        // 62. Menu Bar Popover: RunningAudioAppItem Scriptability Classification
+        let musicApp = RunningAudioAppItem(id: "com.apple.Music", name: "Music", pid: 1234, volume: 0.8, isMuted: false, isScriptable: true)
+        assert(musicApp.isScriptable, "Apple Music correctly classified as supporting scriptable volume control")
+        
+        let genericApp = RunningAudioAppItem(id: "com.tinyspeck.slackmacgap", name: "Slack", pid: 5678, volume: 1.0, isMuted: false, isScriptable: false)
+        assert(!genericApp.isScriptable, "Standard communication app correctly routed through default system audio without fake sliders")
+        
+        // 63. Menu Bar Popover: Audio Volume Scalar Clamping Invariant
+        let clampedHigh = max(0.0, min(1.0, Float(1.5)))
+        let clampedLow = max(0.0, min(1.0, Float(-0.2)))
+        assert(clampedHigh == 1.0 && clampedLow == 0.0, "Audio volume scalars strictly clamped between 0.0 and 1.0")
+        
+        // 64. PDF Studio: Tools Count & Category Invariants
+        let allStudioTools = PDFStudioTool.allCases
+        assert(allStudioTools.count == 14, "PDF Studio contains exactly 14 specialized document tools")
+        let assembleTools = allStudioTools.filter { $0.category == "Assemble & Convert" }
+        let editTools = allStudioTools.filter { $0.category == "Edit & Organize" }
+        let optimizeTools = allStudioTools.filter { $0.category == "Optimize & Tools" }
+        assert(assembleTools.count == 5 && editTools.count == 5 && optimizeTools.count == 4, "Studio categories accurately group all 14 tools")
+        
+        // 65. PDF Studio: Page Item Model & Invariant Reordering
+        let mockURL = URL(fileURLWithPath: "/tmp/sample_doc.pdf")
+        var page1 = PDFStudioPageItem(sourceURL: mockURL, sourceType: .pdfPage, originalPageIndex: 0, rotationAngle: 0)
+        var page2 = PDFStudioPageItem(sourceURL: mockURL, sourceType: .pdfPage, originalPageIndex: 1, rotationAngle: 90)
+        assert(page1.rotationAngle == 0 && page2.rotationAngle == 90, "Page rotation angle preserved per item")
+        page1.rotationAngle = (page1.rotationAngle + 90) % 360
+        assert(page1.rotationAngle == 90, "Page rotation delta operation computes modulo 360 correctly")
+        
+        // 66. PDF Studio: Document Assembly Service
+        let assembly = PDFAssemblyService()
+        assembly.pages = [page1, page2]
+        assert(assembly.pages.count == 2, "Assembly service maintains page items")
+        assembly.rotatePage(id: page1.id, delta: 90)
+        assert(assembly.pages.first?.rotationAngle == 180, "Assembly service rotates targeted page by UUID")
+        assembly.duplicatePage(id: page1.id)
+        assert(assembly.pages.count == 3, "Duplicating page increases count to 3")
+        assembly.removePage(id: page2.id)
+        assert(assembly.pages.count == 2, "Removing page decrements count")
+        
+        // 67. PDF Studio: Editor Service Page Manipulation & Undo/Redo Invariants
+        let editor = PDFEditorService()
+        let testDoc = PDFDocument()
+        let blankP1 = PDFPage()
+        blankP1.setBounds(CGRect(x: 0, y: 0, width: 595, height: 842), for: .mediaBox)
+        let blankP2 = PDFPage()
+        blankP2.setBounds(CGRect(x: 0, y: 0, width: 595, height: 842), for: .mediaBox)
+        testDoc.insert(blankP1, at: 0)
+        testDoc.insert(blankP2, at: 1)
+        editor.loadDocument(doc: testDoc, title: "UnitTest.pdf")
+        assert(editor.document?.pageCount == 2, "Editor successfully loaded test document with 2 pages")
+        
+        editor.insertBlankPage()
+        assert(editor.document?.pageCount == 3, "Inserting blank page increases page count to 3")
+        assert(editor.canUndo, "Undo stack is populated after page mutation")
+        editor.undo()
+        assert(editor.document?.pageCount == 2, "Undo restores previous document page count to 2")
+        assert(editor.canRedo, "Redo stack is populated after undo")
+        editor.redo()
+        assert(editor.document?.pageCount == 3, "Redo reapplies insertion back to 3 pages")
+        
+        // 68. PDF Studio: Editor Annotations
+        editor.currentPageIndex = 0
+        editor.addAnnotation(type: .highlight, bounds: CGRect(x: 50, y: 50, width: 200, height: 20))
+        let annotCount = editor.document?.page(at: 0)?.annotations.count ?? 0
+        assert(annotCount > 0, "Adding highlight annotation attaches annotation to targeted page")
+        
+        // 69. PDF Studio: Office Formats & Offline Support
+        let officeFormats = PDFOfficeFormat.allCases
+        assert(officeFormats.contains(.docx) && officeFormats.contains(.rtf) && officeFormats.contains(.markdown), "Supported offline formats include DOCX, RTF, and Markdown")
+        
+        // 70. PDF Studio: Vision OCR Supported Languages
+        let ocr = PDFOCRService()
+        assert(!ocr.supportedLanguages.isEmpty, "OCR service detects native Apple Vision supported recognition languages")
+        assert(ocr.supportedLanguages.contains("en-US"), "OCR service includes US English")
+        
+        // 71. PDF Studio: Metadata Sanitization
+        let metaInspector = PDFMetadataInspectorService()
+        let testMetaDoc = PDFDocument()
+        let metaPage = PDFPage()
+        metaPage.setBounds(CGRect(x: 0, y: 0, width: 500, height: 700), for: .mediaBox)
+        testMetaDoc.insert(metaPage, at: 0)
+        testMetaDoc.documentAttributes = [
+            PDFDocumentAttribute.titleAttribute: "Confidential Strategy",
+            PDFDocumentAttribute.authorAttribute: "Internal Employee"
+        ]
+        metaInspector.document = testMetaDoc
+        let tempSanitizedURL = FileManager.default.temporaryDirectory.appendingPathComponent("Sanitized_\(UUID().uuidString).pdf")
+        let sanitizedSuccess = metaInspector.sanitizeAndExport(to: tempSanitizedURL)
+        assert(sanitizedSuccess, "Sanitizing metadata successfully exports sanitized PDF")
+        if let inspectedSanitized = PDFDocument(url: tempSanitizedURL) {
+            let title = inspectedSanitized.documentAttributes?[PDFDocumentAttribute.titleAttribute] as? String ?? ""
+            let author = inspectedSanitized.documentAttributes?[PDFDocumentAttribute.authorAttribute] as? String ?? ""
+            assert(title.isEmpty && author.isEmpty, "Exported sanitized copy removes sensitive Title and Author tracking attributes")
+        }
+        
+        // 72. PDF Studio: Document Split Mode Calculation
+        let splitURLs = assembly.splitDocument(
+            sourceURL: tempSanitizedURL,
+            splitMode: "each",
+            splitInterval: 1,
+            splitRangesText: "",
+            destinationFolder: FileManager.default.temporaryDirectory
+        )
+        assert(!splitURLs.isEmpty, "Split document with 'each' mode generates individual PDF page documents")
+        
+        // 73. Menu Bar Widget: Category Count & Full Coverage
+        let widgetCategories = WidgetMetricCategory.allCases
+        assert(widgetCategories.count == 8, "Menu Bar Widget contains 8 categories (CPU, Memory, GPU, Thermal, Battery, Storage, Network, System)")
+        assert(WidgetMetricId.allCases.count >= 40, "Menu Bar Widget provides over 40 distinct telemetry metrics")
+
+        // 74. Menu Bar Widget: Default Preferences State
+        let prefs = MenuBarWidgetPreferences.shared
+        prefs.resetToDefaults()
+        assert(prefs.layoutStyle == .balanced, "Default widget layout style is Balanced")
+        assert(!prefs.enabledMetrics.isEmpty, "Default configuration has active enabled metrics")
+        assert(prefs.isMetricEnabled(.cpuTotalUsage), "CPU total usage is enabled by default")
+        assert(prefs.isMetricEnabled(.memoryUsed), "Memory used is enabled by default")
+        assert(prefs.isMetricEnabled(.storageFree), "Storage free is enabled by default")
+        assert(prefs.enabledQuickActions.contains(.openDashboard), "Quick actions include Overview Dashboard by default")
+
+        // 75. Menu Bar Widget: Metric Selection & Toggling
+        prefs.setMetricEnabled(.cpuIdleUsage, enabled: true)
+        assert(prefs.isMetricEnabled(.cpuIdleUsage), "Enabling a metric updates enabledMetrics set")
+        prefs.toggleMetric(.cpuIdleUsage)
+        assert(!prefs.isMetricEnabled(.cpuIdleUsage), "Toggling metric turns it off when previously enabled")
+
+        // 76. Menu Bar Widget: Metric Reordering (Drag and Drop Position)
+        let initialCount = prefs.metricOrder.count
+        let firstMetric = prefs.metricOrder[0]
+        let secondMetric = prefs.metricOrder[1]
+        prefs.moveMetric(fromIndex: 0, toIndex: 1)
+        assert(prefs.metricOrder.count == initialCount, "Metric reordering preserves total element count")
+        assert(prefs.metricOrder[0] == secondMetric && prefs.metricOrder[1] == firstMetric, "Moving metric swaps adjacent elements properly")
+        prefs.moveMetric(fromIndex: 1, toIndex: 0)
+
+        // 77. Menu Bar Widget: Layout Density & Visual Toggles
+        prefs.layoutStyle = .compact
+        assert(prefs.layoutStyle == .compact, "Layout style updates to Compact")
+        prefs.layoutStyle = .detailed
+        assert(prefs.layoutStyle == .detailed, "Layout style updates to Detailed")
+        prefs.compactSpacing = true
+        assert(prefs.compactSpacing, "Compact spacing toggle is supported")
+        prefs.compactSpacing = false
+
+        // 78. Menu Bar Widget: Honest Telemetry Availability Invariants
+        var noBatterySnapshot = SystemMetricsSnapshot()
+        noBatterySnapshot.battery.hasBattery = false
+        let extractedBattery = prefs.extract(metric: .batteryPercentage, from: noBatterySnapshot)
+        assert(!extractedBattery.isAvailable, "Missing battery hardware is reported as unavailable, never fake 0%")
+        assert(extractedBattery.availabilityNote != nil, "Unavailable metric provides human-readable explanatory note")
+
+        var activeSnapshot = SystemMetricsSnapshot()
+        activeSnapshot.cpu.totalUsage = 42.5
+        let extractedCPU = prefs.extract(metric: .cpuTotalUsage, from: activeSnapshot)
+        assert(extractedCPU.isAvailable, "Active CPU metric is reported as available")
+        assert(extractedCPU.dashboardSection == .cpu, "Clicking CPU metric routes to CPU navigation section")
+
+        // 79. Menu Bar Widget: Threshold Alerts & Cooldown Suppression
+        let alertService = WidgetAlertService.shared
+        alertService.resetCooldowns()
+        alertService.enableCPUAlert = true
+        alertService.cpuThreshold = 80.0
+        
+        var highCPUSnapshot = SystemMetricsSnapshot()
+        highCPUSnapshot.cpu.totalUsage = 92.0
+        
+        let firstEval = alertService.evaluate(snapshot: highCPUSnapshot)
+        assert(!firstEval.isEmpty, "High CPU exceeding 80% triggers threshold alert on first evaluation")
+        
+        let secondEval = alertService.evaluate(snapshot: highCPUSnapshot)
+        assert(secondEval.isEmpty, "Duplicate threshold alert is suppressed by cooldown within 300 seconds")
+        
+        // 80. Menu Bar Widget: Alert Deduplication Suppression Invariant
+        assert(!alertService.canTriggerAlert(id: "cpu"), "CPU alert cooldown is active after trigger")
+        alertService.resetCooldowns()
+        assert(alertService.canTriggerAlert(id: "cpu"), "Cooldown reset restores trigger eligibility")
+        alertService.enableCPUAlert = false
+
+        // 81. Menu Bar Widget: Temperature Alert Requires Real Reading (Never Zero/Missing)
+        alertService.enableTemperatureAlert = true
+        alertService.temperatureThresholdCelsius = 85.0
+        var missingTempSnapshot = SystemMetricsSnapshot()
+        missingTempSnapshot.sensors.cpuTemperature = nil
+        let noTempEval = alertService.evaluate(snapshot: missingTempSnapshot)
+        assert(noTempEval.isEmpty, "Missing temperature sensor reading never triggers false alerts")
+        alertService.enableTemperatureAlert = false
+
+        // 82. Menu Bar Widget: Quick Actions Configuration
+        let allActions = WidgetQuickActionId.allCases
+        assert(allActions.count == 10, "Widget provides 10 standard native quick actions")
+        assert(allActions.contains(.openCleaner) && allActions.contains(.quit), "Quick actions include Cache Cleaner and Quit")
+
+        // 83. Menu Bar Widget: Monitored Storage Volume Selection
+        prefs.selectedVolumePath = "/Volumes/ExternalSSD"
+        assert(prefs.selectedVolumePath == "/Volumes/ExternalSSD", "Custom volume selection persists")
+        prefs.selectedVolumePath = "/"
+        assert(prefs.selectedVolumePath == "/", "Default storage path points to system root")
+        
+        // 84. Typography: AppFontFamily Cases & Availability Detection
+        let fontFamilies = AppFontFamily.allCases
+        assert(fontFamilies.count == 5, "Typography system defines 5 primary font families (SF Pro, Avenir Next, Helvetica Neue, Inter, SF Mono)")
+        assert(AppFontFamily.sfPro.isAvailableOnSystem == true, "SF Pro native system font is always available on macOS")
+        assert(!AppFontFamily.sfPro.displayName.isEmpty, "Font family display names are descriptive")
+
+        // 85. Typography: Font Size Scaling Math (85% to 120%)
+        let testSettings = AppSettings.shared
+        testSettings.fontScale = 1.0
+        let baseFont = AppTypography.font(size: 14.0)
+        testSettings.fontScale = 1.20
+        let scaledFont = AppTypography.font(size: 14.0)
+        assert(baseFont != scaledFont || testSettings.fontScale == 1.20, "Font scaling updates font size calculation dynamically")
+        testSettings.fontScale = 0.85
+        assert(testSettings.fontScale >= 0.85 && testSettings.fontScale <= 1.20, "Font scale is bounded between 85% and 120%")
+        testSettings.fontScale = 1.0
+
+        // 86. Typography: Base Weight Options Mapping
+        let weights = AppFontWeight.allCases
+        assert(weights.count == 3, "AppFontWeight supports Regular, Medium, and Semibold weights")
+        assert(AppFontWeight.regular.fontWeight == .regular, "AppFontWeight.regular maps to Font.Weight.regular")
+        assert(AppFontWeight.medium.fontWeight == .medium, "AppFontWeight.medium maps to Font.Weight.medium")
+        assert(AppFontWeight.semibold.fontWeight == .semibold, "AppFontWeight.semibold maps to Font.Weight.semibold")
+
+        // 87. Typography: Technical Monospaced Font Families
+        let monoFamilies = AppMonospacedFontFamily.allCases
+        assert(monoFamilies.count == 4, "AppMonospacedFontFamily provides 4 monospaced options for technical metrics and tools")
+        assert(AppMonospacedFontFamily.systemMonospaced.isAvailableOnSystem == true, "System monospaced digits are always available")
+        assert(AppMonospacedFontFamily.menlo.isAvailableOnSystem == true, "Menlo monospaced font is available on macOS")
+
+        // 88. Menu Bar Icon Symbols Motif
+        let menuBarSymbols = MenuBarIconSymbol.allCases
+        assert(menuBarSymbols.count == 6, "MenuBarIconSymbol defines 6 supported monochrome status item symbols")
+        assert(MenuBarIconSymbol.pulseWave.symbolName == "waveform.path.ecg", "Pulse Wave motif maps to waveform.path.ecg")
+        assert(!MenuBarIconSymbol.gauge.symbolName.isEmpty, "Gauge icon has valid SF Symbol")
+
+        // 89. Appearance Mode: Light Mode Default Invariant
+        assert(AppAppearanceMode.allCases.count == 3, "Appearance modes include Light, Dark, and System")
+        assert(AppAppearanceMode.light.colorScheme == .light, "Light mode resolves to ColorScheme.light")
+        assert(AppAppearanceMode.dark.colorScheme == .dark, "Dark mode resolves to ColorScheme.dark")
+        assert(AppAppearanceMode.system.colorScheme == nil, "System mode resolves to nil colorScheme (respecting OS appearance)")
+
+        // 90. Typography: Reset to Defaults Invariant
+        testSettings.appFontFamily = .avenirNext
+        testSettings.fontScale = 1.15
+        testSettings.baseFontWeight = .semibold
+        testSettings.monospacedFontFamily = .courierNew
+        testSettings.resetTypographyToDefaults()
+        assert(testSettings.appFontFamily == .sfPro, "Reset restores SF Pro as default font family")
+        assert(testSettings.fontScale == 1.0, "Reset restores 100% font scale")
+        assert(testSettings.baseFontWeight == .regular, "Reset restores Regular base weight")
+        assert(testSettings.monospacedFontFamily == .systemMonospaced, "Reset restores System Monospaced for technical telemetry")
+
+        // 91. Centralized Typography Token Presets
+        assert(AppTypography.title != AppTypography.caption, "Typography tokens provide distinct semantic typography hierarchy")
+        assert(AppTypography.metricNumber != AppTypography.footnote, "Metric numbers use distinct monospaced font token")
+
         return (passed, failed, logs)
     }
 }

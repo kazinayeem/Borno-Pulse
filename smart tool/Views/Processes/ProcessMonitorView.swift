@@ -1,6 +1,6 @@
 //
 //  ProcessMonitorView.swift
-//  Naem Smart Tool
+//  Borno Pulse
 //
 
 import SwiftUI
@@ -31,8 +31,9 @@ public struct ProcessMonitorView: View {
                     }
                 }
                 .padding(8)
-                .background(Color.white.opacity(0.06))
+                .background(AppTheme.cardBackground)
                 .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+                .overlay(RoundedRectangle(cornerRadius: 8, style: .continuous).stroke(AppTheme.cardBorder, lineWidth: 0.5))
                 
                 // Sort Picker
                 Picker("Sort by", selection: $service.sortField) {
@@ -73,7 +74,7 @@ public struct ProcessMonitorView: View {
             }
             .padding(.horizontal, 20)
             .padding(.vertical, 8)
-            .background(Color.black.opacity(0.2))
+            .background(AppTheme.cardBackgroundSecondary)
             
             // Process List
             let list = service.filteredProcesses

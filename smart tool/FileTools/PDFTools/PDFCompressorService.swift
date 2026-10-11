@@ -1,6 +1,6 @@
 //
 //  PDFCompressorService.swift
-//  Naem Smart Tool
+//  Borno Pulse
 //
 
 import AppKit
@@ -124,7 +124,7 @@ public final class PDFCompressorService: ObservableObject {
         statusMessage = "Compression cancelled"
     }
     
-    private nonisolated static func compressSinglePDF(
+    public nonisolated static func compressSinglePDF(
         inputURL: URL,
         outputDir: URL,
         preset: PDFCompressionPreset

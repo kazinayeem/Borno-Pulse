@@ -1,6 +1,6 @@
 //
 //  BatteryProvider.swift
-//  Naem Smart Tool
+//  Borno Pulse
 //
 
 import Foundation
@@ -23,6 +23,9 @@ public final class BatteryProvider: @unchecked Sendable {
             metrics.hasBattery = false
             metrics.isPluggedIn = true
             metrics.powerSource = "AC Power Adapter"
+            metrics.stateOfCharge = .acDesktop
+            metrics.formattedTimeRemaining = "AC Connected (Desktop Mac)"
+            metrics.estimateConfidence = .unavailable
             metrics.state = .unavailable(reason: "Desktop Mac without internal battery")
             return metrics
         }
@@ -45,6 +48,9 @@ public final class BatteryProvider: @unchecked Sendable {
             if let isCharging = desc[kIOPSIsChargingKey] as? Bool {
                 metrics.isCharging = isCharging
             }
+            if let isCharged = desc[kIOPSIsChargedKey] as? Bool {
+                metrics.isFullyCharged = isCharged
+            }
             if let powerState = desc[kIOPSPowerSourceStateKey] as? String {
                 metrics.isPluggedIn = (powerState == kIOPSACPowerValue)
                 metrics.powerSource = metrics.isPluggedIn ? "Power Adapter" : "Battery"
@@ -55,42 +61,107 @@ public final class BatteryProvider: @unchecked Sendable {
             if let timeToFull = desc[kIOPSTimeToFullChargeKey] as? Int, timeToFull > 0 {
                 metrics.timeToFullMinutes = timeToFull
             }
+            if let voltage = desc[kIOPSVoltageKey] as? Int, voltage > 0 {
+                metrics.voltageVolts = Double(voltage) / 1000.0
+            }
+            if let current = desc[kIOPSCurrentKey] as? Int {
+                metrics.amperageAmps = Double(current) / 1000.0
+            }
         }
         
         if foundBattery {
-            // Read hardware cycle count via AppleSmartBattery
-            queryAppleSmartBattery(&metrics)
+            // Read hardware telemetry and power calculations via BatteryPowerService
+            let telemetry: BatteryPowerTelemetry
+            if Thread.isMainThread {
+                telemetry = MainActor.assumeIsolated {
+                    BatteryPowerService.shared.queryHardwarePowerTelemetry(
+                        isPluggedIn: metrics.isPluggedIn,
+                        isCharging: metrics.isCharging
+                    )
+                }
+            } else {
+                telemetry = DispatchQueue.main.sync {
+                    BatteryPowerService.shared.queryHardwarePowerTelemetry(
+                        isPluggedIn: metrics.isPluggedIn,
+                        isCharging: metrics.isCharging
+                    )
+                }
+            }
+            
+            if let v = telemetry.voltageVolts { metrics.voltageVolts = v }
+            if let a = telemetry.amperageAmps { metrics.amperageAmps = a }
+            metrics.chargingWatts = telemetry.chargingWatts
+            metrics.dischargingWatts = telemetry.dischargingWatts
+            metrics.systemPowerWatts = telemetry.systemPowerWatts
+            metrics.adapterInputWatts = telemetry.adapterInputWatts
+            metrics.adapterRatedWatts = telemetry.adapterRatedWatts
+            metrics.adapterName = telemetry.adapterName
+            metrics.isMeasuredWattage = telemetry.isMeasured
+            if let cycles = telemetry.cycleCount { metrics.cycleCount = cycles }
+            if let health = telemetry.healthPercentage { metrics.healthPercentage = health }
+            if let temp = telemetry.temperatureCelsius { metrics.temperatureCelsius = temp }
+            if let full = telemetry.isFullyCharged { metrics.isFullyCharged = full }
+            
+            // Effective battery wattage
+            if let c = telemetry.chargingWatts {
+                metrics.wattage = c
+            } else if let d = telemetry.dischargingWatts {
+                metrics.wattage = -d
+            } else if let v = metrics.voltageVolts, let a = metrics.amperageAmps {
+                metrics.wattage = v * a
+            }
+            
+            // Enrich through dedicated estimation service
+            let estimation: (estimatedMinutes: Int?, confidence: BatteryEstimateConfidence, state: BatteryStateOfCharge, ratePerHour: Double?, formatted: String)
+            if Thread.isMainThread {
+                estimation = MainActor.assumeIsolated {
+                    BatteryEstimationService.shared.processSample(
+                        hasBattery: true,
+                        percentage: metrics.percentage,
+                        isCharging: metrics.isCharging,
+                        isPluggedIn: metrics.isPluggedIn,
+                        timeToEmptyMinutes: metrics.timeToEmptyMinutes,
+                        timeToFullMinutes: metrics.timeToFullMinutes,
+                        voltageVolts: metrics.voltageVolts,
+                        amperageAmps: metrics.amperageAmps,
+                        wattage: metrics.wattage,
+                        temperatureCelsius: metrics.temperatureCelsius
+                    )
+                }
+            } else {
+                estimation = DispatchQueue.main.sync {
+                    BatteryEstimationService.shared.processSample(
+                        hasBattery: true,
+                        percentage: metrics.percentage,
+                        isCharging: metrics.isCharging,
+                        isPluggedIn: metrics.isPluggedIn,
+                        timeToEmptyMinutes: metrics.timeToEmptyMinutes,
+                        timeToFullMinutes: metrics.timeToFullMinutes,
+                        voltageVolts: metrics.voltageVolts,
+                        amperageAmps: metrics.amperageAmps,
+                        wattage: metrics.wattage,
+                        temperatureCelsius: metrics.temperatureCelsius
+                    )
+                }
+            }
+            
+            metrics.estimatedMinutes = estimation.estimatedMinutes
+            metrics.estimateConfidence = estimation.confidence
+            metrics.stateOfCharge = estimation.state
+            metrics.ratePercentagePerHour = estimation.ratePerHour
+            metrics.formattedTimeRemaining = estimation.formatted
+            metrics.lastUpdated = Date()
             metrics.state = .available
         } else {
             metrics.hasBattery = false
             metrics.isPluggedIn = true
             metrics.powerSource = "AC Power Adapter"
+            metrics.stateOfCharge = .acDesktop
+            metrics.formattedTimeRemaining = "AC Connected (Desktop Mac)"
+            metrics.estimateConfidence = .unavailable
             metrics.state = .unavailable(reason: "Desktop Mac (AC Powered)")
         }
         
         return metrics
-    }
-    
-    private func queryAppleSmartBattery(_ metrics: inout BatteryMetrics) {
-        let matching = IOServiceMatching("AppleSmartBattery")
-        var iterator: io_iterator_t = 0
-        
-        if IOServiceGetMatchingServices(kIOMainPortDefault, matching, &iterator) == kIOReturnSuccess {
-            let service = IOIteratorNext(iterator)
-            if service != 0 {
-                var props: Unmanaged<CFMutableDictionary>?
-                if IORegistryEntryCreateCFProperties(service, &props, kCFAllocatorDefault, 0) == kIOReturnSuccess,
-                   let dict = props?.takeRetainedValue() as? [String: Any] {
-                    if let cycles = dict["CycleCount"] as? Int {
-                        metrics.cycleCount = cycles
-                    }
-                    if let maxCap = dict["MaxCapacity"] as? Int, maxCap > 0 {
-                        metrics.healthPercentage = min(maxCap, 100)
-                    }
-                }
-                IOObjectRelease(service)
-            }
-            IOObjectRelease(iterator)
-        }
     }
 }

@@ -1,6 +1,6 @@
 //
 //  smart_toolApp.swift
-//  Naem Smart Tool
+//  Borno Pulse
 //
 
 import AppKit
@@ -12,9 +12,10 @@ struct smart_toolApp: App {
     @ObservedObject var settings = AppSettings.shared
     
     var body: some Scene {
-        Window("Naem Smart Tool", id: "main-window") {
+        Window("Borno Pulse", id: "main-window") {
             MainDashboardView()
                 .frame(minWidth: 960, minHeight: 640)
+                .preferredColorScheme(settings.appearanceMode.colorScheme)
         }
         .windowStyle(.titleBar)
         .windowToolbarStyle(.unified)

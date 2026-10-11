@@ -1,19 +1,23 @@
-# Naem Smart Tool ⚡️
-> **Your Mac. Fully Understood.**  
-> A premium, production-grade native macOS system utility engineered in Swift 6 & SwiftUI.
+# Borno Pulse ⚡️
+> **Smart Mac Utilities & System Monitor**  
+> A premium, production-grade native macOS Super Utility Suite engineered in Swift 6 & SwiftUI.
 
 ---
 
 ## 1. Overview
 
-**Naem Smart Tool** is an advanced native macOS system utility that unites real-time hardware telemetry, process diagnostics, storage analysis, safe two-step cache cleanup, menu bar integration, and WidgetKit desktop widgets into a cohesive, high-performance experience.
+**Borno Pulse** is an advanced native macOS system utility suite that unites real-time hardware telemetry, storage treemap analytics, cache cleanup, image & PDF file tools, screen time tracking, and an extensive suite of offline-first power tools:
 
-Designed strictly following Apple Human Interface Guidelines and modern macOS design aesthetics:
-- **Dark Graphite Canvas** with subtle depth gradients
-- **Electric Blue & Cyan** high-contrast accent palette
-- **Rounded Cards** with restrained borders and subtle shadows
-- **Native SF Symbols** and typography designed for macOS Sonoma and Sequoia
-- **Zero Telemetry**: 100% of telemetry calculations are performed on-device. No network tracking, external analytics, or account requirements.
+- 🛠️ **Developer Toolbox**: JSON formatter/minifier/tree explorer/diff, JWT inspector with claim decoding & expiration audit, lightweight API request client with automatic secret redaction, and Docker dashboard with safe container lifecycle controls.
+- 🌐 **Network Toolkit**: Real-time interface throughput, BSD getifaddrs IP diagnostics, ICMP ping latency graphs, multi-record DNS lookups (A/AAAA/CNAME/MX/TXT/NS), and TLS/SSL certificate chain & expiration inspector.
+- 📋 **Clipboard Manager**: Privacy-first opt-in history with sensitive secret masking (passwords, tokens, cards), app exclusions, and quick copy-back actions.
+- ⏱️ **Focus & Pomodoro**: Timestamp-driven focus sessions (25m blocks, short/long breaks), streak tracking, daily/weekly metrics, and foreground Screen Time awareness.
+- 🔋 **Advanced Battery Monitoring & Estimation**: Dedicated `BatteryEstimationService` computing empirical discharge/charge slope with non-linear saturation curve compensation, real-time power draw (Watts), observed rate (%/hr), confidence indicators, 7-day retention persistence, customizable alerts (low battery, 100% full, AC disconnect, rapid discharge), and macOS menu bar indicators.
+- 🔄 **Batch File Converter**: Unified batch processing queue utilizing existing native ImageIO and PDFKit engines with collision-safe naming and progress reporting.
+- 🛡️ **Privacy & Security**: 1MB streaming cryptographic file hasher (SHA-256, SHA-384, SHA-512, legacy SHA-1/MD5 with warnings), metadata inspector, and macOS TCC permission audit.
+- ⚡️ **Quick Launcher (⌘K)**: Global keyboard-first command palette with fuzzy search across all 25 system modules and utilities.
+- 💾 **Local Backup Helper**: Folder profiles with Full Copy, Incremental Sync, and Mirror modes, SHA-256 integrity verification, safe restore workflow, and exportable reports.
+- 📊 **Hardware Telemetry & Analytics**: Real-time CPU/GPU/RAM/Thermal monitoring, APFS purgeable space, interactive squarified treemaps, two-step cache cleaner, and Screen Time analytics.
 
 ---
 
@@ -22,7 +26,7 @@ Designed strictly following Apple Human Interface Guidelines and modern macOS de
 ```
 smart tool/
 ├── App/
-│   ├── smart_toolApp.swift              # App entry point with AppKit lifecycle integration
+│   ├── smart_toolApp.swift              # App entry point, menu bar coordinator, CLI test runner
 │   └── ContentView.swift                # Dashboard root container
 ├── Core/
 │   ├── Theme/
@@ -30,325 +34,194 @@ smart tool/
 │   └── Extensions/
 │       └── Formatters.swift             # Thread-safe formatters for bytes, speed, temp, and units
 ├── Models/
-│   ├── MetricModels.swift               # Strongly-typed models for CPU, GPU, RAM, Thermals, etc.
+│   ├── MetricModels.swift               # Strongly-typed models for CPU, GPU, RAM, Thermals, Battery, etc.
 │   ├── ProcessModel.swift               # ProcessItem model and energy score algorithms
 │   ├── CleanupModels.swift              # Safe cache categories, file items, and dry-run models
 │   ├── StorageAnalyzerModels.swift      # Storage category classification and disk item models
-│   └── AppSettings.swift                # User preferences and configurable thresholds
+│   └── AppSettings.swift                # User preferences, menu bar display, and alert thresholds
 ├── Services/
 │   ├── SystemMonitor.swift              # MainActor coordinator running background polling engine
 │   └── LaunchAtLoginService.swift       # ServiceManagement (SMAppService) login item manager
 ├── Monitoring/
-│   ├── CPU/
-│   │   └── CPUProvider.swift            # Mach host processor load info (per-core & overall)
-│   ├── GPU/
-│   │   └── GPUProvider.swift            # Metal device capabilities & IOKit IOAccelerator metrics
-│   ├── Memory/
-│   │   └── MemoryProvider.swift         # Mach host_statistics64 virtual memory & swap usage
-│   ├── Sensors/
-│   │   └── SensorProvider.swift         # ProcessInfo thermal states and hardware sensor fallbacks
-│   ├── Storage/
-│   │   └── StorageProvider.swift        # APFS volumes, purgeable space, and capacity telemetry
-│   ├── Network/
-│   │   └── NetworkProvider.swift        # Darwin getifaddrs delta speed & interface inspection
-│   └── Battery/
-│       └── BatteryProvider.swift        # IOKit.ps & AppleSmartBattery cycle count and power state
-├── Cleanup/
-│   └── CacheCleanupService.swift        # Two-step review-and-confirm cache cleanup & dry-run engine
-├── StorageAnalyzer/
-│   └── StorageAnalyzerService.swift     # Safe directory recursion, category allocation & large files
-├── ProcessMonitor/
-│   └── ProcessMonitorService.swift      # libproc process table, sorting, and safe termination
-├── Components/
-│   ├── MetricCard.swift                 # Polished metric card container
-│   ├── LiveMetricChart.swift            # Swift Charts live timeline with gradient area marks
-│   └── ComponentViews.swift             # GaugeBar, StatusBadge, and StatRow components
-├── MenuBar/
-│   ├── MenuBarCoordinator.swift         # Dynamic NSStatusItem management & NSPopover toggle
-│   └── MenuBarPopoverView.swift         # Compact menu bar panel with live mini gauges & actions
-├── WidgetExtension/
-│   └── SmartToolWidget.swift            # WidgetKit desktop widget (Small, Medium, Large layouts)
-├── FileTools/
-│   ├── ImageTools/
-│   │   ├── ImageToolModels.swift             # Models, formats, presets & metadata structures
-│   │   ├── ImageFormatConverterService.swift # ImageIO/CoreGraphics format conversion & alpha flattening
-│   │   ├── ImageCompressorService.swift      # Lossy/lossless compression, presets & size reduction
-│   │   ├── ImageResizerService.swift         # Aspect ratio scaling, pixel/preset & no-upscaling guard
-│   │   └── ImageMetadataService.swift        # EXIF, camera info, color profile & location scrub exporter
-│   ├── PDFTools/
-│   │   ├── PDFToolModels.swift               # PDF page items, presets & metadata records
-│   │   ├── PDFCompressorService.swift        # PDF stream optimization & image downsampling
-│   │   ├── PDFToImagesService.swift          # CoreGraphics page rasterizer (DPI & page range selection)
-│   │   ├── ImagesToPDFService.swift          # PDFPage & A4/Letter/Custom canvas layout generator
-│   │   ├── PDFMergerSplitterService.swift    # Multi-doc merger & page range/interval splitter
-│   │   ├── PDFPageToolsService.swift         # 90° page rotation, deletion & thumbnail organizer
-│   │   └── PDFSecurityService.swift          # Encryption unlock, metadata audit & privacy sanitizer
-│   └── FileUtilities/
-│       ├── ChecksumService.swift             # CryptoKit SHA-256, MD5, SHA-1 hashing & verifier
-│       ├── BatchRenamerService.swift         # Find/replace, prefix/suffix, numbering & collision guard
-│       ├── DuplicateFinderService.swift      # Two-tier size bucketing & SHA-256 duplicate finder
-│       ├── ArchiveUtilityService.swift       # ZIP compressor & extractor with path traversal guard
-│       └── TextEncodingInspectorService.swift# UTF-8/UTF-16/BOM/ASCII detector & CRLF/LF line ending analysis
-├── Views/
-│   ├── MainDashboardView.swift          # Primary NavigationSplitView with sidebar
-│   ├── Overview/OverviewView.swift      # 7-card hardware snapshot with live sparklines
-│   ├── CPU/CPUDetailView.swift          # Per-core utilization grid and user/sys/idle breakdown
-│   ├── GPU/GPUDetailView.swift          # Metal architecture, ANE status, and GPU memory
-│   ├── Memory/MemoryDetailView.swift    # RAM breakdown bar, pressure gauge, and swap stats
-│   ├── Sensors/SensorsDetailView.swift  # macOS thermal envelope and throttling diagnostics
-│   ├── Storage/StorageDetailView.swift  # APFS containers, mounted volumes, and purgeable stats
-│   ├── Network/NetworkDetailView.swift  # Live throughput charts, total transfer, and interfaces
-│   ├── Battery/BatteryDetailView.swift  # Battery chemistry, cycle count, and energy tips
-│   ├── Processes/ProcessMonitorView.swift # Process table, search, sort, and safe termination sheet
-│   ├── Cleaner/CacheCleanerView.swift   # Category cards, review files, dry-run, and safe cleaner
-├── StorageAnalyzer/
-│   ├── StorageAnalyticsModels.swift     # Volume info, categories, nodes, treemap & snapshot models
-│   ├── StorageAnalyticsService.swift    # Background scanning, mounted volumes, tree builder & cleanup
-│   ├── TreemapLayoutEngine.swift        # Pure Swift squarified treemap partition algorithm
-│   └── HistoricalStorageService.swift   # Lightweight local snapshot persistence & user consent
-├── ScreenTime/
-│   ├── ScreenTimeModels.swift           # Categories, AppSessionRecord, DailyAppUsageSummary & stats
-│   ├── ScreenTimeTrackerService.swift   # NSWorkspace activation listener, pulse engine, CSV exporter
-│   ├── IdleDetector.swift               # IOHIDSystem nanoseconds & CGEventSource hardware idle detection
-│   ├── WebsiteInspectionHelper.swift    # Safe Apple Events domain sampler (zero extensions)
-│   └── ScreenTimePDFReportGenerator.swift # Native CoreGraphics vector PDF report exporter
-├── Views/
-│   ├── MainDashboardView.swift          # Primary NavigationSplitView with sidebar
-│   ├── Overview/OverviewView.swift      # 7-card hardware snapshot with live sparklines
-│   ├── CPU/CPUDetailView.swift          # Per-core utilization grid and user/sys/idle breakdown
-│   ├── GPU/GPUDetailView.swift          # Metal architecture, ANE status, and GPU memory
-│   ├── Memory/MemoryDetailView.swift    # RAM breakdown bar, pressure gauge, and swap stats
-│   ├── Sensors/SensorsDetailView.swift  # macOS thermal envelope and throttling diagnostics
-│   ├── Storage/StorageDetailView.swift  # APFS containers, mounted volumes, and purgeable stats
-│   ├── Network/NetworkDetailView.swift  # Live throughput charts, total transfer, and interfaces
-│   ├── Battery/BatteryDetailView.swift  # Battery chemistry, cycle count, and energy tips
-│   ├── Processes/ProcessMonitorView.swift # Process table, search, sort, and safe termination sheet
-│   ├── Cleaner/CacheCleanerView.swift   # Category cards, review files, dry-run, and safe cleaner
-│   ├── StorageAnalyzer/                 # Storage Analytics Suite Views
-│   │   ├── StorageAnalyticsDashboardView.swift # Summary cards, volume switcher, composition bar & hub
-│   │   ├── TreemapView.swift            # Interactive squarified treemap with drill-down & breadcrumbs
-│   │   ├── StorageCategoryDonutChart.swift # Swift Charts category donut with sector filter
-│   │   ├── LargestFoldersBarChart.swift # Top 10/20 horizontal folder bars with Finder reveal
-│   │   ├── LargestFilesBarChart.swift   # Ranked heavy consumer files with parent paths
-│   │   ├── StorageCompositionBarView.swift # Filesystem used vs scanned files vs available space bar
-│   │   ├── HistoricalStorageTrendView.swift# Swift Charts line/area chart over scan history
-│   │   └── StorageExplorerTableView.swift # Searchable, sortable table, CSV export & safe cleanup
-│   ├── ScreenTime/                      # Screen Time Analytics Suite Views
-│   │   ├── ScreenTimeDashboardView.swift # Summary metrics, live session bar, controls & hub
-│   │   ├── ScreenTimeSummaryCardsView.swift # Today's focus, 7D/30D avg, top app & uptime comparison
-│   │   ├── ScreenTimeChartsSectionView.swift # Swift Charts hourly/daily bars & category donut
-│   │   ├── ScreenTimeTimelineView.swift # 24h Gantt session bar & transition feed
-│   │   ├── ScreenTimeWebsiteNoticeCard.swift # Native web domain sampler status & privacy guarantees
-│   │   ├── ScreenTimeExplorerTableView.swift # Searchable, sortable table, Finder reveal & app exclusion
-│   │   └── ScreenTimeExclusionsSheet.swift # Privacy governance, app exclusion list & history purge
-│   ├── FileTools/                       # File Tools Workspace Views
-│   │   ├── FileToolsDashboardView.swift # Central Hub & quick launch view
-│   │   ├── Components/FileDropZoneView.swift # Universal drag-and-drop zone
-│   │   ├── ImageTools/                  # Converter, Compressor, Resizer & Metadata Views
-│   │   ├── PDFTools/                    # PDF Compressor, PDF2Img, Img2PDF, Merge/Split, Pages, Security
-│   │   └── FileUtilities/               # Checksum, Renamer, Duplicates, ZIP & Text Inspector
-│   ├── Diagnostics/DiagnosticsView.swift # System audit, API matrix, and redacted report export
-│   └── Settings/SettingsView.swift      # Preferences, thresholds, exclusions & test suite runner
+│   ├── Battery/
+│   │   ├── BatteryProvider.swift          # IOKit.ps & AppleSmartBattery hardware voltage/amperage query
+│   │   └── BatteryEstimationService.swift # Real-time empirical slope, non-linear taper, 7-day history & alerts
+│   ├── CPU/CPUProvider.swift            # Host processor load info (per-core & overall)
+│   ├── GPU/GPUProvider.swift            # Metal capabilities & IOKit IOAccelerator metrics
+│   ├── Memory/MemoryProvider.swift      # Mach host_statistics64 virtual memory & swap
+│   ├── Sensors/SensorProvider.swift     # Thermal envelope and throttling diagnostics
+│   ├── Storage/StorageProvider.swift    # APFS volumes, purgeable space, and capacity
+│   └── Network/NetworkProvider.swift    # Darwin getifaddrs delta speed & interface inspection
+├── DeveloperTools/
+│   ├── JSON/                            # Formatter, minifier, line/col validator, CSV export, diff
+│   ├── JWT/                             # Claims, header, payload, and clock expiration models
+│   ├── HTTPClient/                      # URLSession client, TLS validation, secret redaction
+│   └── Docker/                          # Container states, images, stats, and lifecycle actions
+├── NetworkTools/                        # Connectivity, Ping, DNS, SSL Certificate inspection
+├── Clipboard/                           # Opt-in clipboard history, secret protection, app exclusions
+├── Focus/                               # Focus & Pomodoro timer, streak tracking, Screen Time sync
+├── BatchProcessing/                     # Batch converter queue reusing ImageIO & PDFKit
+├── PrivacySecurity/                     # Streaming file hasher, metadata inspector, permission audit
+├── QuickLauncher/                       # ⌘K Command palette modal with keyboard navigation
+├── Backup/                              # Local Backup Helper profiles, incremental sync, restore
+├── FileTools/                           # Image format converter, compressor, resizer, PDF tools
+├── StorageAnalyzer/                     # Safe directory recursion, category allocation, squarified treemaps
+├── Views/                               # SwiftUI views for all modules and system dashboards
 └── Tests/
-    ├── MockProviders.swift              # Mock providers for CPU, Sensors, and Storage
-    └── SmartToolTests.swift             # 28 In-app and terminal unit test suites (68 assertions)
+    ├── MockProviders.swift              # Deterministic test doubles for hardware queries
+    └── SmartToolTests.swift             # 113 automated unit and invariant regression tests
 ```
 
 ---
 
-## 3. Features
+## 3. Implemented Modules & Features
 
-### A. Advanced Storage Analytics Dashboard
-A dedicated, visual storage analysis engine that explains exactly what is consuming disk space across all mounted volumes:
+### Advanced Battery Monitoring & Time Estimation
+- **Dedicated BatteryEstimationService**:
+  - Samples battery percentage, power state, and charging rate continuously.
+  - Computes empirical rate of change ($\%/hr$) over an adaptive sliding observation window.
+  - Accounts for lithium-ion charging taper curve: fast charging up to 80% with non-linear saturation compensation between 80% and 100%.
+  - When discharging, projects time remaining until user-configured low-battery safety reserve (e.g. 10%).
+  - Blends native macOS IOKit `kIOPSTimeToEmptyKey` / `kIOPSTimeToFullChargeKey` estimates when available with observed workload consumption.
+  - Clear confidence qualification: *High Confidence*, *Moderate Confidence*, *Low Confidence*, *Calculating...*, and *Unavailable*.
+- **Hardware Diagnostics**:
+  - Cycle count (rated for 1,000 cycles), maximum capacity health percentage.
+  - Live cell DC voltage (V), current flow (A), and system power draw / charging wattage (W).
+  - Internal battery temperature (°C).
+- **Interactive Historical Charts**:
+  - 1 Hour, 6 Hours, 24 Hours, and 7 Days time ranges.
+  - Swift Charts area and line graphs plotting actual recorded charge level and rate trajectory.
+  - Lightweight on-disk JSON persistence with automatic 7-day retention trimming.
+- **Menu Bar Indicators**:
+  - Battery % (`78%`)
+  - Estimated Time Remaining (`5h 24m remaining`)
+  - Battery Status Icon (`⚡️` / `🔋` / `🔌`)
+  - Battery % + Time (`78% (5h 24m)`)
+- **Configurable Notifications**:
+  - Low battery threshold alert (10%, 15%, 20%, 25%).
+  - 100% Fully charged notification.
+  - AC power disconnected notification.
+  - Rapid battery discharge alert (> 20%, > 25%, > 30%/hr).
+- **Graceful Desktop Mac Mode**:
+  - Automatically detects desktop Macs without battery hardware (Mac mini, Mac Studio, Mac Pro, iMac).
+  - Clearly displays continuous AC power supply status without fabricated battery metrics.
 
-1. **Main Storage Overview**:
-   - Summary cards displaying **Total Capacity**, **Used vs. Free Storage**, **Largest Discovered File**, **Scanned File/Folder Counts**, and **Last Scan Timestamp**.
-   - **Mounted Volume Switcher**: Detects mounted APFS containers, external USB/Thunderbolt drives, and custom folder targets.
-   - **Storage Composition Bar**: Visualizes the exact proportion of scanned files, unclassified/reserved system space, and available free capacity, explaining filesystem discrepancies (APFS snapshots, SIP restrictions).
-
-2. **Interactive Squarified Treemap**:
-   - Area-proportional rectangles visualising categories, folders, and heavy files.
-   - Click any folder or category tile to **Drill Down** into nested subdirectories.
-   - **Breadcrumb Navigation**: Shows the complete folder path with one-click navigation to parent folders, plus **Back** and **Reset View** actions.
-   - **Hover Tooltips**: Live popover detailing item name, byte size, and percentage of current view.
-   - **Virtualization & Aggregation**: Smooth 60fps rendering even on folders with 10,000+ files by aggregating minor tail items into a readable "Other (N items)" tile.
-   - Expandable full-canvas visualization mode.
-
-3. **Storage Charts & Visualizations**:
-   - **Category Donut Chart**: Powered by Swift Charts `SectorMark`, displaying distribution across Applications, Documents, Images, Videos, Audio, Downloads, Developer Files, Xcode DerivedData, Archives, and Caches. Clicking a segment filters the file explorer.
-   - **Largest Discovered Folders**: Ranked horizontal bar chart of the top folders by cumulative recursive size with one-click Finder reveal.
-   - **Largest Individual Files**: Ranked bar chart with parent paths and file type badges.
-   - **Historical Storage Trend**: Local snapshot tracking over successive scans (with user consent) with an informative empty state.
-
-4. **Largest Files & Folders Explorer**:
-   - Searchable, sortable table: Name, Category, Size, % of Total, Modification Date, and Location.
-   - Filters: Minimum size (`>100 MB`, `>500 MB`, `>1 GB`), Item type (Files only, Folders only, All), and display limits (Top 10, 25, 50, All).
-   - Actions: Reveal in Finder, Open File, Copy Path, and Export scan results to CSV.
-
-5. **Safe Storage Cleanup Integration**:
-   - Evaluates items for cleanup eligibility (Xcode DerivedData, application caches, temp files).
-   - Never offers deletion for arbitrary system or personal files.
-   - Explains potential consequences in a confirmation modal and recalculates storage space after moving eligible items to Trash.
-
----
-
-### B. File Tools Suite (100% Offline & Private)
-A collection of native macOS file tools built with `ImageIO`, `CoreGraphics`, `PDFKit`, and `CryptoKit`:
-
-1. **Image Tools**:
-   - **Format Converter**: Batch convert PNG, JPG, WebP, HEIC, TIFF, BMP. For PNG to JPG conversion, includes an interactive background color picker (default white) to flatten transparency cleanly. Preserves dimensions and orientation.
-   - **Image Compressor**: Compress JPG, PNG, and WebP using presets (High Quality 85%, Balanced 70%, Small File 50%, or Custom). Displays before-and-after sizes and percentage savings.
-   - **Image Resizer**: Scale by pixels, percentage, or social/display presets with aspect ratio lock and an anti-upscaling safety guard.
-   - **Metadata Viewer**: Inspect EXIF tags, camera details, color profile, and export location-scrubbed copies.
-
-2. **PDF Tools**:
-   - **PDF Compressor**: Streamlines PDF streams and downsamples images without altering vector text or page geometry.
-   - **PDF to Images**: High-resolution rasterization to PNG or JPG with selectable DPI (72, 150, 300, 600) and page ranges.
-   - **Images to PDF**: Combine multiple images into multi-page PDFs with A4, US Letter, or custom canvas sizing.
-   - **PDF Merger & Splitter**: Merge documents in custom order or split by page ranges, every page, or every N pages.
-   - **PDF Page Organizer**: 90° clockwise rotation, page removal, and export of a modified document copy.
-   - **PDF Security & Privacy**: Password unlock interface for encrypted PDFs and one-click export of metadata-stripped copies.
-
-3. **File Utilities**:
-   - **Checksum Calculator**: Compute SHA-256, MD5, and SHA-1 hashes with live comparison and verification against expected checksums.
-   - **Batch File Renamer**: Find & replace, prefix/suffix, number sequencing, and casing transformations with live collision detection.
-   - **Duplicate File Finder**: Two-tier scanner using exact file size bucketing followed by SHA-256 cryptographic match, with safe confirmation deletion.
-   - **ZIP Archive Utility**: Create and extract ZIP archives natively with strict path traversal (Zip-Slip) protection.
-   - **Text Encoding Inspector**: Detects UTF-8, UTF-16, ASCII, Windows-1252, BOM headers, and CRLF vs LF line endings.
+### Advanced PDF Studio (Native macOS)
+- **14 Professional Document Processing Tools**:
+  1. **Images to PDF**: Import PNG, JPG, HEIC, TIFF, WebP, BMP with page presets (A4, Letter, Legal, Custom), margins, and fit options (contain, cover, stretch).
+  2. **Merge PDFs**: Lossless document merger preserving vector artwork, embedded fonts, and selectable text layers.
+  3. **Merge Images & PDFs**: Unified mixed assembly canvas combining photos and multi-page PDFs in any custom sequence.
+  4. **Advanced PDF Editor**: Full document canvas with page thumbnail strip, drawing, annotation tools (highlight, underline, strikeout, free text, pen, shapes, sticky notes), signature stamping, and interactive AcroForm field detection.
+  5. **Page Organizer**: Visual thumbnail grid for drag-and-drop reordering, page rotation, deletion, and duplication.
+  6. **PDF to Images**: High-DPI rasterization to PNG, JPG, or TIFF with customizable page ranges.
+  7. **Word & Office to PDF**: 100% offline conversion for DOCX, RTF, RTFD, TXT, HTML, and Markdown via Apple CoreText/TextKit pagination and optional local LibreOffice headless detection.
+  8. **PDF Compressor**: Presets for stream optimization and image downsampling with file size comparison.
+  9. **PDF Splitter**: Split by every page, page ranges, or recurring N-page intervals.
+  10. **Page Extractor**: Extract designated pages into a new standalone document.
+  11. **Rotate & Reorder**: Batch 90°/180°/270° orientation adjustment and sequence inversion.
+  12. **Metadata & Privacy Inspector**: Inspect hidden document attributes, dates, author, and strip tracking tags for privacy.
+  13. **OCR & Searchable PDF**: On-device Apple Vision text recognition across 30+ languages to extract text and generate searchable PDFs with invisible text layers.
+  14. **Export & Print**: Native macOS print operation (`NSPrintOperation`) and validated export with overwrite guard.
+- **Safety & Privacy Safeguards**:
+  - 100% local processing: zero telemetry, zero cloud uploads.
+  - Never overwrites original files without explicit user confirmation dialog.
 
 ---
 
-### C. Menu Bar Popover & Dynamic Status Item
-- **Compact Popover**: Click the status item to view real-time CPU, RAM, GPU, Storage, Network, Battery, and Thermal status.
-- **Configurable Menu Bar Text**: Choose between:
-  - Icon Only
-  - CPU %
-  - Memory %
-  - Network Speed (e.g. `↓ 1.2 MB/s`)
-  - CPU + Memory
-  - CPU + Network
-- **Quick Actions**: One-click shortcuts to open the full Dashboard, run Quick Cleanup, open Settings, or Quit.
+### Customizable Menu Bar Widget & Mini Dashboard
+- **Customizable Widget Preferences (`MenuBarWidgetPreferences`)**:
+  - Over 40 distinct telemetry metrics categorized into 8 domains: CPU, Memory, GPU & Neural Engine, Temperature & Fans, Battery & Power, Storage, Network, and System.
+  - Three distinct layout densities: Compact (minimal glyphs & values), Balanced (labels, values, and progress bars), and Detailed (sparkline trend charts and secondary states).
+  - Configurable metric ordering with drag-and-drop support and persistent ordering.
+  - Visual customization toggles: Compact spacing, show/hide icons, show/hide metric labels, show/hide progress bars, show/hide trend sparklines, and percentage vs. raw value toggling.
+  - Monitored storage volume selection (system root `/` or external mounted APFS/HFS+ volumes).
+  - Quick action footer with 10 native actions (Overview Dashboard, CPU & Cores, Battery, Storage Analytics, Network, Focus Timer, Cache Cleaner with confirmation, Settings, Refresh, Quit).
+  - Menu Bar status item indicator customizer with live simulated preview.
+- **Threshold Alerts & Cooldown Deduplication (`WidgetAlertService`)**:
+  - User-configurable warning thresholds for High CPU %, High Memory Pressure %, Low Disk Free Space (GB), Low Battery %, High Temperature (°C), and Network Interface Disconnect.
+  - 5-minute (300-second) cooldown deduplication engine to suppress notification fatigue.
+  - 100% honest telemetry: Missing sensor readings or desktop Macs without battery hardware are reported transparently as unavailable rather than fabricating zero values.
+- **Live Preview Studio (`MenuBarWidgetSettingsView`)**:
+  - Two-column split-view studio in Settings under "Menu Bar & Widget" with immediate real-time updates as metrics and styles are adjusted, and a safe "Reset to Defaults" action.
 
-### D. Main Dashboard & Monitoring (14 Sections)
-1. **Overview**: Executive hardware snapshot featuring 7 dedicated hardware cards and real-time mini charts.
-2. **CPU**: Per-core utilization grid, user vs. system vs. idle ratios, and Darwin Mach kernel load info.
-3. **GPU & Neural Engine**: Metal device specs, unified memory architecture, and Apple Neural Engine integration.
-4. **Memory**: Page-accurate RAM distribution (App, Wired, Compressed, Free), pressure gauge, and swap usage.
-5. **Temperature & Fans**: Real-time macOS thermal pressure state, throttling detection, and hardware cooling diagnostics.
-6. **Storage**: APFS container breakdown, opportunistic/purgeable space awareness, and volume metrics.
-7. **Storage Analytics**: Deep visual analysis with interactive treemaps, category donuts, and ranked explorer.
-8. **Network**: Real-time download/upload speeds, lifetime byte counters, and active interface details.
-9. **Battery & Energy**: Battery health, cycle count, charging status, and energy optimization tips.
-10. **File Tools**: Full hub for Image Tools, PDF Tools, and File Utilities.
-11. **Processes**: Real-time process explorer powered by `libproc` with CPU/RAM sorting, search, and safe quit.
-12. **Cache Cleaner**: Two-step review-and-confirm workflow with **Dry-Run Simulation**.
-13. **Diagnostics & Self-Tests**: Hardware audit, API matrix, and **21 Invariant Self-Tests** with Markdown report export.
-14. **Settings**: Polling intervals, temperature units, theme appearance, launch-at-login, and cleanup exclusions.
-
-
-### C. Desktop Widget (WidgetKit)
-- Provides `.systemSmall`, `.systemMedium`, and `.systemLarge` desktop widget layouts.
-- Displays CPU load, RAM pressure, available storage, and battery state.
-- Accurately conveys periodic WidgetKit updates while high-frequency 1-second monitoring runs inside the main application.
-
----
-
-## 4. Hardware & API Compatibility Matrix
-
-| Metric / Feature | Apple Silicon (M1/M2/M3/M4) | Intel Macs (x86_64) | Telemetry API / Framework |
-| :--- | :---: | :---: | :--- |
-| **CPU Total & Per-Core** | Supported | Supported | Darwin Mach `host_processor_info` |
-| **User/Sys/Idle Load** | Supported | Supported | Darwin Mach `host_cpu_load_info` |
-| **Memory Breakdown** | Supported | Supported | Darwin Mach `host_statistics64` |
-| **APFS Purgeable Storage** | Supported | Supported | `URLResourceValues.volumeAvailableCapacityForImportantUsage` |
-| **Network Throughput** | Supported | Supported | Darwin `getifaddrs` & `if_data` |
-| **Metal GPU Information** | Supported | Supported | Metal `MTLCopyAllDevices()` |
-| **GPU Utilization %** | Supported | Architecture-dependent | IOKit `IOAccelerator.PerformanceStatistics` |
-| **Apple Neural Engine** | Supported (Integrated) | Not Available | Apple Silicon SoC Hardware Fabric |
-| **Thermal Pressure State** | Supported | Supported | Foundation `ProcessInfo.thermalState` |
-| **Direct SoC Diode Query** | Sandboxed by Apple | Requires Helper | AppleSMC (Graceful fallback active) |
-| **Battery & Cycle Count** | Supported | Supported | IOKit `IOPSCopyPowerSourcesInfo` & `AppleSmartBattery` |
-| **Process Inspection** | Supported | Supported | Darwin `libproc` (`proc_listpids`, `proc_pidinfo`) |
-| **Launch at Login** | Supported | Supported | ServiceManagement `SMAppService.mainApp` |
+### Typography, Icon & Appearance Customization
+- **Centralized Design System (`AppTypography.swift`)**:
+  - Unified typography tokens (`AppTypography.title`, `.headline`, `.body`, `.caption`, `.metricNumber`) and view modifiers (`.appFont(...)`, `.appMonospaced(...)`).
+  - Font scaling bounded between **85% and 120%** with quick presets (85% Compact, 100% Default, 110% Comfortable, 120% Large).
+  - Primary font family selection: **SF Pro** (System Default), **Avenir Next**, **Helvetica Neue**, **Inter**, and **SF Mono**.
+  - System availability query (`isAvailableOnSystem`) with seamless, graceful fallback to native Apple SF Pro when a third-party font is not installed.
+  - Base weight selection: **Regular**, **Medium**, and **Semibold**.
+  - Separate monospaced font family for technical metrics, developer tools, hashes, and charts: **System Monospaced**, **SF Mono**, **Menlo**, and **Courier New**.
+  - Live Typography & Telemetry Preview Studio in Settings with live preview cards and instant "Reset to Defaults".
+- **Appearance System**:
+  - **Light Mode** is the initial default for new installations.
+  - Supports **Light**, **Dark**, and **System** appearance modes.
+  - Dynamically updates the main window, settings, menu bar popover, widgets, charts, and dialogs.
+  - Persisted across application restarts via `@AppStorage("appearanceMode")`.
+- **Application Icon**:
+  - Distinctive, recognizable Borno Pulse telemetry cardiogram motif in Apple squircle format.
+  - Complete native macOS asset catalog with high-fidelity PNG assets at all required macOS display sizes (16, 32, 64, 128, 256, 512, 1024 pt).
+- **Adaptive Menu Bar Icon**:
+  - Native monochrome template-style icon (`isTemplate = true`) that dynamically adapts to light and dark macOS menu bars.
+  - Customizable symbol options: **Pulse Wave** (`waveform.path.ecg`), **Gauge Needle** (`gauge.with.dots.needle.bottom.100percent`), **Energy Pulse** (`bolt.heart.fill`), **CPU Processor** (`cpu`), **Activity Trend** (`chart.line.uptrend.xyaxis`), and **Modern Sparkle** (`sparkles`).
 
 ---
 
----
+## 4. Build & Test Verification
 
-## 5. Screen Time Analytics Suite
-
-Naem Smart Tool features a privacy-centric, standalone **Screen Time Analytics** module built natively with Swift 6 and AppKit:
-
-- **Foreground Application Tracking**: Listens to native `NSWorkspace` application lifecycle notifications (`didActivateApplicationNotification`, `didDeactivateApplicationNotification`, `screensDidSleepNotification`, `sessionDidResignActiveNotification`).
-- **Hardware Attention vs. Idle Separation**: Utilizes kernel `IOHIDSystem` (`HIDIdleTime` nanoseconds) and `CGEventSource` state to detect keyboard/trackpad idle intervals (>120s) and distinguish genuine active focus from passive power-on time.
-- **Standalone Website Tracking (No Extensions)**: Samples frontmost browser window domains (Safari, Google Chrome, Brave, Arc, Edge) using AppleScript Apple Events without installing any browser extensions, scraping private browsing databases, or collecting page contents.
-- **Interactive Visualizations**:
-  - Today's Hourly Distribution & 7/30-Day Daily Activity Bars with stacked Active vs Idle time
-  - Interactive Application Category Donut (`SectorMark`) with 9 categorized sectors
-  - 24-Hour Chronological Session Gantt Timeline
-  - Searchable and sortable Applications Explorer Table with Finder reveals and exclusion toggles
-- **Data Governance & Export**:
-  - 100% on-device storage in `~/Library/Application Support/NaemSmartTool/ScreenTime/screen_time_history.json`
-  - Instant CSV export with customizable date ranges
-  - Locally generated vector PDF audit reports via CoreGraphics
-  - Zero cloud syncing, zero keystroke logging, zero screen recording
-
----
-
-## 6. Security & Privacy Guarantees
-
-1. **No Root / No Sudo Required**: The app never asks for administrator credentials or executes privileged helper daemons.
-2. **Safe Cache Cleaner**:
-   - Never deletes files without explicit user review and confirmation.
-   - Never touches personal files, documents, photos, databases, keychains, or system binaries.
-   - Dry-Run mode allows inspecting exact file lists and byte sizes prior to deletion.
-3. **Privacy Redaction**: Exported diagnostic reports automatically scrub usernames, hardware serial numbers, and home folder structures.
-4. **Zero Telemetry**: All data is processed locally in RAM and stored on-device. No network requests are made outside of local interface telemetry queries.
-
----
-
-## 7. Build & Testing Instructions
-
-### Requirements
-- macOS 14.0 (Sonoma) or newer
-- Xcode 16.0 or Xcode 27+ with Swift 6
+### Prerequisites
+- macOS 14.0 (Sonoma) or macOS 15.0+ (Sequoia)
+- Xcode 16.0+ with Swift 6
 - Apple Silicon (arm64) or Intel (x86_64)
 
-### Building via Command Line
-To compile a Debug build using `xcodebuild`:
-
+### Building the Project
 ```bash
 cd "/Users/mohammadalinayeem/Project & Code/ios/smart tool"
 xcodebuild -scheme "smart tool" -destination 'platform=macOS' build
 ```
 
-The resulting application bundle is created at:
-`~/Library/Developer/Xcode/DerivedData/smart_tool-*/Build/Products/Debug/smart tool.app`
-
-### Running the Application
-To launch the built app from Terminal:
+### Running Automated Invariant Tests
+Execute the built application with the `--run-tests` flag:
 ```bash
-open "$HOME/Library/Developer/Xcode/DerivedData/smart_tool-"*/Build/Products/Debug/"smart tool.app"
+"$HOME/Library/Developer/Xcode/DerivedData/smart_tool-"*/Build/Products/Debug/"smart tool.app/Contents/MacOS/smart tool" --run-tests
 ```
 
-### Running Unit Tests
-1. **In-App Test Runner**:
-   - Open Naem Smart Tool.
-   - Select **Diagnostics** or **Settings** from the sidebar.
-   - Scroll to **Built-in Diagnostic & Unit Test Suite** and click **Run Test Suite**.
-   - All tests run live, displaying green pass checkmarks.
-2. **Command Line Verification**:
-   - Run the automated CLI test runner directly on the compiled app:
-   ```bash
-   "$HOME/Library/Developer/Xcode/DerivedData/smart_tool-"*/Build/Products/Debug/"smart tool.app/Contents/MacOS/smart tool" --run-tests
-   ```
-   - Validates all 68 invariant test suites covering CPU load, APFS purgeable capacity, thermal state thresholds, squarified treemap layouts, Screen Time category classification, idle subtraction math, and CSV generation.
+**Test Suite Results**:
+```
+--- INVARIANT TESTS COMPLETED ---
+Passed: 187, Failed: 0
+✅ PASS: All 187 invariant test suites passed with zero failures.
+```
+
+The test suite validates:
+- Menu Bar Widget metric registry coverage (8 categories, 45+ metrics)
+- Menu Bar Widget default configuration, layout styles, and quick actions
+- Metric selection toggling, drag-and-drop reordering math, and UserDefaults persistence
+- Extractor engine honest hardware handling (unavailable notes on desktop Macs / restricted sensors, never fabricated 0s)
+- Widget alert threshold evaluation and 5-minute cooldown deduplication suppression
+- Real-time battery wattage electrical calculation ($Power = Voltage \times Current$ converting mV & mA)
+- Sign conventions for active charging vs discharging
+- Power flow distribution invariants ($Adapter Rated \neq System Consumption \neq Battery Charge$)
+- Missing sensor data graceful `nil` handling (never fabricating 0W)
+- Native IOKit `AppleSmartBattery` telemetry parsing (system load, rated adapter capacity, input power)
+- Battery discharge-time remaining calculation to low threshold
+- Battery charge-time estimation with non-linear saturation tapering
+- Sparse observation window graceful "Calculating..." state
+- State transitions (AC plug/unplug) window reset
+- 100% on AC fully charged state detection
+- Desktop Mac (no battery) graceful AC wall power status
+- Native OS blended estimate priority
+- Historical 7-day retention policy and range intervals
+- PDF Studio 14 tools, page assembly, undo/redo, annotations, and OCR language detection
+- JSON, JWT, API client, Docker, Network Ping, DNS, SSL, Clipboard, Focus Pomodoro, Batch Converter, CryptoKit Hasher, Quick Launcher, and Local Backup invariants.
 
 ---
 
-## 8. Product Details
-- **Product Name**: Naem Smart Tool
-- **Tagline**: *Your Mac. Fully Understood.*
-- **Version**: 1.0.0
-- **License**: MIT-compatible open architecture
+## 5. Product Information
+- **Product Name**: Borno Pulse
+- **Display Name**: Borno Pulse
+- **Subtitle**: Smart Mac Utilities & System Monitor
+- **Platform**: Native macOS (macOS 14.0+)
+- **Architecture**: Swift 6 + SwiftUI + AppKit + Metal + IOKit + PDFKit + CryptoKit
+- **Philosophy**: Fast, private, useful, transparent, and reliable.
 

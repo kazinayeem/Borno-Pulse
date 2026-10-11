@@ -1,6 +1,6 @@
 //
 //  MetricModels.swift
-//  Naem Smart Tool
+//  Borno Pulse
 //
 
 import Foundation
@@ -222,17 +222,55 @@ public struct NetworkMetrics: Sendable {
 }
 
 // MARK: - Battery Metrics
+public enum BatteryEstimateConfidence: String, CaseIterable, Identifiable, Codable, Sendable {
+    case high = "High Confidence"
+    case medium = "Moderate Confidence"
+    case low = "Low Confidence"
+    case calculating = "Calculating..."
+    case unavailable = "Unavailable"
+    
+    public var id: String { rawValue }
+}
+
+public enum BatteryStateOfCharge: String, CaseIterable, Identifiable, Codable, Sendable {
+    case charging = "Charging"
+    case discharging = "Discharging"
+    case fullyCharged = "Fully Charged"
+    case acDesktop = "AC Connected"
+    case unknown = "Unknown"
+    
+    public var id: String { rawValue }
+}
+
 public struct BatteryMetrics: Sendable {
     public var hasBattery: Bool = false
     public var percentage: Int = 100
     public var isCharging: Bool = false
     public var isPluggedIn: Bool = true
+    public var isFullyCharged: Bool = false
     public var timeToEmptyMinutes: Int? = nil
     public var timeToFullMinutes: Int? = nil
+    public var estimatedMinutes: Int? = nil
+    public var formattedTimeRemaining: String = "Calculating estimate..."
+    public var estimateConfidence: BatteryEstimateConfidence = .calculating
+    public var stateOfCharge: BatteryStateOfCharge = .unknown
+    public var ratePercentagePerHour: Double? = nil
+    public var wattage: Double? = nil
+    public var chargingWatts: Double? = nil
+    public var dischargingWatts: Double? = nil
+    public var systemPowerWatts: Double? = nil
+    public var adapterInputWatts: Double? = nil
+    public var adapterRatedWatts: Int? = nil
+    public var adapterName: String? = nil
+    public var isMeasuredWattage: Bool = true
+    public var voltageVolts: Double? = nil
+    public var amperageAmps: Double? = nil
+    public var temperatureCelsius: Double? = nil
     public var cycleCount: Int? = nil
     public var healthPercentage: Int? = nil
     public var condition: String = "Normal"
     public var powerSource: String = "Power Adapter"
+    public var lastUpdated: Date = Date()
     public var state: AvailabilityState = .measuring
     
     public init() {}

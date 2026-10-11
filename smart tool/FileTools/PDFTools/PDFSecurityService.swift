@@ -1,6 +1,6 @@
 //
 //  PDFSecurityService.swift
-//  Naem Smart Tool
+//  Borno Pulse
 //
 
 import AppKit
@@ -87,7 +87,7 @@ public final class PDFSecurityService: ObservableObject {
             PDFDocumentAttribute.titleAttribute: "",
             PDFDocumentAttribute.authorAttribute: "",
             PDFDocumentAttribute.subjectAttribute: "",
-            PDFDocumentAttribute.creatorAttribute: "Naem Smart Tool (Sanitized)",
+            PDFDocumentAttribute.creatorAttribute: "Borno Pulse (Sanitized)",
             PDFDocumentAttribute.producerAttribute: "Native CoreGraphics"
         ]
         

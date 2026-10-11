@@ -1,6 +1,6 @@
 //
 //  CPUProvider.swift
-//  Naem Smart Tool
+//  Borno Pulse
 //
 
 import Darwin

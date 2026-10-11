@@ -251,7 +251,8 @@
 				ENABLE_HARDENED_RUNTIME = NO;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_NSHumanReadableCopyright = "Copyright © 2026 Naem. All rights reserved.";
+				INFOPLIST_KEY_CFBundleDisplayName = "Borno Pulse";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "Copyright © 2026 Borno. All rights reserved.";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
@@ -281,7 +282,8 @@
 				ENABLE_HARDENED_RUNTIME = NO;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_NSHumanReadableCopyright = "Copyright © 2026 Naem. All rights reserved.";
+				INFOPLIST_KEY_CFBundleDisplayName = "Borno Pulse";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "Copyright © 2026 Borno. All rights reserved.";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",

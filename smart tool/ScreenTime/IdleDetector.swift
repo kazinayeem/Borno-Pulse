@@ -1,6 +1,6 @@
 //
 //  IdleDetector.swift
-//  Naem Smart Tool
+//  Borno Pulse
 //
 
 import CoreGraphics

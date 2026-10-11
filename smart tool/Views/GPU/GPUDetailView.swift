@@ -1,6 +1,6 @@
 //
 //  GPUDetailView.swift
-//  Naem Smart Tool
+//  Borno Pulse
 //
 
 import SwiftUI

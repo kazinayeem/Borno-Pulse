@@ -1,6 +1,6 @@
 //
 //  ImageCompressorService.swift
-//  Naem Smart Tool
+//  Borno Pulse
 //
 
 import AppKit
@@ -151,7 +151,7 @@ public final class ImageCompressorService: ObservableObject {
         statusMessage = "Compression cancelled"
     }
     
-    private nonisolated static func compressSingleImage(
+    public nonisolated static func compressSingleImage(
         inputURL: URL,
         outputDir: URL,
         quality: Float

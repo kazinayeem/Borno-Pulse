@@ -1,6 +1,6 @@
 //
 //  FileToolsDashboardView.swift
-//  Naem Smart Tool
+//  Borno Pulse
 //
 
 import SwiftUI
@@ -22,6 +22,7 @@ public enum SelectedFileSubTool: String, CaseIterable, Identifiable {
     case imageMetadata = "Metadata Viewer"
     
     // PDF Tools
+    case pdfStudio = "PDF Studio"
     case pdfCompressor = "PDF Compressor"
     case pdfToImages = "PDF to Images"
     case imagesToPDF = "Images to PDF"
@@ -42,7 +43,7 @@ public enum SelectedFileSubTool: String, CaseIterable, Identifiable {
         switch self {
         case .imageConverter, .imageCompressor, .imageResizer, .imageMetadata:
             return .imageTools
-        case .pdfCompressor, .pdfToImages, .imagesToPDF, .pdfMergerSplitter, .pdfPageTools, .pdfSecurity:
+        case .pdfStudio, .pdfCompressor, .pdfToImages, .imagesToPDF, .pdfMergerSplitter, .pdfPageTools, .pdfSecurity:
             return .pdfTools
         case .checksum, .batchRenamer, .duplicateFinder, .archiveUtility, .textEncoding:
             return .fileUtilities
@@ -133,7 +134,7 @@ public struct FileToolsDashboardView: View {
                 }
                 .padding(.horizontal, 24)
                 .padding(.vertical, 8)
-                .background(Color.black.opacity(0.2))
+                .background(AppTheme.cardBackgroundSecondary)
                 
                 Divider()
             }
@@ -198,6 +199,13 @@ public struct FileToolsDashboardView: View {
                 // Section 2: PDF Tools
                 categorySectionHeader(title: "PDF Tools", icon: "doc.text.fill", color: AppTheme.neonCyan)
                 LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 14) {
+                    toolLaunchCard(
+                        title: "Advanced PDF Studio",
+                        description: "Professional native PDF suite: 14 tools, drag & drop assembly, annotations, OCR & Office conversion.",
+                        icon: "doc.richtext.fill",
+                        color: AppTheme.electricBlue,
+                        target: .pdfStudio
+                    )
                     toolLaunchCard(
                         title: "PDF Compressor",
                         description: "Downsample image-heavy PDFs and optimize streams with selectable compression levels.",
@@ -298,6 +306,8 @@ public struct FileToolsDashboardView: View {
             ImageResizerView()
         case .imageMetadata:
             ImageMetadataView()
+        case .pdfStudio:
+            PDFStudioWorkspaceView()
         case .pdfCompressor:
             PDFCompressorView()
         case .pdfToImages:
@@ -328,7 +338,7 @@ public struct FileToolsDashboardView: View {
         switch category {
         case .overview: return nil
         case .imageTools: return .imageConverter
-        case .pdfTools: return .pdfCompressor
+        case .pdfTools: return .pdfStudio
         case .fileUtilities: return .checksum
         }
     }
@@ -340,7 +350,7 @@ public struct FileToolsDashboardView: View {
         case .imageTools:
             return [.imageConverter, .imageCompressor, .imageResizer, .imageMetadata]
         case .pdfTools:
-            return [.pdfCompressor, .pdfToImages, .imagesToPDF, .pdfMergerSplitter, .pdfPageTools, .pdfSecurity]
+            return [.pdfStudio, .pdfCompressor, .pdfToImages, .imagesToPDF, .pdfMergerSplitter, .pdfPageTools, .pdfSecurity]
         case .fileUtilities:
             return [.checksum, .batchRenamer, .duplicateFinder, .archiveUtility, .textEncoding]
         }

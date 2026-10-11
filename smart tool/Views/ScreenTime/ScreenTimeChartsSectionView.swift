@@ -1,6 +1,6 @@
 //
 //  ScreenTimeChartsSectionView.swift
-//  Naem Smart Tool
+//  Borno Pulse
 //
 
 import Charts

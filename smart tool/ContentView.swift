@@ -1,6 +1,6 @@
 //
 //  ContentView.swift
-//  Nayeem Smart Tool
+//  Borno Pulse
 //
 
 import SwiftUI

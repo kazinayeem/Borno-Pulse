@@ -1,6 +1,6 @@
 //
 //  GPUProvider.swift
-//  Naem Smart Tool
+//  Borno Pulse
 //
 
 import Foundation

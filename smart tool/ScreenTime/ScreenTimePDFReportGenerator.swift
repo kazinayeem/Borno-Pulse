@@ -1,6 +1,6 @@
 //
 //  ScreenTimePDFReportGenerator.swift
-//  Naem Smart Tool
+//  Borno Pulse
 //
 
 import AppKit
@@ -49,7 +49,7 @@ public final class ScreenTimePDFReportGenerator: Sendable {
             .font: NSFont.boldSystemFont(ofSize: 20),
             .foregroundColor: NSColor.white
         ]
-        "NAEM SMART TOOL — SCREEN TIME REPORT".draw(at: CGPoint(x: 52, y: pageHeight - 65), withAttributes: titleAttributes)
+        "BORNO PULSE — SCREEN TIME REPORT".draw(at: CGPoint(x: 52, y: pageHeight - 65), withAttributes: titleAttributes)
         
         let subTitleAttributes: [NSAttributedString.Key: Any] = [
             .font: NSFont.systemFont(ofSize: 11),
@@ -158,7 +158,7 @@ public final class ScreenTimePDFReportGenerator: Sendable {
             .font: NSFont.systemFont(ofSize: 8.5),
             .foregroundColor: NSColor.darkGray
         ]
-        "🔒 PRIVACY VERIFIED: Processed entirely on-device by Naem Smart Tool. No keystroke recording, no screen capture, no cloud sync.".draw(at: CGPoint(x: 48, y: 47), withAttributes: footerAttrs)
+        "🔒 PRIVACY VERIFIED: Processed entirely on-device by Borno Pulse. No keystroke recording, no screen capture, no cloud sync.".draw(at: CGPoint(x: 48, y: 47), withAttributes: footerAttrs)
         
         context.endPage()
         context.closePDF()

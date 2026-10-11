@@ -1,6 +1,6 @@
 //
 //  ScreenTimeWebsiteNoticeCard.swift
-//  Naem Smart Tool
+//  Borno Pulse
 //
 
 import SwiftUI
@@ -73,8 +73,9 @@ public struct ScreenTimeWebsiteNoticeCard: View {
             }
             .padding(.horizontal, 10)
             .padding(.vertical, 6)
-            .background(Color.white.opacity(0.03))
-            .clipShape(RoundedRectangle(cornerRadius: 6))
+            .background(AppTheme.cardBackgroundSecondary)
+            .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: 6, style: .continuous).stroke(AppTheme.cardBorder, lineWidth: 0.5))
             
             if !topWebsites.isEmpty {
                 VStack(alignment: .leading, spacing: 6) {
@@ -102,8 +103,9 @@ public struct ScreenTimeWebsiteNoticeCard: View {
                             }
                             .padding(.horizontal, 8)
                             .padding(.vertical, 5)
-                            .background(Color.black.opacity(0.2))
-                            .clipShape(RoundedRectangle(cornerRadius: 5))
+                            .background(AppTheme.cardBackgroundSecondary)
+                            .clipShape(RoundedRectangle(cornerRadius: 5, style: .continuous))
+                            .overlay(RoundedRectangle(cornerRadius: 5, style: .continuous).stroke(AppTheme.cardBorder, lineWidth: 0.5))
                         }
                     }
                 }
@@ -128,7 +130,7 @@ public struct ScreenTimeWebsiteNoticeCard: View {
                     )
                     bulletPoint(
                         title: "Zero Private Browsing Access",
-                        desc: "Naem Smart Tool never opens browser SQLite databases, history caches, cookies, or incognito sessions."
+                        desc: "Borno Pulse never opens browser SQLite databases, history caches, cookies, or incognito sessions."
                     )
                 }
                 .transition(.opacity.combined(with: .move(edge: .top)))

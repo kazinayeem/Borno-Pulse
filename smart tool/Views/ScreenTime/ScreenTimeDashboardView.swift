@@ -1,6 +1,6 @@
 //
 //  ScreenTimeDashboardView.swift
-//  Naem Smart Tool
+//  Borno Pulse
 //
 
 import AppKit
@@ -178,8 +178,9 @@ public struct ScreenTimeDashboardView: View {
         }
         .padding(.horizontal, 8)
         .padding(.vertical, 3)
-        .background(Color.white.opacity(0.04))
+        .background(AppTheme.cardBackgroundSecondary)
         .clipShape(Capsule())
+        .overlay(Capsule().stroke(AppTheme.cardBorder, lineWidth: 0.5))
     }
     
     // MARK: - Live Active Session Bar
@@ -233,10 +234,10 @@ public struct ScreenTimeDashboardView: View {
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 8)
-        .background(Color.black.opacity(0.25))
-        .clipShape(RoundedRectangle(cornerRadius: 6))
+        .background(AppTheme.cardBackgroundSecondary)
+        .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
         .overlay(
-            RoundedRectangle(cornerRadius: 6)
+            RoundedRectangle(cornerRadius: 6, style: .continuous)
                 .stroke(AppTheme.cardBorder, lineWidth: 1)
         )
     }

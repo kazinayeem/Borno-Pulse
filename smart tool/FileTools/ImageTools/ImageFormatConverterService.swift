@@ -1,6 +1,6 @@
 //
 //  ImageFormatConverterService.swift
-//  Naem Smart Tool
+//  Borno Pulse
 //
 
 import AppKit
@@ -139,7 +139,7 @@ public final class ImageFormatConverterService: ObservableObject {
         statusMessage = "Conversion cancelled"
     }
     
-    private nonisolated static func convertSingleImage(
+    public nonisolated static func convertSingleImage(
         inputURL: URL,
         outputDir: URL,
         targetFormat: ImageFormat,

@@ -1,6 +1,6 @@
 //
 //  ScreenTimeTrackerService.swift
-//  Naem Smart Tool
+//  Borno Pulse
 //
 
 import AppKit
@@ -614,7 +614,7 @@ public final class ScreenTimeTrackerService: ObservableObject {
             ("Notes", "com.apple.Notes", .productivity, 0.8),
             ("Terminal", "com.apple.Terminal", .developer, 1.1),
             ("Spotify", "com.spotify.client", .media, 1.5),
-            ("Naem Smart Tool", "com.naem.smart-tool", .utilities, 0.6),
+            ("Borno Pulse", "com.naem.smart-tool", .utilities, 0.6),
             ("System Settings", "com.apple.systempreferences", .system, 0.3)
         ]
         

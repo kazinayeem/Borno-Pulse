@@ -1,6 +1,6 @@
 //
 //  SmartToolWidget.swift
-//  Naem Smart Tool
+//  Borno Pulse
 //
 
 import SwiftUI
@@ -129,7 +129,7 @@ public struct SmartToolWidgetEntryView: View {
                 HStack {
                     Image(systemName: "gauge.with.dots.needle.bottom.100percent")
                         .foregroundStyle(AppTheme.electricBlue)
-                    Text("Naem Smart Tool")
+                    Text("Borno Pulse")
                         .font(.system(size: 12, weight: .bold))
                 }
                 
@@ -177,7 +177,7 @@ public struct SmartToolWidgetEntryView: View {
                         .foregroundStyle(AppTheme.warningAmber)
                 }
                 
-                Text("Open Smart Tool for 1s live telemetry")
+                Text("Open Borno Pulse for 1s live telemetry")
                     .font(.system(size: 8))
                     .foregroundStyle(AppTheme.textTertiary)
             }
@@ -192,7 +192,7 @@ public struct SmartToolWidgetEntryView: View {
             HStack {
                 Image(systemName: "gauge.with.dots.needle.bottom.100percent")
                     .foregroundStyle(AppTheme.electricBlue)
-                Text("Naem Smart Tool — System Monitor")
+                Text("Borno Pulse — System Monitor")
                     .font(.system(size: 13, weight: .bold))
                 Spacer()
                 StatusBadge(text: entry.healthText, color: AppTheme.successGreen)

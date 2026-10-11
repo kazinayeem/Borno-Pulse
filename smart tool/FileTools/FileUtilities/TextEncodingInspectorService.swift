@@ -1,6 +1,6 @@
 //
 //  TextEncodingInspectorService.swift
-//  Naem Smart Tool
+//  Borno Pulse
 //
 
 import Combine

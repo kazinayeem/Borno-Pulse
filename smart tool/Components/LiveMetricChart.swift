@@ -1,6 +1,6 @@
 //
 //  LiveMetricChart.swift
-//  Naem Smart Tool
+//  Borno Pulse
 //
 
 import Charts
@@ -71,7 +71,7 @@ public struct LiveMetricChart: View {
             .chartYAxis {
                 AxisMarks(position: .leading, values: [0, maxValue / 2, maxValue]) { value in
                     AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5, dash: [2, 3]))
-                        .foregroundStyle(Color.white.opacity(0.06))
+                        .foregroundStyle(AppTheme.cardBorder)
                     AxisValueLabel() {
                         if let intVal = value.as(Double.self) {
                             Text("\(Int(intVal))\(unit)")

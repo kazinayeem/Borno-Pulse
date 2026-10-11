@@ -1,6 +1,6 @@
 //
 //  CacheCleanerView.swift
-//  Naem Smart Tool
+//  Borno Pulse
 //
 
 import SwiftUI
@@ -91,7 +91,7 @@ public struct CacheCleanerView: View {
                 Text("Safety Guarantee & System Integrity")
                     .font(.system(size: 13, weight: .semibold))
                     .foregroundStyle(AppTheme.textPrimary)
-                Text("Naem Smart Tool operates strictly in user space without requiring administrator credentials (sudo). Protected system files, personal documents, photos, keychains, and source code are strictly excluded.")
+                Text("Borno Pulse operates strictly in user space without requiring administrator credentials (sudo). Protected system files, personal documents, photos, keychains, and source code are strictly excluded.")
                     .font(.system(size: 11))
                     .foregroundStyle(AppTheme.textSecondary)
                 Text("Note: Clearing application caches may cause affected apps to rebuild cached assets or take slightly longer on their first launch.")
@@ -100,8 +100,9 @@ public struct CacheCleanerView: View {
             }
         }
         .padding(12)
-        .background(Color.white.opacity(0.04))
+        .background(AppTheme.cardBackgroundSecondary)
         .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: 8, style: .continuous).stroke(AppTheme.cardBorder, lineWidth: 0.5))
     }
     
     // MARK: - Control Bar

@@ -1,6 +1,6 @@
 //
 //  StorageCategoryDonutChart.swift
-//  Naem Smart Tool
+//  Borno Pulse
 //
 
 import Charts

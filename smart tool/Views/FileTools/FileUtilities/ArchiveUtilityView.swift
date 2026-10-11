@@ -1,6 +1,6 @@
 //
 //  ArchiveUtilityView.swift
-//  Naem Smart Tool
+//  Borno Pulse
 //
 
 import AppKit

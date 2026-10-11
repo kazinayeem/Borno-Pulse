@@ -1,6 +1,6 @@
 //
 //  ImageResizerService.swift
-//  Naem Smart Tool
+//  Borno Pulse
 //
 
 import AppKit
@@ -145,7 +145,7 @@ public final class ImageResizerService: ObservableObject {
         statusMessage = "Resizing cancelled"
     }
     
-    private nonisolated static func resizeSingleImage(
+    public nonisolated static func resizeSingleImage(
         inputURL: URL,
         outputDir: URL,
         mode: ResizeMode,
