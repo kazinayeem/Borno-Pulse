@@ -179,7 +179,8 @@ public final class PDFEditorService: ObservableObject {
         .cover: Color(nsColor: .white)
     ]
     private var isSyncingToolColor = false
-    private var textSession: (annotation: PDFAnnotation, before: PDFAnnotationState)?
+    private var textSession: (annotation: PDFAnnotation, before: PDFAnnotationState, name: String)?
+    private var sessionGeneration: Int = 0
     private var clipboardTemplate: PDFAnnotation?
     private var clipboardChangeCount: Int = -1
     private var pasteCount: Int = 0
@@ -1195,24 +1196,44 @@ public final class PDFEditorService: ObservableObject {
 
     /// Live text editing from the inspector; consecutive edits are coalesced into one undo step.
     public func updateText(_ text: String, for annotation: PDFAnnotation) {
-        if textSession?.annotation !== annotation {
+        liveModify(annotation, actionName: "Edit Text", commitDelay: nil) { annotation in
+            annotation.contents = text
+            if annotation.type == "FreeText" {
+                annotation.bounds = Self.fittedTextBounds(annotation)
+            }
+        }
+    }
+
+    /// Applies a continuous change (color well drags, sliders, typing). Consecutive changes with
+    /// the same action name on the same annotation become a single undo step, committed when
+    /// another command runs, the selection changes, or after `commitDelay` seconds of inactivity.
+    public func liveModify(_ annotation: PDFAnnotation, actionName: String, commitDelay: Double? = 0.8, _ change: (PDFAnnotation) -> Void) {
+        if let session = textSession, session.annotation !== annotation || session.name != actionName {
             endTextEditSession()
-            textSession = (annotation, Self.captureState(annotation))
         }
-        annotation.contents = text
-        if annotation.type == "FreeText" {
-            annotation.bounds = Self.fittedTextBounds(annotation)
+        if textSession == nil {
+            textSession = (annotation, Self.captureState(annotation), actionName)
         }
+        change(annotation)
         hasUnsavedChanges = true
         revision &+= 1
         refreshUndoState()
         canvas?.refresh(page: annotation.page)
+        sessionGeneration &+= 1
+        if let commitDelay {
+            let generation = sessionGeneration
+            Task { @MainActor [weak self] in
+                try? await Task.sleep(nanoseconds: UInt64(commitDelay * 1_000_000_000))
+                guard let self, self.sessionGeneration == generation else { return }
+                self.endTextEditSession()
+            }
+        }
     }
 
     public func endTextEditSession() {
         guard let session = textSession else { return }
         textSession = nil
-        commitChange(session.annotation, from: session.before, actionName: "Edit Text")
+        commitChange(session.annotation, from: session.before, actionName: session.name)
     }
 
     // MARK: - Clipboard

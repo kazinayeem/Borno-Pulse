@@ -111,6 +111,14 @@ public struct SignatureDrawingView: View {
                 }
                 .buttonStyle(.bordered)
 
+                Picker("Ink", selection: $strokeColor) {
+                    Text("Black").tag(Color.black)
+                    Text("Blue").tag(Color(red: 0.05, green: 0.2, blue: 0.65))
+                }
+                .pickerStyle(.segmented)
+                .frame(width: 120)
+                .help("Signature ink color")
+
                 Spacer()
 
                 Button("Cancel") {
@@ -135,7 +143,7 @@ public struct SignatureDrawingView: View {
 
     private func importSignatureFile() {
         let openPanel = NSOpenPanel()
-        openPanel.allowedContentTypes = [.png, .jpeg, .tiff]
+        openPanel.allowedContentTypes = [.png, .jpeg, .tiff, .heic]
         openPanel.prompt = "Choose Signature"
         if openPanel.runModal() == .OK, let url = openPanel.url, let img = NSImage(contentsOf: url) {
             onSaveSignature(img)
@@ -143,33 +151,58 @@ public struct SignatureDrawingView: View {
         }
     }
 
+    /// Renders the strokes cropped to their bounds at 3× resolution on a transparent background.
     private func renderSignatureImage() -> NSImage? {
-        let size = CGSize(width: 460, height: 200)
-        let img = NSImage(size: size)
-        img.lockFocus()
+        let allPoints = lines.flatMap { $0 }
+        guard let first = allPoints.first else { return nil }
+        var minX = first.x, maxX = first.x, minY = first.y, maxY = first.y
+        for point in allPoints {
+            minX = min(minX, point.x); maxX = max(maxX, point.x)
+            minY = min(minY, point.y); maxY = max(maxY, point.y)
+        }
+        let padding = strokeWidth * 2
+        let crop = CGRect(x: minX - padding, y: minY - padding, width: maxX - minX + padding * 2, height: maxY - minY + padding * 2)
+        let scale: CGFloat = 3
+        guard let rep = NSBitmapImageRep(
+            bitmapDataPlanes: nil,
+            pixelsWide: max(1, Int(crop.width * scale)),
+            pixelsHigh: max(1, Int(crop.height * scale)),
+            bitsPerSample: 8,
+            samplesPerPixel: 4,
+            hasAlpha: true,
+            isPlanar: false,
+            colorSpaceName: .deviceRGB,
+            bytesPerRow: 0,
+            bitsPerPixel: 0
+        ), let context = NSGraphicsContext(bitmapImageRep: rep) else { return nil }
 
-        // Transparent background
-        NSColor.clear.setFill()
-        CGRect(origin: .zero, size: size).fill()
+        NSGraphicsContext.saveGraphicsState()
+        NSGraphicsContext.current = context
+        let cg = context.cgContext
+        cg.clear(CGRect(x: 0, y: 0, width: rep.pixelsWide, height: rep.pixelsHigh))
+        cg.scaleBy(x: scale, y: scale)
 
-        let nsStrokeColor = NSColor(strokeColor)
-        nsStrokeColor.setStroke()
-
+        NSColor(strokeColor).setStroke()
         for line in lines {
-            guard let first = line.first else { continue }
+            guard let start = line.first else { continue }
             let bezier = NSBezierPath()
             bezier.lineWidth = strokeWidth
             bezier.lineCapStyle = .round
             bezier.lineJoinStyle = .round
-            // Invert Y for macOS AppKit focus
-            bezier.move(to: NSPoint(x: first.x, y: size.height - first.y))
-            for pt in line.dropFirst() {
-                bezier.line(to: NSPoint(x: pt.x, y: size.height - pt.y))
+            // Canvas points are y-down; the bitmap context is y-up.
+            bezier.move(to: NSPoint(x: start.x - crop.minX, y: crop.maxY - start.y))
+            for point in line.dropFirst() {
+                bezier.line(to: NSPoint(x: point.x - crop.minX, y: crop.maxY - point.y))
+            }
+            if line.count == 1 {
+                bezier.line(to: NSPoint(x: start.x - crop.minX + 0.5, y: crop.maxY - start.y))
             }
             bezier.stroke()
         }
+        NSGraphicsContext.restoreGraphicsState()
 
-        img.unlockFocus()
-        return img
+        let image = NSImage(size: crop.size)
+        image.addRepresentation(rep)
+        return image
     }
 }
