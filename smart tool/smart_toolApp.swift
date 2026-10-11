@@ -126,6 +126,43 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             }
         }
 
+        if CommandLine.arguments.contains("--capture-portmanager-screenshot") {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
+                MainWindowRouter.shared.showMainWindow(section: .portManager)
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                    guard let window = NSApp.windows.first(where: { $0.identifier?.rawValue.contains("main-window") == true }) else {
+                        print("Main window not found for screenshot")
+                        exit(1)
+                    }
+                    
+                    let path = "/Users/mohammadalinayeem/.gemini/antigravity-ide/brain/931ffc5a-fecb-4a17-856f-76f5eafd8b10/port_manager.png"
+                    if let cgImage = CGWindowListCreateImage(.null, .optionIncludingWindow, CGWindowID(window.windowNumber), [.boundsIgnoreFraming, .bestResolution]) {
+                        let rep = NSBitmapImageRep(cgImage: cgImage)
+                        if let data = rep.representation(using: .png, properties: [:]) {
+                            try? data.write(to: URL(fileURLWithPath: path))
+                            print("Captured port_manager.png")
+                        }
+                    }
+                    
+                    if let first = PortScannerService.shared.ports.first {
+                        PortScannerService.shared.selectedPortItem = first
+                    }
+                    
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
+                        let pathInspector = "/Users/mohammadalinayeem/.gemini/antigravity-ide/brain/931ffc5a-fecb-4a17-856f-76f5eafd8b10/port_manager_inspector.png"
+                        if let cgImage = CGWindowListCreateImage(.null, .optionIncludingWindow, CGWindowID(window.windowNumber), [.boundsIgnoreFraming, .bestResolution]) {
+                            let rep = NSBitmapImageRep(cgImage: cgImage)
+                            if let data = rep.representation(using: .png, properties: [:]) {
+                                try? data.write(to: URL(fileURLWithPath: pathInspector))
+                                print("Captured port_manager_inspector.png")
+                            }
+                        }
+                        exit(0)
+                    }
+                }
+            }
+        }
+
         // A second copy would add duplicate menu bar items and a second clipboard monitor.
         let ownPID = ProcessInfo.processInfo.processIdentifier
         if let bundleID = Bundle.main.bundleIdentifier,

@@ -19,6 +19,7 @@ public enum NavigationSection: String, CaseIterable, Identifiable, Sendable {
     // Developer & Network Toolkit
     case developerToolbox = "Developer Toolbox"
     case networkToolkit = "Network Toolkit"
+    case portManager = "Port Manager"
     
     // Productivity & Utilities
     case clipboard = "Clipboard Manager"
@@ -53,6 +54,7 @@ public enum NavigationSection: String, CaseIterable, Identifiable, Sendable {
         case .battery: return "battery.100.bolt"
         case .developerToolbox: return "wrench.and.screwdriver.fill"
         case .networkToolkit: return "antenna.radiowaves.left.and.right"
+        case .portManager: return "server.rack"
         case .clipboard: return "doc.on.clipboard"
         case .focusPomodoro: return "timer"
         case .batchConverter: return "arrow.triangle.2.circlepath"
@@ -119,6 +121,8 @@ public struct MainDashboardView: View {
             MainWindowRouter.shared.register(openWindow: openWindow)
             if CommandLine.arguments.contains("--settings") {
                 selectedSection = .settings
+            } else if CommandLine.arguments.contains("--port-manager") {
+                selectedSection = .portManager
             } else if let section = MainWindowRouter.shared.consumePendingSection() {
                 selectedSection = section
             }
@@ -160,6 +164,7 @@ public struct MainDashboardView: View {
             Section("Developer & Network") {
                 sidebarItem(.developerToolbox)
                 sidebarItem(.networkToolkit)
+                sidebarItem(.portManager)
             }
             
             Section("Productivity & Files") {
@@ -288,6 +293,8 @@ public struct MainDashboardView: View {
             DeveloperToolboxView()
         case .networkToolkit:
             NetworkToolkitView()
+        case .portManager:
+            PortManagerView()
         case .clipboard:
             ClipboardManagerView()
         case .focusPomodoro:

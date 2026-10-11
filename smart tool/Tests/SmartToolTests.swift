@@ -1250,6 +1250,9 @@ public enum SmartToolTests {
         // 130. Settings: persistence, publishing, search index and layout
         runSettingsTests(assert)
 
+        // 131. Port Manager: listening sockets, dev servers, redaction, conflicts, safety
+        runPortManagerTests(assert)
+
         return (passed, failed, logs)
     }
 }

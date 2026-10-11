@@ -28,6 +28,7 @@ public final class QuickLauncherService: Sendable {
             QuickLauncherItem(id: "filetools", title: "File Tools Hub", subtitle: "Standalone image, PDF, and checksum utilities", icon: "folder.badge.gearshape", category: "Utilities", section: .fileTools, keywords: ["pdf", "image", "resizer", "compressor"]),
             
             // Developer & Network
+            QuickLauncherItem(id: "port_manager", title: "Port Manager", subtitle: "Inspect listening ports, recognize dev servers & stop processes", icon: "server.rack", category: "Developer", section: .portManager, keywords: ["port", "ports", "lsof", "listen", "tcp", "server", "vite", "next", "react", "kill", "conflict", "docker"]),
             QuickLauncherItem(id: "dev_json", title: "Developer Toolbox: JSON", subtitle: "Formatter, minifier, tree explorer & diff", icon: "curlybraces", category: "Developer", section: .developerToolbox, keywords: ["json", "pretty", "minify", "tree", "diff", "csv"]),
             QuickLauncherItem(id: "dev_jwt", title: "Developer Toolbox: JWT Inspector", subtitle: "Inspect claims, header, payload & expiration", icon: "key.horizontal.fill", category: "Developer", section: .developerToolbox, keywords: ["jwt", "token", "claims", "bearer", "auth"]),
             QuickLauncherItem(id: "dev_api", title: "API Request Tester", subtitle: "Lightweight HTTP client with secret redaction", icon: "paperplane.fill", category: "Developer", section: .developerToolbox, keywords: ["api", "http", "curl", "postman", "get", "post"]),
