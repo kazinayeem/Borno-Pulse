@@ -127,7 +127,7 @@ public struct StorageAnalyzerView: View {
                             .foregroundStyle(AppTheme.textPrimary)
                     }
                     .padding(10)
-                    .background(Color.white.opacity(0.04))
+                    .background(AppTheme.insetBackground)
                     .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
                 }
             }
@@ -189,7 +189,7 @@ public struct StorageAnalyzerView: View {
                         .help("Reveal in Finder")
                     }
                     .padding(8)
-                    .background(Color.white.opacity(0.02))
+                    .background(AppTheme.insetBackground)
                     .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
                 }
             }

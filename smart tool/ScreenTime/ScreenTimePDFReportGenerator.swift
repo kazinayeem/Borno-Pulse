@@ -9,6 +9,10 @@ import Foundation
 /// Generates local vector PDF reports of Screen Time analytics using native CoreGraphics and AppKit.
 public final class ScreenTimePDFReportGenerator: Sendable {
     public static let shared = ScreenTimePDFReportGenerator()
+
+    // Fixed print colors: the report is always rendered on light paper, regardless of the app appearance.
+    private static let printPrimaryText = NSColor(white: 0.10, alpha: 1.0)
+    private static let printSecondaryText = NSColor(white: 0.38, alpha: 1.0)
     
     private init() {}
     
@@ -104,7 +108,7 @@ public final class ScreenTimePDFReportGenerator: Sendable {
         let colY = tableHeaderY - 20
         let colAttrs: [NSAttributedString.Key: Any] = [
             .font: NSFont.boldSystemFont(ofSize: 9),
-            .foregroundColor: NSColor.secondaryLabelColor
+            .foregroundColor: Self.printSecondaryText
         ]
         "APPLICATION".draw(at: CGPoint(x: 44, y: colY), withAttributes: colAttrs)
         "CATEGORY".draw(at: CGPoint(x: 220, y: colY), withAttributes: colAttrs)
@@ -123,11 +127,11 @@ public final class ScreenTimePDFReportGenerator: Sendable {
         let appLimit = min(15, topApps.count)
         let rowAttrs: [NSAttributedString.Key: Any] = [
             .font: NSFont.systemFont(ofSize: 9),
-            .foregroundColor: NSColor.textColor
+            .foregroundColor: Self.printPrimaryText
         ]
         let rowSubAttrs: [NSAttributedString.Key: Any] = [
             .font: NSFont.systemFont(ofSize: 9),
-            .foregroundColor: NSColor.secondaryLabelColor
+            .foregroundColor: Self.printSecondaryText
         ]
         
         for i in 0..<appLimit {
@@ -175,11 +179,11 @@ public final class ScreenTimePDFReportGenerator: Sendable {
         
         let titleAttrs: [NSAttributedString.Key: Any] = [
             .font: NSFont.systemFont(ofSize: 8, weight: .semibold),
-            .foregroundColor: NSColor.secondaryLabelColor
+            .foregroundColor: Self.printSecondaryText
         ]
         let valAttrs: [NSAttributedString.Key: Any] = [
             .font: NSFont.boldSystemFont(ofSize: 14),
-            .foregroundColor: NSColor.textColor
+            .foregroundColor: Self.printPrimaryText
         ]
         
         title.draw(at: CGPoint(x: rect.minX + 10, y: rect.maxY - 18), withAttributes: titleAttrs)

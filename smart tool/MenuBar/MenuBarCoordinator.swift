@@ -53,7 +53,16 @@ public final class MenuBarCoordinator: NSObject {
                 }
             )
         )
+        pop.appearance = AppearanceController.shared.resolvedAppearance
         self.popover = pop
+
+        // A status-item popover follows the menu bar's appearance unless set explicitly.
+        NotificationCenter.default.publisher(for: .appAppearanceDidChange)
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] _ in
+                self?.popover?.appearance = AppearanceController.shared.resolvedAppearance
+            }
+            .store(in: &cancellables)
         
         // Subscribe to SystemMonitor snapshots to update status item button text and evaluate threshold alerts
         SystemMonitor.shared.$snapshot
@@ -79,6 +88,8 @@ public final class MenuBarCoordinator: NSObject {
         if pop.isShown {
             pop.performClose(nil)
         } else {
+            // Re-resolved on every show so System mode tracks macOS appearance changes.
+            pop.appearance = AppearanceController.shared.resolvedAppearance
             pop.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
             pop.contentViewController?.view.window?.makeKey()
         }
@@ -152,7 +163,6 @@ extension Notification.Name {
 }
 
 private struct MenuBarPopoverWrapper: View {
-    @ObservedObject var settings = AppSettings.shared
     let onOpenDashboard: () -> Void
     let onOpenSettings: () -> Void
     let onQuickCleanup: () -> Void
@@ -165,6 +175,5 @@ private struct MenuBarPopoverWrapper: View {
             onQuickCleanup: onQuickCleanup,
             onQuit: onQuit
         )
-        .preferredColorScheme(settings.appearanceMode.colorScheme)
     }
 }

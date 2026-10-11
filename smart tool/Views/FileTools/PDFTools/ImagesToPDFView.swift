@@ -138,7 +138,7 @@ public struct ImagesToPDFView: View {
                                 .buttonStyle(.plain)
                             }
                             .padding(8)
-                            .background(Color.white.opacity(0.03))
+                            .background(AppTheme.insetBackground)
                             .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
                         }
                     }

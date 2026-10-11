@@ -196,9 +196,7 @@ public struct JSONToolsView: View {
                         .font(.system(size: 12, design: .monospaced))
                         .scrollContentBackground(.hidden)
                         .padding(8)
-                        .background(AppTheme.cardBackground)
-                        .clipShape(RoundedRectangle(cornerRadius: 6))
-                        .overlay(RoundedRectangle(cornerRadius: 6).stroke(AppTheme.cardBorder, lineWidth: 1))
+                        .themedInputField()
                         .frame(minHeight: 280)
                 }
             } right: {
@@ -212,9 +210,7 @@ public struct JSONToolsView: View {
                         .font(.system(size: 12, design: .monospaced))
                         .scrollContentBackground(.hidden)
                         .padding(8)
-                        .background(AppTheme.cardBackground)
-                        .clipShape(RoundedRectangle(cornerRadius: 6))
-                        .overlay(RoundedRectangle(cornerRadius: 6).stroke(AppTheme.cardBorder, lineWidth: 1))
+                        .themedInputField()
                         .frame(minHeight: 280)
                 }
             }
@@ -232,8 +228,9 @@ public struct JSONToolsView: View {
         }
         .padding(.horizontal, 8)
         .padding(.vertical, 4)
-        .background(Color.white.opacity(0.04))
+        .background((val.isValid ? AppTheme.successGreen : AppTheme.dangerRed).opacity(0.12))
         .clipShape(Capsule())
+        .overlay(Capsule().stroke((val.isValid ? AppTheme.successGreen : AppTheme.dangerRed).opacity(0.35), lineWidth: 0.5))
     }
     
     private var copyOutputButton: some View {
@@ -266,8 +263,7 @@ public struct JSONToolsView: View {
                     }
                     .padding(.horizontal, 8)
                     .padding(.vertical, 5)
-                    .background(Color.white.opacity(0.04))
-                    .clipShape(RoundedRectangle(cornerRadius: 6))
+                    .themedInputField()
                     .frame(maxWidth: 300)
                     
                     Spacer()
@@ -301,8 +297,7 @@ public struct JSONToolsView: View {
                         }
                         .padding(.horizontal, 8)
                         .padding(.vertical, 5)
-                        .background(Color.white.opacity(0.04))
-                        .clipShape(RoundedRectangle(cornerRadius: 6))
+                        .themedInputField()
                     }
                     
                     HStack {
@@ -416,9 +411,7 @@ public struct JSONToolsView: View {
                         .font(.system(size: 12, design: .monospaced))
                         .scrollContentBackground(.hidden)
                         .padding(8)
-                        .background(AppTheme.cardBackground)
-                        .clipShape(RoundedRectangle(cornerRadius: 6))
-                        .overlay(RoundedRectangle(cornerRadius: 6).stroke(AppTheme.cardBorder, lineWidth: 1))
+                        .themedInputField()
                         .frame(minHeight: 280)
                 }
             } right: {
@@ -431,9 +424,7 @@ public struct JSONToolsView: View {
                         .font(.system(size: 12, design: .monospaced))
                         .scrollContentBackground(.hidden)
                         .padding(8)
-                        .background(AppTheme.cardBackground)
-                        .clipShape(RoundedRectangle(cornerRadius: 6))
-                        .overlay(RoundedRectangle(cornerRadius: 6).stroke(AppTheme.cardBorder, lineWidth: 1))
+                        .themedInputField()
                         .frame(minHeight: 280)
                 }
             }
@@ -467,9 +458,7 @@ public struct JSONToolsView: View {
                         .font(.system(size: 12, design: .monospaced))
                         .scrollContentBackground(.hidden)
                         .padding(8)
-                        .background(AppTheme.cardBackground)
-                        .clipShape(RoundedRectangle(cornerRadius: 6))
-                        .overlay(RoundedRectangle(cornerRadius: 6).stroke(AppTheme.cardBorder, lineWidth: 1))
+                        .themedInputField()
                         .frame(minHeight: 180)
                 }
             } right: {
@@ -482,9 +471,7 @@ public struct JSONToolsView: View {
                         .font(.system(size: 12, design: .monospaced))
                         .scrollContentBackground(.hidden)
                         .padding(8)
-                        .background(AppTheme.cardBackground)
-                        .clipShape(RoundedRectangle(cornerRadius: 6))
-                        .overlay(RoundedRectangle(cornerRadius: 6).stroke(AppTheme.cardBorder, lineWidth: 1))
+                        .themedInputField()
                         .frame(minHeight: 180)
                 }
             }
@@ -753,7 +740,7 @@ public struct JSONTreeNodeRowView: View {
                     .foregroundStyle(AppTheme.textTertiary)
                     .padding(.horizontal, 4)
                     .padding(.vertical, 1)
-                    .background(Color.white.opacity(0.04))
+                    .background(AppTheme.subtleFill)
                     .clipShape(RoundedRectangle(cornerRadius: 3))
                 
                 Spacer()

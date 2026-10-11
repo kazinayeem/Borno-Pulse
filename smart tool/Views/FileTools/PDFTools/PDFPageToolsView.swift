@@ -103,13 +103,8 @@ public struct PDFPageToolsView: View {
                                     Text("Export Modified Copy")
                                 }
                                 .font(.system(size: 13, weight: .semibold))
-                                .padding(.horizontal, 14)
-                                .padding(.vertical, 6)
-                                .background(AppTheme.electricBlue)
-                                .foregroundStyle(.white)
-                                .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
                             }
-                            .buttonStyle(.plain)
+                            .buttonStyle(.themedPrimary(fill: AppTheme.accentFill, horizontalPadding: 14, verticalPadding: 6))
                         }
                     }
                     .smartCard()
@@ -155,13 +150,13 @@ public struct PDFPageToolsView: View {
                 // Page visual indicator
                 ZStack {
                     RoundedRectangle(cornerRadius: 6, style: .continuous)
-                        .fill(isDeleted ? AppTheme.dangerRed.opacity(0.15) : Color.white.opacity(0.06))
+                        .fill(isDeleted ? AppTheme.dangerRed.opacity(0.15) : AppTheme.cardBackground)
                         .aspectRatio(0.75, contentMode: .fit)
                         .overlay(
                             RoundedRectangle(cornerRadius: 6, style: .continuous)
                                 .stroke(
                                     isDeleted ? AppTheme.dangerRed :
-                                    isSelected ? AppTheme.electricBlue : Color.white.opacity(0.12),
+                                    isSelected ? AppTheme.electricBlue : AppTheme.borderStrong,
                                     lineWidth: isSelected ? 2 : 1
                                 )
                         )
@@ -200,9 +195,12 @@ public struct PDFPageToolsView: View {
                 }
             }
             .padding(10)
-            .background(Color.white.opacity(0.02))
+            .background(isSelected ? AppTheme.selectionBackground : AppTheme.insetBackground)
             .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+            .contentShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
         }
         .buttonStyle(.plain)
+        .accessibilityLabel("Page \(pageIndex + 1)\(isDeleted ? ", marked for deletion" : "")")
+        .accessibilityAddTraits(isSelected ? .isSelected : [])
     }
 }

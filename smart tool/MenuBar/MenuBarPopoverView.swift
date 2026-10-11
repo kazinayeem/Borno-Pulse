@@ -108,8 +108,7 @@ public struct MenuBarPopoverView: View {
             bottomActionToolbar
         }
         .frame(width: 330)
-        .background(AppTheme.cardBackground)
-        .preferredColorScheme(settings.appearanceMode.colorScheme)
+        .background(AppTheme.elevatedCardBackground)
         .onAppear {
             audioService.refreshAll()
         }

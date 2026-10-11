@@ -146,7 +146,7 @@ public struct ChecksumCalculatorView: View {
                 .textSelection(.enabled)
                 .padding(8)
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .background(Color.white.opacity(0.03))
+                .background(AppTheme.insetBackground)
                 .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
         }
     }

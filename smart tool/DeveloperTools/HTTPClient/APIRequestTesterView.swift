@@ -55,9 +55,7 @@ public struct APIRequestTesterView: View {
                     .textFieldStyle(.plain)
                     .font(.system(size: 12, design: .monospaced))
                     .padding(7)
-                    .background(AppTheme.cardBackground)
-                    .clipShape(RoundedRectangle(cornerRadius: 6))
-                    .overlay(RoundedRectangle(cornerRadius: 6).stroke(AppTheme.cardBorder, lineWidth: 1))
+                    .themedInputField()
                 
                 // Send Button
                 Button {
@@ -154,16 +152,14 @@ public struct APIRequestTesterView: View {
                                 .textFieldStyle(.plain)
                                 .font(.system(size: 11, design: .monospaced))
                                 .padding(5)
-                                .background(Color.white.opacity(0.03))
-                                .clipShape(RoundedRectangle(cornerRadius: 4))
+                                .themedInputField(cornerRadius: 4)
                                 .frame(width: 140)
                             
                             TextField("Value", text: $item.value)
                                 .textFieldStyle(.plain)
                                 .font(.system(size: 11, design: .monospaced))
                                 .padding(5)
-                                .background(Color.white.opacity(0.03))
-                                .clipShape(RoundedRectangle(cornerRadius: 4))
+                                .themedInputField(cornerRadius: 4)
                             
                             Button {
                                 headers.removeAll { $0.id == item.id }
@@ -209,16 +205,14 @@ public struct APIRequestTesterView: View {
                                 .textFieldStyle(.plain)
                                 .font(.system(size: 11, design: .monospaced))
                                 .padding(5)
-                                .background(Color.white.opacity(0.03))
-                                .clipShape(RoundedRectangle(cornerRadius: 4))
+                                .themedInputField(cornerRadius: 4)
                                 .frame(width: 140)
                             
                             TextField("Value", text: $item.value)
                                 .textFieldStyle(.plain)
                                 .font(.system(size: 11, design: .monospaced))
                                 .padding(5)
-                                .background(Color.white.opacity(0.03))
-                                .clipShape(RoundedRectangle(cornerRadius: 4))
+                                .themedInputField(cornerRadius: 4)
                             
                             Button {
                                 queryParams.removeAll { $0.id == item.id }
@@ -259,9 +253,7 @@ public struct APIRequestTesterView: View {
                 .scrollContentBackground(.hidden)
                 .padding(8)
                 .frame(height: 210)
-                .background(AppTheme.cardBackground)
-                .clipShape(RoundedRectangle(cornerRadius: 6))
-                .overlay(RoundedRectangle(cornerRadius: 6).stroke(AppTheme.cardBorder, lineWidth: 1))
+                .themedInputField()
         }
     }
     
@@ -280,8 +272,7 @@ public struct APIRequestTesterView: View {
                 .textFieldStyle(.plain)
                 .font(.system(size: 11, design: .monospaced))
                 .padding(7)
-                .background(Color.white.opacity(0.04))
-                .clipShape(RoundedRectangle(cornerRadius: 6))
+                .themedInputField()
             
             Button("Apply to Headers") {
                 if !bearerToken.isEmpty {
@@ -350,9 +341,7 @@ public struct APIRequestTesterView: View {
                     .scrollContentBackground(.hidden)
                     .padding(8)
                     .frame(height: 240)
-                    .background(AppTheme.cardBackground)
-                    .clipShape(RoundedRectangle(cornerRadius: 6))
-                    .overlay(RoundedRectangle(cornerRadius: 6).stroke(AppTheme.cardBorder, lineWidth: 1))
+                    .themedInputField()
             } else if !isLoading {
                 VStack(spacing: 8) {
                     Image(systemName: "network")
@@ -427,7 +416,7 @@ public struct APIRequestTesterView: View {
                                         .foregroundStyle(AppTheme.textTertiary)
                                 }
                                 .padding(8)
-                                .background(Color.white.opacity(0.02))
+                                .background(AppTheme.subtleFill)
                                 .clipShape(RoundedRectangle(cornerRadius: 4))
                             }
                             .buttonStyle(.plain)

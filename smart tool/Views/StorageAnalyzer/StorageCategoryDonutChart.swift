@@ -98,7 +98,7 @@ public struct StorageCategoryDonutChart: View {
                                 }
                                 .padding(.vertical, 2)
                                 .padding(.horizontal, 4)
-                                .background(service.selectedCategoryFilter == item.cat ? Color.white.opacity(0.06) : Color.clear)
+                                .background(service.selectedCategoryFilter == item.cat ? AppTheme.selectionBackground : Color.clear)
                                 .clipShape(RoundedRectangle(cornerRadius: 4, style: .continuous))
                             }
                             .buttonStyle(.plain)

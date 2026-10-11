@@ -132,7 +132,7 @@ public struct ImageResizerView: View {
                                 StatusBadge(text: item.status.rawValue, color: statusColor(item.status))
                             }
                             .padding(8)
-                            .background(Color.white.opacity(0.03))
+                            .background(AppTheme.insetBackground)
                             .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
                         }
                     }

@@ -92,7 +92,7 @@ public struct StorageExplorerTableView: View {
                     }
                     .padding(.horizontal, 10)
                     .padding(.vertical, 6)
-                    .background(Color.white.opacity(0.03))
+                    .background(AppTheme.tableHeaderBackground)
                     .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
                     
                     // Table Items
@@ -170,8 +170,7 @@ public struct StorageExplorerTableView: View {
             }
             .padding(.horizontal, 10)
             .padding(.vertical, 5)
-            .background(Color.white.opacity(0.04))
-            .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
+            .themedInputField()
             .frame(minWidth: 140, maxWidth: 220)
             
             // Export CSV Button
@@ -304,7 +303,7 @@ public struct StorageExplorerTableView: View {
         }
         .padding(.horizontal, 10)
         .padding(.vertical, 6)
-        .background(Color.white.opacity(0.015))
+        .background(AppTheme.tableRowAlternate)
         .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
         .overlay(RoundedRectangle(cornerRadius: 6, style: .continuous).stroke(AppTheme.cardBorder, lineWidth: 0.5))
     }

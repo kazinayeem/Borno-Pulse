@@ -161,7 +161,7 @@ public struct PDFMergerSplitterView: View {
                         }
                         .padding(.horizontal, 12)
                         .padding(.vertical, 8)
-                        .background(Color.white.opacity(0.03))
+                        .background(AppTheme.insetBackground)
                         .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
                     }
                 }
@@ -178,13 +178,8 @@ public struct PDFMergerSplitterView: View {
                         Text("Merge PDFs")
                     }
                     .font(.system(size: 13, weight: .semibold))
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 8)
-                    .background(AppTheme.electricBlue)
-                    .foregroundStyle(.white)
-                    .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(.themedPrimary)
                 .disabled(service.isProcessing || service.mergeQueue.count < 2)
                 
                 if let dir = service.outputDirectory {
@@ -283,13 +278,8 @@ public struct PDFMergerSplitterView: View {
                             Text("Execute Split")
                         }
                         .font(.system(size: 13, weight: .semibold))
-                        .padding(.horizontal, 16)
-                        .padding(.vertical, 8)
-                        .background(AppTheme.neonCyan)
-                        .foregroundStyle(.black)
-                        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(.themedPrimary(fill: AppTheme.infoFill))
                     .disabled(service.isProcessing)
                     
                     if let dir = service.outputDirectory {

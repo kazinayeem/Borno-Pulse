@@ -62,7 +62,7 @@ public struct ScreenTimeExplorerTableView: View {
                     }
                     .padding(.horizontal, 10)
                     .padding(.vertical, 6)
-                    .background(Color.white.opacity(0.04))
+                    .background(AppTheme.tableHeaderBackground)
                     .clipShape(RoundedRectangle(cornerRadius: 4))
                     
                     // Table Rows List
@@ -131,8 +131,7 @@ public struct ScreenTimeExplorerTableView: View {
             }
             .padding(.horizontal, 8)
             .padding(.vertical, 5)
-            .background(Color.white.opacity(0.05))
-            .clipShape(RoundedRectangle(cornerRadius: 6))
+            .themedInputField()
             
             // Category Filter
             Picker("Category", selection: $tracker.filterCategory) {
@@ -206,7 +205,7 @@ public struct ScreenTimeExplorerTableView: View {
                     let fill = maxDuration > 0 ? (app.totalDuration / maxDuration) * geo.size.width : 0
                     ZStack(alignment: .leading) {
                         Capsule()
-                            .fill(Color.white.opacity(0.06))
+                            .fill(AppTheme.chartTrack)
                         Capsule()
                             .fill(app.category.color.gradient)
                             .frame(width: max(3, fill))
@@ -264,7 +263,7 @@ public struct ScreenTimeExplorerTableView: View {
         }
         .padding(.horizontal, 10)
         .padding(.vertical, 5)
-        .background(Color.white.opacity(0.015))
+        .background(AppTheme.tableRowAlternate)
         .clipShape(RoundedRectangle(cornerRadius: 4))
     }
     

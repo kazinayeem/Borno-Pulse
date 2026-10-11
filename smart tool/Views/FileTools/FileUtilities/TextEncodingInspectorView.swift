@@ -80,7 +80,7 @@ public struct TextEncodingInspectorView: View {
                                 .padding(12)
                         }
                         .frame(maxHeight: 240)
-                        .background(Color.white.opacity(0.02))
+                        .background(AppTheme.insetBackground)
                         .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
                     }
                     .smartCard()
@@ -105,7 +105,7 @@ public struct TextEncodingInspectorView: View {
         }
         .padding(10)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color.white.opacity(0.03))
+        .background(AppTheme.insetBackground)
         .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
     }
 }

@@ -74,8 +74,9 @@ public struct NetworkToolkitView: View {
                             }
                             .padding(.horizontal, 10)
                             .padding(.vertical, 5)
-                            .background(activeTab == tab ? AppTheme.electricCyan.opacity(0.18) : Color.clear)
-                            .foregroundStyle(activeTab == tab ? AppTheme.electricCyan : AppTheme.textSecondary)
+                            .background(activeTab == tab ? AppTheme.selectionBackground : Color.clear)
+                            .foregroundStyle(AppTheme.selectableForeground(activeTab == tab))
+                            .contentShape(RoundedRectangle(cornerRadius: 6))
                             .clipShape(RoundedRectangle(cornerRadius: 6))
                         }
                         .buttonStyle(.plain)
@@ -169,7 +170,8 @@ public struct NetworkToolkitView: View {
                                     if let ip6 = iface.ipv6 {
                                         Text("IPv6: \(ip6)")
                                             .font(.system(size: 10, design: .monospaced))
-                                            .foregroundStyle(AppTheme.textTertiary)
+                                            .foregroundStyle(AppTheme.textSecondary)
+                                            .textSelection(.enabled)
                                     }
                                 }
                             }
@@ -178,10 +180,10 @@ public struct NetworkToolkitView: View {
                             
                             Text(iface.isUp ? "UP" : "DOWN")
                                 .font(.system(size: 9, weight: .bold))
-                                .foregroundStyle(iface.isUp ? AppTheme.successGreen : AppTheme.textTertiary)
+                                .foregroundStyle(iface.isUp ? AppTheme.successGreen : AppTheme.textSecondary)
                                 .padding(.horizontal, 6)
                                 .padding(.vertical, 2)
-                                .background(Color.white.opacity(0.04))
+                                .background((iface.isUp ? AppTheme.successGreen : AppTheme.textSecondary).opacity(0.12))
                                 .clipShape(Capsule())
                         }
                         .padding(10)
@@ -205,9 +207,7 @@ public struct NetworkToolkitView: View {
                     .textFieldStyle(.plain)
                     .font(.system(size: 12, design: .monospaced))
                     .padding(7)
-                    .background(AppTheme.cardBackground)
-                    .clipShape(RoundedRectangle(cornerRadius: 6))
-                    .overlay(RoundedRectangle(cornerRadius: 6).stroke(AppTheme.cardBorder, lineWidth: 1))
+                    .themedInputField()
                 
                 if isPinging {
                     Button("Stop Ping") {
@@ -303,9 +303,7 @@ public struct NetworkToolkitView: View {
                     .textFieldStyle(.plain)
                     .font(.system(size: 12, design: .monospaced))
                     .padding(7)
-                    .background(AppTheme.cardBackground)
-                    .clipShape(RoundedRectangle(cornerRadius: 6))
-                    .overlay(RoundedRectangle(cornerRadius: 6).stroke(AppTheme.cardBorder, lineWidth: 1))
+                    .themedInputField()
                 
                 Picker("Type", selection: $dnsType) {
                     ForEach(DNSRecordType.allCases) { t in
@@ -410,9 +408,7 @@ public struct NetworkToolkitView: View {
                     .textFieldStyle(.plain)
                     .font(.system(size: 12, design: .monospaced))
                     .padding(7)
-                    .background(AppTheme.cardBackground)
-                    .clipShape(RoundedRectangle(cornerRadius: 6))
-                    .overlay(RoundedRectangle(cornerRadius: 6).stroke(AppTheme.cardBorder, lineWidth: 1))
+                    .themedInputField()
                 
                 Button("Inspect TLS Certificate") {
                     inspectSSL()
@@ -460,7 +456,7 @@ public struct NetworkToolkitView: View {
                             .foregroundStyle(days > 30 ? AppTheme.successGreen : AppTheme.warningAmber)
                             .padding(.horizontal, 8)
                             .padding(.vertical, 4)
-                            .background(Color.white.opacity(0.04))
+                            .background((days > 30 ? AppTheme.successGreen : AppTheme.warningAmber).opacity(0.12))
                             .clipShape(Capsule())
                     }
                 }

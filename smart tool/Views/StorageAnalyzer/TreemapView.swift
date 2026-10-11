@@ -85,7 +85,7 @@ public struct TreemapView: View {
                     if service.treemapTiles.isEmpty {
                         ZStack {
                             RoundedRectangle(cornerRadius: 10, style: .continuous)
-                                .fill(Color.white.opacity(0.02))
+                                .fill(AppTheme.insetBackground)
                             VStack(spacing: 8) {
                                 Image(systemName: "square.grid.3x3.fill")
                                     .font(.system(size: 28))
@@ -122,7 +122,7 @@ public struct TreemapView: View {
             .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
             .overlay(
                 RoundedRectangle(cornerRadius: 10, style: .continuous)
-                    .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                    .stroke(AppTheme.cardBorder, lineWidth: 1)
             )
         }
     }
@@ -140,7 +140,7 @@ public struct TreemapView: View {
                 .overlay(
                     RoundedRectangle(cornerRadius: 6, style: .continuous)
                         .stroke(
-                            isHovered ? Color.white : tile.category.color.opacity(0.55),
+                            isHovered ? AppTheme.textPrimary : tile.category.color.opacity(0.55),
                             lineWidth: isHovered ? 2 : 1
                         )
                 )
@@ -210,11 +210,11 @@ public struct TreemapView: View {
         }
         .padding(.horizontal, 10)
         .padding(.vertical, 6)
-        .background(AppTheme.cardBackground)
+        .background(AppTheme.elevatedCardBackground)
         .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
         .overlay(
             RoundedRectangle(cornerRadius: 8, style: .continuous)
-                .stroke(AppTheme.cardBorder, lineWidth: 1)
+                .stroke(AppTheme.borderStrong, lineWidth: 1)
         )
         .shadow(color: Color.black.opacity(0.18), radius: 6, x: 0, y: 3)
     }

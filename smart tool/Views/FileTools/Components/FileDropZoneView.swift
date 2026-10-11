@@ -63,12 +63,12 @@ public struct FileDropZoneView: View {
         .frame(maxWidth: .infinity)
         .background(
             RoundedRectangle(cornerRadius: 12, style: .continuous)
-                .fill(isTargeted ? AppTheme.electricBlue.opacity(0.12) : Color.white.opacity(0.03))
+                .fill(isTargeted ? AppTheme.selectionBackground : AppTheme.cardBackground)
         )
         .overlay(
             RoundedRectangle(cornerRadius: 12, style: .continuous)
                 .stroke(
-                    isTargeted ? AppTheme.electricBlue : Color.white.opacity(0.12),
+                    isTargeted ? AppTheme.electricBlue : AppTheme.borderStrong,
                     style: StrokeStyle(lineWidth: isTargeted ? 2 : 1, dash: [6, 4])
                 )
         )

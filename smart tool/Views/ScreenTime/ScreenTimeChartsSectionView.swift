@@ -86,7 +86,7 @@ public struct ScreenTimeChartsSectionView: View {
                 .chartYAxis {
                     AxisMarks(position: .leading) { value in
                         AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5, dash: [2, 3]))
-                            .foregroundStyle(Color.white.opacity(0.1))
+                            .foregroundStyle(AppTheme.chartGrid)
                         AxisValueLabel {
                             if let mins = value.as(Double.self) {
                                 Text("\(Int(mins))m")
@@ -100,7 +100,7 @@ public struct ScreenTimeChartsSectionView: View {
                     // Show evenly spaced hours every 4 hours: 0h, 4h, 8h, 12h, 16h, 20h
                     AxisMarks(values: [0, 4, 8, 12, 16, 20].map { "\($0)h" }) { value in
                         AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5, dash: [2, 3]))
-                            .foregroundStyle(Color.white.opacity(0.1))
+                            .foregroundStyle(AppTheme.chartGrid)
                         AxisValueLabel {
                             if let label = value.as(String.self) {
                                 Text(label)
@@ -165,7 +165,7 @@ public struct ScreenTimeChartsSectionView: View {
                 .chartYAxis {
                     AxisMarks(position: .leading) { value in
                         AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5, dash: [2, 3]))
-                            .foregroundStyle(Color.white.opacity(0.1))
+                            .foregroundStyle(AppTheme.chartGrid)
                         AxisValueLabel {
                             if let hrs = value.as(Double.self) {
                                 Text(String(format: "%.1fh", hrs))
@@ -179,7 +179,7 @@ public struct ScreenTimeChartsSectionView: View {
                     // Only label the selected milestone ticks so labels NEVER overlap
                     AxisMarks(values: Array(milestoneKeys)) { value in
                         AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5, dash: [2, 3]))
-                            .foregroundStyle(Color.white.opacity(0.1))
+                            .foregroundStyle(AppTheme.chartGrid)
                         AxisValueLabel {
                             if let dayKey = value.as(String.self),
                                let point = trend.first(where: { $0.dayKey == dayKey }) {

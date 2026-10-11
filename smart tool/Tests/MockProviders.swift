@@ -39,33 +39,70 @@ public final class MockCPUProvider: @unchecked Sendable {
     }
 }
 
+/// Test-only sensor provider. Feeds mocked reader responses through the production
+/// `SensorMetricsBuilder`, so tests exercise the real classification logic.
 public final class MockSensorProvider: @unchecked Sendable {
     public var simulateMissingSensors: Bool
     public var simulateThrottling: Bool
+    public var hidResult: SensorReadResult
+    public var smcResult: SensorReadResult
+    public var fanResult: FanReadResult
     
     public init(simulateMissingSensors: Bool = true, simulateThrottling: Bool = false) {
         self.simulateMissingSensors = simulateMissingSensors
         self.simulateThrottling = simulateThrottling
+        self.hidResult = .values(Self.appleSiliconHIDFixture)
+        self.smcResult = .values(Self.appleSiliconSMCFixture)
+        self.fanResult = .fans(reportedCount: 1, readings: [RawFanValue(index: 0, rpm: 2150, minRPM: 1200, maxRPM: 5800)])
     }
     
-    public func sample() -> SensorMetrics {
-        var metrics = SensorMetrics()
-        metrics.thermalState = simulateThrottling ? .serious : .nominal
-        metrics.thermalStateDescription = simulateThrottling ? "Serious (Throttling Active)" : "Nominal"
-        metrics.isThrottling = simulateThrottling
-        
+    public func sample(now: Date = Date()) -> SensorMetrics {
+        let thermalState: ProcessInfo.ThermalState = simulateThrottling ? .serious : .nominal
         if simulateMissingSensors {
-            metrics.temperatureState = .unavailable(reason: "Direct diode query sandboxed on Apple Silicon")
-            metrics.fansState = .unavailable(reason: "SMC fan telemetry managed by coprocessor")
-        } else {
-            metrics.cpuTemperature = 48.5
-            metrics.gpuTemperature = 45.0
-            metrics.fanSpeeds = [FanInfo(id: 0, name: "Fan #1", speedRPM: 1250)]
-            metrics.temperatureState = .available
-            metrics.fansState = .available
+            return SensorMetricsBuilder.build(
+                thermalState: thermalState,
+                hid: .unavailable(reason: "HID temperature services returned no events."),
+                smc: .unavailable(reason: "macOS denied access to the SMC."),
+                fans: .unavailable(reason: "macOS denied access to the SMC."),
+                isAppleSilicon: true,
+                now: now
+            )
         }
-        return metrics
+        return SensorMetricsBuilder.build(
+            thermalState: thermalState,
+            hid: hidResult,
+            smc: smcResult,
+            fans: fanResult,
+            isAppleSilicon: true,
+            now: now
+        )
     }
+
+    // MARK: - Fixtures (shapes match what an M4 MacBook Air returns; values are test data)
+
+    /// SMC response: CPU P/E-cluster keys, GPU keys, battery keys, and keys that must stay unclassified.
+    public static let appleSiliconSMCFixture: [RawTemperatureValue] = [
+        RawTemperatureValue(key: "Tp01", name: "CPU performance cluster (Tp01)", celsius: 64.0, source: .smc),
+        RawTemperatureValue(key: "Tp05", name: "CPU performance cluster (Tp05)", celsius: 68.0, source: .smc),
+        RawTemperatureValue(key: "Te05", name: "CPU efficiency cluster (Te05)", celsius: 54.0, source: .smc),
+        RawTemperatureValue(key: "Tg0G", name: "GPU (Tg0G)", celsius: 47.0, source: .smc),
+        RawTemperatureValue(key: "Tg0H", name: "GPU (Tg0H)", celsius: 51.0, source: .smc),
+        RawTemperatureValue(key: "TB0T", name: "Battery pack (TB0T)", celsius: 31.0, source: .smc),
+        RawTemperatureValue(key: "TG0B", name: "TG0B", celsius: 33.0, source: .smc),
+        RawTemperatureValue(key: "Ts00", name: "Ts00", celsius: 47.7, source: .smc)
+    ]
+
+    /// HID response: unattributed PMU sensors, a disconnected thermistor, a calibration
+    /// reference, battery gas-gauge sensors and the SSD NAND sensor. No CPU/GPU-named sensors.
+    public static let appleSiliconHIDFixture: [RawTemperatureValue] = [
+        RawTemperatureValue(key: "PMU tdie1#0x54503162", name: "PMU tdie1", celsius: 46.5, source: .hidEventSystem),
+        RawTemperatureValue(key: "PMU2 tdie1#0x54523162", name: "PMU2 tdie1", celsius: 43.3, source: .hidEventSystem),
+        RawTemperatureValue(key: "PMU tdev1#0x54503164", name: "PMU tdev1", celsius: -21.99, source: .hidEventSystem),
+        RawTemperatureValue(key: "PMU tcal#0x5450305a", name: "PMU tcal", celsius: 51.8, source: .hidEventSystem),
+        RawTemperatureValue(key: "gas gauge battery#0x54473042", name: "gas gauge battery", celsius: 33.3, source: .hidEventSystem),
+        RawTemperatureValue(key: "gas gauge battery#0x54473043", name: "gas gauge battery", celsius: 33.0, source: .hidEventSystem),
+        RawTemperatureValue(key: "NAND CH0 temp#0x544e306e", name: "NAND CH0 temp", celsius: 41.0, source: .hidEventSystem)
+    ]
 }
 
 public final class MockStorageProvider: @unchecked Sendable {

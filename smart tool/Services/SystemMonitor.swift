@@ -153,24 +153,41 @@ public final class SystemMonitor: ObservableObject {
     }
     
     private func appendTemperatureHistory(from sensors: SensorMetrics) {
+        temperatureHistory = Self.appendingTemperatureHistory(
+            temperatureHistory,
+            from: sensors,
+            staleAfter: sensorStaleAfter,
+            maxPoints: maxHistoryPoints
+        )
+    }
+
+    /// Appends one point per headline component. Missing or stale readings become `nil` gaps,
+    /// so a cached value is never drawn as if it were a fresh measurement.
+    nonisolated static func appendingTemperatureHistory(
+        _ history: [ThermalComponent: [TemperatureHistoryPoint]],
+        from sensors: SensorMetrics,
+        staleAfter: TimeInterval,
+        maxPoints: Int
+    ) -> [ThermalComponent: [TemperatureHistoryPoint]] {
+        var history = history
         let pointTime = sensors.sampledAt ?? Date()
-        let staleAfter = sensorStaleAfter
         for component in ThermalComponent.headline {
             let fresh = sensors.temperature(for: component).flatMap {
                 $0.isStale(at: pointTime, maxAge: staleAfter) ? nil : $0
             }
-            var series = temperatureHistory[component] ?? []
+            var series = history[component] ?? []
             series.append(TemperatureHistoryPoint(
                 timestamp: pointTime,
                 celsius: fresh?.celsius,
                 source: fresh?.source,
                 sensorCount: fresh?.sensorCount ?? 0
             ))
-            if series.count > maxHistoryPoints {
-                series.removeFirst(series.count - maxHistoryPoints)
+            if series.count > maxPoints {
+                series.removeFirst(series.count - maxPoints)
             }
-            temperatureHistory[component] = series
+            history[component] = series
         }
+        return history
     }
 
     private func appendHistory(_ array: inout [Double], value: Double) {

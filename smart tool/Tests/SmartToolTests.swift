@@ -28,8 +28,9 @@ public enum SmartToolTests {
         // 1. Formatters Tests
         assert(!Formatters.bytes(UInt64(0)).isEmpty, "Formatters.bytes(0) produces valid string")
         assert(Formatters.bytes(UInt64(1024 * 1024)).contains("MB") || Formatters.bytes(UInt64(1024 * 1024)).contains("1"), "Formatters.bytes(1MB) handles MB conversion")
-        assert(Formatters.temperature(0.0) == "0.0 °C", "Formatters.temperature(0°C) matches standard")
-        assert(Formatters.temperature(100.0, inFahrenheit: true) == "212.0 °F", "Formatters.temperature(100°C in °F) == 212.0 °F")
+        assert(Formatters.temperature(47.0) == "47 °C", "Formatters.temperature formats whole degrees Celsius by default")
+        assert(Formatters.temperature(100.0, unit: .fahrenheit) == "212 °F", "Formatters.temperature(100°C in °F) == 212 °F")
+        assert(Formatters.temperature(nil) == "Unavailable", "Formatters.temperature(nil) reads Unavailable, never 0 °C")
         assert(Formatters.percentage(55.23) == "55.2%", "Formatters.percentage formats to 1 decimal")
         assert(Formatters.speed(1024 * 1024) == "1.00 MB/s", "Formatters.speed(1MB) == 1.00 MB/s")
         
@@ -73,6 +74,9 @@ public enum SmartToolTests {
         } else {
             assert(false, "Sensor state should report unavailable when diode query is sandboxed")
         }
+        assert(sensorSample.cpuTemperature == nil && sensorSample.gpuTemperature == nil && sensorSample.batteryTemperature == nil,
+               "Unreadable sensors leave every component temperature nil")
+        assert(sensorSample.fanSpeeds.isEmpty && !sensorSample.fansState.isAvailable, "Unreadable SMC reports no fabricated fan speeds")
         
         // 6. Cleanup Safety Rules Tests
         assert(CleanupCategoryType.trash.defaultSelected == false, "Trash must NEVER be selected by default")
@@ -771,6 +775,8 @@ public enum SmartToolTests {
 
         // 79. Menu Bar Widget: Threshold Alerts & Cooldown Suppression
         let alertService = WidgetAlertService.shared
+        alertService.deliversNotifications = false
+        defer { alertService.deliversNotifications = true }
         alertService.resetCooldowns()
         alertService.enableCPUAlert = true
         alertService.cpuThreshold = 80.0
@@ -791,13 +797,15 @@ public enum SmartToolTests {
         alertService.enableCPUAlert = false
 
         // 81. Menu Bar Widget: Temperature Alert Requires Real Reading (Never Zero/Missing)
-        alertService.enableTemperatureAlert = true
-        alertService.temperatureThresholdCelsius = 85.0
+        let savedCPUTempAlert = (alertService.enableCPUTemperatureAlert, alertService.cpuTemperatureThresholdCelsius)
+        alertService.enableCPUTemperatureAlert = true
+        alertService.cpuTemperatureThresholdCelsius = 85.0
         var missingTempSnapshot = SystemMetricsSnapshot()
         missingTempSnapshot.sensors.cpuTemperature = nil
         let noTempEval = alertService.evaluate(snapshot: missingTempSnapshot)
         assert(noTempEval.isEmpty, "Missing temperature sensor reading never triggers false alerts")
-        alertService.enableTemperatureAlert = false
+        alertService.enableCPUTemperatureAlert = savedCPUTempAlert.0
+        alertService.cpuTemperatureThresholdCelsius = savedCPUTempAlert.1
 
         // 82. Menu Bar Widget: Quick Actions Configuration
         let allActions = WidgetQuickActionId.allCases
@@ -866,6 +874,279 @@ public enum SmartToolTests {
         // 91. Centralized Typography Token Presets
         assert(AppTypography.title != AppTypography.caption, "Typography tokens provide distinct semantic typography hierarchy")
         assert(AppTypography.metricNumber != AppTypography.footnote, "Metric numbers use distinct monospaced font token")
+
+        // 92. Thermal: Sensor Classification
+        assert(SensorClassifier.component(forSMCKey: "Tp01", isAppleSilicon: true) == .cpu, "Apple Silicon Tp** keys are CPU performance-cluster sensors")
+        assert(SensorClassifier.component(forSMCKey: "Te05", isAppleSilicon: true) == .cpu, "Apple Silicon Te** keys are CPU efficiency-cluster sensors")
+        assert(SensorClassifier.component(forSMCKey: "Tg0G", isAppleSilicon: true) == .gpu, "Apple Silicon Tg** keys are GPU sensors")
+        assert(SensorClassifier.component(forSMCKey: "TG0B", isAppleSilicon: true) == nil, "Apple Silicon TG** battery gas-gauge keys are never treated as GPU")
+        assert(SensorClassifier.component(forSMCKey: "TB1T", isAppleSilicon: true) == .battery, "TB?T keys are battery pack sensors")
+        assert(SensorClassifier.component(forSMCKey: "Ts00", isAppleSilicon: true) == nil, "Unknown SMC keys stay unclassified")
+        assert(SensorClassifier.component(forSMCKey: "TC0P", isAppleSilicon: false) == .cpu, "Intel TC0P is CPU proximity")
+        assert(SensorClassifier.component(forSMCKey: "TG0D", isAppleSilicon: false) == .gpu, "Intel TG0D is GPU die")
+        assert(SensorClassifier.component(forHIDProduct: "PMU tcal") == nil, "HID calibration references are not temperatures")
+        assert(SensorClassifier.component(forHIDProduct: "PMU tdie1") == .powerManagement, "PMU die sensors are never attributed to CPU or GPU")
+        assert(SensorClassifier.component(forHIDProduct: "gas gauge battery") == .battery, "HID gas gauge is the battery sensor")
+        assert(SensorClassifier.component(forHIDProduct: "NAND CH0 temp") == .storage, "HID NAND sensor is SSD temperature")
+        assert(SensorClassifier.component(forHIDProduct: "pACC MTR Temp Sensor2") == .cpu, "HID pACC MTR sensors are CPU")
+        assert(SensorClassifier.component(forHIDProduct: "GPU MTR Temp Sensor1") == .gpu, "HID GPU MTR sensors are GPU")
+
+        // 93. Thermal: CPU and GPU Never Share a Value
+        let thermalNow = Date()
+        let smcOnly = SensorMetricsBuilder.build(
+            thermalState: .nominal,
+            hid: .unavailable(reason: "No HID events."),
+            smc: .values(MockSensorProvider.appleSiliconSMCFixture),
+            fans: .fans(reportedCount: 0, readings: []),
+            isAppleSilicon: true,
+            now: thermalNow
+        )
+        assert(abs((smcOnly.cpuTemperature?.celsius ?? -1) - 62.0) < 0.001, "CPU temperature is the mean of Tp/Te sensors only (62 °C)")
+        assert(smcOnly.cpuTemperature?.maximumCelsius == 68.0 && smcOnly.cpuTemperature?.sensorCount == 3, "CPU peak and sensor count come from CPU sensors")
+        assert(abs((smcOnly.gpuTemperature?.celsius ?? -1) - 49.0) < 0.001, "GPU temperature is the mean of Tg sensors only (49 °C)")
+        assert(smcOnly.cpuTemperature?.celsius != smcOnly.gpuTemperature?.celsius, "CPU and GPU temperatures are distinct values")
+        assert(smcOnly.readings(for: .gpu).allSatisfy { $0.key.hasPrefix("Tg") }, "GPU readings contain only GPU keys")
+        assert(!smcOnly.readings(for: .cpu).contains { $0.key.hasPrefix("Tg") || $0.key.hasPrefix("TB") }, "CPU readings contain no GPU or battery keys")
+        assert(smcOnly.batteryTemperature?.celsius == 31.0 && smcOnly.batteryTemperature?.sensorCount == 1, "Battery uses TB0T only; TG0B is excluded")
+        assert(!smcOnly.readings.contains { $0.key == "Ts00" }, "Unclassified SMC keys are not shown as component readings")
+
+        // 94. Thermal: Unattributed Sensors Are Never Promoted (HID-only, as on Apple Silicon without SMC)
+        let hidOnly = SensorMetricsBuilder.build(
+            thermalState: .nominal,
+            hid: .values(MockSensorProvider.appleSiliconHIDFixture),
+            smc: .unavailable(reason: "macOS denied access to the SMC."),
+            fans: .unavailable(reason: "macOS denied access to the SMC."),
+            isAppleSilicon: true,
+            now: thermalNow
+        )
+        assert(hidOnly.cpuTemperature == nil && hidOnly.gpuTemperature == nil, "PMU die sensors never populate CPU or GPU temperature")
+        if case .unavailable(let reason) = hidOnly.state(for: .cpu) {
+            assert(reason.contains("none is identified as a CPU sensor"), "Missing CPU sensor explains why it is unavailable")
+        } else {
+            assert(false, "CPU state is unavailable when no CPU sensor exists")
+        }
+        assert(hidOnly.readings(for: .powerManagement).count == 2, "Unattributed PMU sensors are listed under their own group")
+        assert(abs((hidOnly.batteryTemperature?.celsius ?? -1) - 33.15) < 0.001, "Battery temperature comes from the gas-gauge sensors")
+        assert(hidOnly.storageTemperature?.celsius == 41.0, "SSD temperature comes from the NAND sensor")
+        assert(!hidOnly.readings.contains { $0.name == "PMU tcal" }, "Calibration reference is excluded")
+        assert(!hidOnly.readings.contains { $0.celsius < SensorClassifier.plausibleRange.lowerBound }, "Disconnected thermistor (-22 °C) is rejected")
+        assert(hidOnly.temperatureState.isAvailable, "Overall temperature state is available when any sensor is readable")
+
+        // 95. Thermal: Source Preference Without Mixing
+        let bothSources = SensorMetricsBuilder.build(
+            thermalState: .fair,
+            hid: .values(MockSensorProvider.appleSiliconHIDFixture),
+            smc: .values(MockSensorProvider.appleSiliconSMCFixture),
+            fans: .fans(reportedCount: 0, readings: []),
+            isAppleSilicon: true,
+            now: thermalNow
+        )
+        assert(bothSources.batteryTemperature?.source == .hidEventSystem, "Vendor-labeled HID battery sensor is preferred over SMC key convention")
+        assert(bothSources.readings(for: .battery).allSatisfy { $0.source == .hidEventSystem }, "Battery readings are never averaged across two sources")
+        assert(bothSources.cpuTemperature?.source == .smc && bothSources.gpuTemperature?.source == .smc, "CPU/GPU come from SMC when HID has no named CPU/GPU sensors")
+        assert(bothSources.sourceStatuses.count == 2 && bothSources.sourceStatuses.allSatisfy { $0.state.isAvailable }, "Each source reports its own status")
+        assert(bothSources.thermalState == .fair && bothSources.thermalStateDescription.contains("Pressure"), "Thermal state is reported as pressure, separately from temperatures")
+
+        // 96. Thermal: Battery Temperature Is Never Inferred
+        var noBatterySensor = SensorMetricsBuilder.build(
+            thermalState: .nominal,
+            hid: .values([]),
+            smc: .values(MockSensorProvider.appleSiliconSMCFixture.filter { !$0.key.hasPrefix("TB") }),
+            fans: nil,
+            isAppleSilicon: true,
+            now: thermalNow
+        )
+        SensorMetricsBuilder.mergeBatteryRegistry(into: &noBatterySensor, hasBattery: true, registryCelsius: nil, registryTimestamp: thermalNow)
+        assert(noBatterySensor.batteryTemperature == nil, "No battery sensor and no registry value leaves battery temperature nil")
+        var chargingSnapshot = SystemMetricsSnapshot()
+        chargingSnapshot.battery.hasBattery = true
+        chargingSnapshot.battery.isCharging = true
+        chargingSnapshot.battery.percentage = 55
+        chargingSnapshot.sensors = noBatterySensor
+        assert(MenuBarStatusMetric.batteryTemperature.menuBarText(from: chargingSnapshot, now: thermalNow) == "BAT --°C", "Charge level and charging state never produce a battery temperature")
+
+        var registryFallback = noBatterySensor
+        SensorMetricsBuilder.mergeBatteryRegistry(into: &registryFallback, hasBattery: true, registryCelsius: 30.5, registryTimestamp: thermalNow)
+        assert(registryFallback.batteryTemperature?.celsius == 30.5 && registryFallback.batteryTemperature?.source == .appleSmartBattery, "Registry temperature is used only as a fallback battery source")
+        var registryIgnored = hidOnly
+        SensorMetricsBuilder.mergeBatteryRegistry(into: &registryIgnored, hasBattery: true, registryCelsius: 20.0, registryTimestamp: thermalNow)
+        assert(registryIgnored.batteryTemperature?.source == .hidEventSystem, "Registry value never overrides a hardware battery sensor")
+        var desktop = hidOnly
+        SensorMetricsBuilder.mergeBatteryRegistry(into: &desktop, hasBattery: false, registryCelsius: 30.0, registryTimestamp: thermalNow)
+        assert(desktop.batteryTemperature == nil && desktop.readings(for: .battery).isEmpty, "Macs without a battery report no battery temperature")
+
+        // 97. Thermal: Missing Sensors Show Unavailable, Never 0 °C
+        let disabledSensors = SensorMetricsBuilder.build(thermalState: .nominal, hid: nil, smc: nil, fans: nil, now: thermalNow)
+        assert(disabledSensors.readings.isEmpty && disabledSensors.cpuTemperature == nil, "Disabled hardware access produces no readings")
+        assert(disabledSensors.state(for: .gpu) == .unavailable(reason: SensorMetricsBuilder.disabledReason), "Disabled access explains why GPU temperature is unavailable")
+        assert(Formatters.compactTemperature(nil) == "--°C", "Compact menu bar form shows --°C for a missing reading")
+        let savedUnit = AppSettings.shared.temperatureUnit
+        AppSettings.shared.temperatureUnit = .celsius
+        var missingGPUSnapshot = SystemMetricsSnapshot()
+        missingGPUSnapshot.sensors = hidOnly
+        let missingGPU = prefs.extract(metric: .gpuTemperature, from: missingGPUSnapshot)
+        assert(!missingGPU.isAvailable && missingGPU.formattedValue == "Unavailable", "Widget shows Unavailable for a missing GPU sensor")
+        assert(missingGPU.availabilityNote?.contains("GPU") == true, "Widget explains why the GPU sensor is unavailable")
+        var presentCPUSnapshot = SystemMetricsSnapshot()
+        presentCPUSnapshot.sensors = SensorMetricsBuilder.build(
+            thermalState: .nominal, hid: nil, smc: .values(MockSensorProvider.appleSiliconSMCFixture), fans: nil, isAppleSilicon: true, now: Date()
+        )
+        let presentCPU = prefs.extract(metric: .cpuTemperature, from: presentCPUSnapshot)
+        let presentGPU = prefs.extract(metric: .gpuTemperature, from: presentCPUSnapshot)
+        assert(presentCPU.isAvailable && presentCPU.formattedValue == "62 °C", "Widget CPU temperature reads the CPU sensor")
+        assert(presentGPU.isAvailable && presentGPU.formattedValue == "49 °C", "Widget GPU temperature reads the GPU sensor")
+        assert(prefs.extract(metric: .ssdTemperature, from: missingGPUSnapshot).formattedValue == "41 °C", "Widget SSD temperature reads the NAND sensor")
+
+        // 98. Thermal: Unit Conversion
+        assert(TemperatureUnit.fahrenheit.convert(fromCelsius: 0) == 32, "0 °C == 32 °F")
+        assert(TemperatureUnit.fahrenheit.convert(fromCelsius: 100) == 212, "100 °C == 212 °F")
+        assert(TemperatureUnit.fahrenheit.convert(fromCelsius: -40) == -40, "-40 °C == -40 °F")
+        assert(abs(TemperatureUnit.fahrenheit.convert(fromCelsius: 37) - 98.6) < 0.0001, "37 °C == 98.6 °F")
+        assert(TemperatureUnit.celsius.convert(fromCelsius: 47.3) == 47.3, "Celsius conversion is identity")
+        assert(abs(TemperatureUnit.fahrenheit.toCelsius(TemperatureUnit.fahrenheit.convert(fromCelsius: 63.7)) - 63.7) < 0.0001, "°F round-trips back to °C")
+        assert(Formatters.temperature(47.6, unit: .fahrenheit) == "118 °F", "Formatter converts before rounding (47.6 °C → 118 °F)")
+        assert(Formatters.temperature(47.64, decimals: 1) == "47.6 °C", "Optional decimal precision is supported")
+        assert(Formatters.compactTemperature(62.0, unit: .fahrenheit) == "144°F", "Compact form converts to °F")
+
+        // 99. Thermal: Stale Reading Detection & Retention
+        let oldReading = ComponentTemperature(
+            component: .cpu, averageCelsius: 60, maximumCelsius: 60, sensorCount: 1,
+            source: .smc, identification: .keyConvention, timestamp: thermalNow.addingTimeInterval(-30)
+        )
+        assert(oldReading.isStale(at: thermalNow, maxAge: 10), "A 30 s old reading is stale with a 10 s limit")
+        assert(!oldReading.isStale(at: thermalNow.addingTimeInterval(-25), maxAge: 10), "A 5 s old reading is fresh")
+        assert(SensorFreshness.staleAfter(refreshInterval: 1) == 10 && SensorFreshness.staleAfter(refreshInterval: 5) == 30, "Stale threshold scales with the refresh interval")
+        var staleSnapshot = SystemMetricsSnapshot()
+        staleSnapshot.sensors.cpuTemperature = ComponentTemperature(
+            component: .cpu, averageCelsius: 60, maximumCelsius: 60, sensorCount: 1,
+            source: .smc, identification: .keyConvention, timestamp: Date().addingTimeInterval(-600)
+        )
+        staleSnapshot.sensors.componentStates[.cpu] = .available
+        assert(MenuBarStatusMetric.cpuTemperature.menuBarText(from: staleSnapshot, now: Date(), staleAfter: 10) == "CPU --°C", "Menu bar never shows a stale reading as current")
+        let staleWidget = prefs.extract(metric: .cpuTemperature, from: staleSnapshot)
+        assert(!staleWidget.isAvailable && staleWidget.secondaryValue?.hasPrefix("Stale") == true, "Widget flags a stale reading")
+
+        let lostSample = SensorMetricsBuilder.build(
+            thermalState: .nominal, hid: .unavailable(reason: "x"), smc: .unavailable(reason: "y"), fans: nil,
+            isAppleSilicon: true, now: thermalNow.addingTimeInterval(4)
+        )
+        let retained = SensorMetricsBuilder.retainingRecentReadings(current: lostSample, previous: smcOnly, now: thermalNow.addingTimeInterval(4), maxAge: 60)
+        assert(retained.cpuTemperature?.timestamp == thermalNow, "Retained reading keeps its original timestamp so it ages honestly")
+        let expired = SensorMetricsBuilder.retainingRecentReadings(current: lostSample, previous: smcOnly, now: thermalNow.addingTimeInterval(120), maxAge: 60)
+        assert(expired.cpuTemperature == nil, "Readings older than the retention window are dropped")
+        let disabledRetained = SensorMetricsBuilder.retainingRecentReadings(current: disabledSensors, previous: smcOnly, now: thermalNow, maxAge: 60)
+        assert(disabledRetained.cpuTemperature == nil, "Turning sensors off clears values immediately")
+
+        // 100. Thermal: Menu Bar Metrics
+        var menuSnapshot = SystemMetricsSnapshot()
+        menuSnapshot.sensors = bothSources
+        assert(MenuBarStatusMetric.cpuTemperature.menuBarText(from: menuSnapshot, now: thermalNow) == "CPU 62°C", "Menu bar CPU temperature uses the CPU sensor")
+        assert(MenuBarStatusMetric.gpuTemperature.menuBarText(from: menuSnapshot, now: thermalNow) == "GPU 49°C", "Menu bar GPU temperature uses the GPU sensor")
+        assert(MenuBarStatusMetric.cpuTemperature.menuBarText(from: menuSnapshot, temperatureUnit: .fahrenheit, now: thermalNow) == "CPU 144°F", "Menu bar honours °F")
+        assert(MenuBarStatusMetric.thermalState.menuBarText(from: menuSnapshot, now: thermalNow) == "THM Fair", "Menu bar thermal state is labelled as state, not °C")
+        assert(MenuBarStatusMetric.fanSpeed.menuBarText(from: menuSnapshot, now: thermalNow) == "FAN --", "Fanless Mac shows FAN --, never 0rpm")
+        var noBatteryMenu = menuSnapshot
+        noBatteryMenu.battery.hasBattery = false
+        assert(MenuBarStatusMetric.batteryTemperature.menuBarText(from: noBatteryMenu, now: thermalNow) == nil, "Battery temperature is hidden on Macs without a battery")
+        menuSnapshot.battery.hasBattery = true
+        assert(MenuBarStatusMetric.batteryTemperature.menuBarText(from: menuSnapshot, now: thermalNow) == "BAT 33°C", "Menu bar battery temperature uses the battery sensor")
+        var hidMenu = SystemMetricsSnapshot()
+        hidMenu.sensors = hidOnly
+        assert(!MenuBarStatusMetric.cpuTemperature.availability(in: hidMenu).isAvailable, "Menu bar settings mark CPU temperature unavailable without a CPU sensor")
+
+        // 101. Thermal: Fans
+        let fanMetrics = MockSensorProvider(simulateMissingSensors: false).sample(now: thermalNow)
+        assert(fanMetrics.fansState.isAvailable && fanMetrics.fanSpeeds.first?.speedRPM == 2150, "Fan speed is reported in RPM from the SMC")
+        menuSnapshot.sensors = fanMetrics
+        assert(MenuBarStatusMetric.fanSpeed.menuBarText(from: menuSnapshot, now: thermalNow) == "FAN 2150rpm", "Menu bar fan speed shows RPM")
+        let noMaxFan = SensorMetricsBuilder.build(
+            thermalState: .nominal, hid: nil, smc: .values([]),
+            fans: .fans(reportedCount: 1, readings: [RawFanValue(index: 0, rpm: 1800, minRPM: nil, maxRPM: 0)]),
+            now: thermalNow
+        )
+        assert(noMaxFan.fanSpeeds.first?.maxRPM == nil, "Unreported fan maximum stays nil instead of a made-up value")
+        if case .unavailable(let reason) = bothSources.fansState {
+            assert(reason.contains("passively cooled"), "Zero fans reported explains the Mac is passively cooled")
+        } else {
+            assert(false, "Zero reported fans is an unavailable state")
+        }
+
+        // 102. Thermal: Per-Component Alerts
+        let savedTempAlerts = (
+            alertService.enableCPUTemperatureAlert, alertService.cpuTemperatureThresholdCelsius,
+            alertService.enableGPUTemperatureAlert, alertService.gpuTemperatureThresholdCelsius,
+            alertService.enableBatteryTemperatureAlert, alertService.batteryTemperatureThresholdCelsius
+        )
+        alertService.resetCooldowns()
+        alertService.enableCPUTemperatureAlert = false
+        alertService.enableGPUTemperatureAlert = true
+        alertService.gpuTemperatureThresholdCelsius = 80
+        alertService.enableBatteryTemperatureAlert = true
+        alertService.batteryTemperatureThresholdCelsius = 45
+        func componentReading(_ component: ThermalComponent, _ celsius: Double, age: TimeInterval = 0) -> ComponentTemperature {
+            ComponentTemperature(component: component, averageCelsius: celsius, maximumCelsius: celsius, sensorCount: 1,
+                                 source: .smc, identification: .keyConvention, timestamp: Date().addingTimeInterval(-age))
+        }
+        var alertSnapshot = SystemMetricsSnapshot()
+        alertSnapshot.sensors.cpuTemperature = componentReading(.cpu, 95)
+        alertSnapshot.sensors.gpuTemperature = componentReading(.gpu, 50)
+        let hotCPUOnly = alertService.evaluate(snapshot: alertSnapshot).filter { $0.contains("temperature") }
+        assert(hotCPUOnly.isEmpty, "A hot CPU never triggers the GPU alert")
+        alertSnapshot.sensors.gpuTemperature = componentReading(.gpu, 85)
+        let hotGPU = alertService.evaluate(snapshot: alertSnapshot).filter { $0.contains("temperature") }
+        assert(hotGPU.count == 1 && hotGPU[0].hasPrefix("GPU"), "GPU alert fires from the GPU reading and its own threshold")
+        alertService.resetCooldowns()
+        alertSnapshot.sensors.gpuTemperature = componentReading(.gpu, 99, age: 600)
+        assert(alertService.evaluate(snapshot: alertSnapshot).filter { $0.contains("temperature") }.isEmpty, "Stale readings never trigger alerts")
+        alertSnapshot.sensors.gpuTemperature = nil
+        alertSnapshot.sensors.batteryTemperature = nil
+        assert(alertService.evaluate(snapshot: alertSnapshot).filter { $0.contains("temperature") }.isEmpty, "Unsupported sensors never trigger alerts")
+        alertSnapshot.sensors.batteryTemperature = componentReading(.battery, 47)
+        let hotBattery = alertService.evaluate(snapshot: alertSnapshot).filter { $0.contains("temperature") }
+        assert(hotBattery.count == 1 && hotBattery[0].hasPrefix("Battery"), "Battery alert uses its own 45 °C threshold")
+        alertService.resetCooldowns()
+        alertService.enableCPUTemperatureAlert = savedTempAlerts.0
+        alertService.cpuTemperatureThresholdCelsius = savedTempAlerts.1
+        alertService.enableGPUTemperatureAlert = savedTempAlerts.2
+        alertService.gpuTemperatureThresholdCelsius = savedTempAlerts.3
+        alertService.enableBatteryTemperatureAlert = savedTempAlerts.4
+        alertService.batteryTemperatureThresholdCelsius = savedTempAlerts.5
+
+        // 103. Thermal: History Keeps Sensor Identity and Gaps
+        var history: [ThermalComponent: [TemperatureHistoryPoint]] = [:]
+        history = SystemMonitor.appendingTemperatureHistory(history, from: smcOnly, staleAfter: 10, maxPoints: 3)
+        history = SystemMonitor.appendingTemperatureHistory(history, from: lostSample, staleAfter: 10, maxPoints: 3)
+        var staleRetainedSample = retained
+        staleRetainedSample.sampledAt = thermalNow.addingTimeInterval(30)
+        history = SystemMonitor.appendingTemperatureHistory(history, from: staleRetainedSample, staleAfter: 10, maxPoints: 3)
+        let cpuSeries = history[.cpu] ?? []
+        assert(cpuSeries.count == 3 && cpuSeries[0].celsius == 62.0 && cpuSeries[0].source == .smc, "History stores the CPU value with its source")
+        assert(cpuSeries[1].celsius == nil, "A missing reading is recorded as a gap")
+        assert(cpuSeries[2].celsius == nil, "A stale cached reading is recorded as a gap, not a fresh point")
+        assert(history[.gpu]?.first?.celsius == 49.0, "GPU history is a separate series with GPU values")
+        history = SystemMonitor.appendingTemperatureHistory(history, from: smcOnly, staleAfter: 10, maxPoints: 3)
+        assert(history[.cpu]?.count == 3 && history[.cpu]?.last?.celsius == 62.0, "History is capped and keeps the newest points")
+        assert(SensorsDetailView.segments(of: cpuSeries + [cpuSeries[0]]).count == 2, "Chart splits the series at gaps")
+
+        // 104. Thermal: Pages Read the Shared Service
+        let monitorSensors = SystemMonitor.shared.snapshot.sensors
+        assert(SystemMonitor.shared.sensorStaleAfter >= SensorFreshness.defaultStaleAfter, "Shared monitor exposes a single stale threshold for all pages")
+        assert(monitorSensors.history.keys.allSatisfy { ThermalComponent.headline.contains($0) }, "Shared snapshot history is keyed by component")
+
+        // 105. Thermal: Live Hardware Invariants (real sensors on this Mac; values not asserted)
+        let liveSensors = SensorProvider().sample(hardwareAccessEnabled: AppSettings.shared.hardwareSensorAccessEnabled)
+        assert(liveSensors.readings.allSatisfy { SensorClassifier.isPlausible($0.celsius) }, "Live readings are all physically plausible")
+        let liveCPUIds = Set(liveSensors.readings(for: .cpu).map(\.id))
+        let liveGPUIds = Set(liveSensors.readings(for: .gpu).map(\.id))
+        assert(liveCPUIds.isDisjoint(with: liveGPUIds), "Live CPU and GPU temperatures come from disjoint sensors")
+        for component in ThermalComponent.headline {
+            let hasValue = liveSensors.temperature(for: component) != nil
+            assert(hasValue == liveSensors.state(for: component).isAvailable, "Live \(component.displayName) availability matches its value")
+        }
+        logs.append("ℹ️ Live sensors: " + ThermalComponent.headline.map { component in
+            "\(component.displayName)=\(Formatters.temperature(liveSensors.temperature(for: component)?.celsius))"
+        }.joined(separator: ", ") + ", \(liveSensors.readings.count) readings, fans: \(liveSensors.fansState.displayText)")
+        AppSettings.shared.temperatureUnit = savedUnit
 
         return (passed, failed, logs)
     }

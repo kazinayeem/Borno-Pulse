@@ -66,13 +66,8 @@ public struct DuplicateFinderView: View {
                                     Text("Start Scan")
                                 }
                                 .font(.system(size: 13, weight: .semibold))
-                                .padding(.horizontal, 16)
-                                .padding(.vertical, 7)
-                                .background(AppTheme.electricBlue)
-                                .foregroundStyle(.white)
-                                .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
                             }
-                            .buttonStyle(.plain)
+                            .buttonStyle(.themedPrimary(fill: AppTheme.accentFill, verticalPadding: 7))
                             .disabled(service.targetDirectory == nil)
                         }
                     }
@@ -192,12 +187,12 @@ public struct DuplicateFinderView: View {
                 }
                 .padding(.horizontal, 10)
                 .padding(.vertical, 6)
-                .background(Color.white.opacity(0.02))
+                .background(AppTheme.cardBackground)
                 .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
             }
         }
         .padding(10)
-        .background(Color.white.opacity(0.02))
+        .background(AppTheme.insetBackground)
         .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
     }
 }

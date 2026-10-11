@@ -78,8 +78,8 @@ public struct FileToolsDashboardView: View {
                             }
                             .padding(.horizontal, 14)
                             .padding(.vertical, 8)
-                            .background(selectedCategory == category ? AppTheme.electricBlue.opacity(0.18) : Color.white.opacity(0.04))
-                            .foregroundStyle(selectedCategory == category ? AppTheme.electricBlue : AppTheme.textSecondary)
+                            .background(AppTheme.selectableFill(selectedCategory == category))
+                            .foregroundStyle(AppTheme.selectableForeground(selectedCategory == category))
                             .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
                             .overlay(
                                 RoundedRectangle(cornerRadius: 8, style: .continuous)
@@ -107,7 +107,7 @@ public struct FileToolsDashboardView: View {
                 .padding(.horizontal, 24)
                 .padding(.vertical, 14)
             }
-            .background(AppTheme.cardBackground)
+            .background(AppTheme.toolbarBackground)
             
             Divider()
             
@@ -123,12 +123,12 @@ public struct FileToolsDashboardView: View {
                                     .font(.system(size: 11, weight: .medium))
                                     .padding(.horizontal, 10)
                                     .padding(.vertical, 5)
-                                    .background(activeSubTool == tool ? AppTheme.neonCyan.opacity(0.2) : Color.white.opacity(0.04))
-                                    .foregroundStyle(activeSubTool == tool ? AppTheme.neonCyan : AppTheme.textSecondary)
+                                    .background(AppTheme.selectableFill(activeSubTool == tool))
+                                    .foregroundStyle(AppTheme.selectableForeground(activeSubTool == tool))
                                     .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
                                     .overlay(
                                         RoundedRectangle(cornerRadius: 6, style: .continuous)
-                                            .stroke(activeSubTool == tool ? AppTheme.neonCyan : Color.clear, lineWidth: 1)
+                                            .stroke(activeSubTool == tool ? AppTheme.electricBlue : Color.clear, lineWidth: 1)
                                     )
                             }
                             .buttonStyle(.plain)
@@ -413,12 +413,13 @@ public struct FileToolsDashboardView: View {
                     .padding(.top, 6)
             }
             .padding(14)
-            .background(Color.white.opacity(0.03))
+            .background(AppTheme.cardBackground)
             .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
             .overlay(
                 RoundedRectangle(cornerRadius: 10, style: .continuous)
-                    .stroke(Color.white.opacity(0.06), lineWidth: 1)
+                    .stroke(AppTheme.cardBorder, lineWidth: 1)
             )
+            .contentShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
         }
         .buttonStyle(.plain)
     }

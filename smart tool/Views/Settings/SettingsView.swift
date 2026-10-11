@@ -54,8 +54,8 @@ public struct SettingsView: View {
                                 }
                                 .padding(.horizontal, 12)
                                 .padding(.vertical, 6)
-                                .background(selectedTab == tab ? AppTheme.electricBlue.opacity(0.18) : Color.white.opacity(0.04))
-                                .foregroundStyle(selectedTab == tab ? AppTheme.electricBlue : AppTheme.textSecondary)
+                                .background(AppTheme.selectableFill(selectedTab == tab))
+                                .foregroundStyle(AppTheme.selectableForeground(selectedTab == tab))
                                 .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
                                 .overlay(
                                     RoundedRectangle(cornerRadius: 6, style: .continuous)

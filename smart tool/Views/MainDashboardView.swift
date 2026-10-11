@@ -83,8 +83,9 @@ public struct MainDashboardView: View {
             sidebarContent
         } detail: {
             detailContent
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .background(AppTheme.contentBackground)
         }
-        .preferredColorScheme(settings.appearanceMode.colorScheme)
         .frame(minWidth: 960, minHeight: 620)
         .toolbar {
             ToolbarItem(placement: .navigation) {
@@ -182,15 +183,15 @@ public struct MainDashboardView: View {
     }
     
     private func sidebarItem(_ section: NavigationSection) -> some View {
+        // Colors are left to the native sidebar so the selected row gets its own
+        // high-contrast foreground on the accent highlight in both appearances.
         NavigationLink(value: section) {
             Label {
                 Text(section.rawValue)
                     .font(.system(size: 13, weight: selectedSection == section ? .semibold : .regular))
-                    .foregroundStyle(AppTheme.textPrimary)
             } icon: {
                 Image(systemName: section.icon)
                     .font(.system(size: 13))
-                    .foregroundStyle(selectedSection == section ? AppTheme.electricBlue : AppTheme.textSecondary)
             }
         }
     }
@@ -238,19 +239,14 @@ public struct MainDashboardView: View {
                 }
                 .padding(.horizontal, 10)
                 .padding(.vertical, 6)
-                .background(AppTheme.cardBackground)
-                .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 6, style: .continuous)
-                        .stroke(AppTheme.cardBorder, lineWidth: 0.5)
-                )
+                .themedInputField()
             }
             .buttonStyle(.plain)
             .foregroundStyle(AppTheme.textPrimary)
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 10)
-        .background(AppTheme.sidebarBackground)
+        .background(.bar)
         .overlay(
             Rectangle()
                 .frame(height: 0.5)

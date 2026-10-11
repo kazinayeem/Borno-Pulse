@@ -253,7 +253,7 @@ public struct DockerDashboardView: View {
                 .font(.system(size: 11, design: .monospaced))
                 .scrollContentBackground(.hidden)
                 .padding(10)
-                .background(AppTheme.cardBackgroundSecondary)
+                .background(AppTheme.inputBackground)
         }
         .frame(width: 620, height: 460)
     }

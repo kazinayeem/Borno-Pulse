@@ -111,7 +111,7 @@ public struct ArchiveUtilityView: View {
                         }
                         .padding(.horizontal, 10)
                         .padding(.vertical, 6)
-                        .background(Color.white.opacity(0.02))
+                        .background(AppTheme.insetBackground)
                         .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
                     }
                 }
@@ -126,13 +126,8 @@ public struct ArchiveUtilityView: View {
                             Text("Create ZIP Archive")
                         }
                         .font(.system(size: 13, weight: .semibold))
-                        .padding(.horizontal, 16)
-                        .padding(.vertical, 8)
-                        .background(AppTheme.electricBlue)
-                        .foregroundStyle(.white)
-                        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(.themedPrimary)
                     .disabled(service.isProcessing)
                     
                     Spacer()

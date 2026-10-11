@@ -52,7 +52,8 @@ public struct PDFCompressorView: View {
                                 .frame(maxWidth: .infinity)
                                 .padding(.horizontal, 12)
                                 .padding(.vertical, 8)
-                                .background(service.selectedPreset == preset ? AppTheme.electricBlue.opacity(0.18) : Color.white.opacity(0.04))
+                                .background(AppTheme.selectableFill(service.selectedPreset == preset))
+                                .foregroundStyle(service.selectedPreset == preset ? AppTheme.selectionForeground : AppTheme.textPrimary)
                                 .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
                                 .overlay(
                                     RoundedRectangle(cornerRadius: 8, style: .continuous)
@@ -118,7 +119,7 @@ public struct PDFCompressorView: View {
                                 StatusBadge(text: item.status.rawValue, color: statusColor(item.status))
                             }
                             .padding(8)
-                            .background(Color.white.opacity(0.03))
+                            .background(AppTheme.insetBackground)
                             .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
                         }
                     }

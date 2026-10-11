@@ -9,13 +9,11 @@ import SwiftUI
 @main
 struct smart_toolApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
-    @ObservedObject var settings = AppSettings.shared
     
     var body: some Scene {
         Window("Borno Pulse", id: "main-window") {
             MainDashboardView()
                 .frame(minWidth: 960, minHeight: 640)
-                .preferredColorScheme(settings.appearanceMode.colorScheme)
         }
         .windowStyle(.titleBar)
         .windowToolbarStyle(.unified)
@@ -47,6 +45,10 @@ struct smart_toolApp: App {
 }
 
 final class AppDelegate: NSObject, NSApplicationDelegate {
+    func applicationWillFinishLaunching(_ notification: Notification) {
+        AppearanceController.shared.start()
+    }
+
     func applicationDidFinishLaunching(_ notification: Notification) {
         if CommandLine.arguments.contains("--run-tests") {
             let results = SmartToolTests.runAllTests()

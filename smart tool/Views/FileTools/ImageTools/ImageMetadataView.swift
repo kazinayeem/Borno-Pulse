@@ -49,7 +49,7 @@ public struct ImageMetadataView: View {
                                 .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
                                 .overlay(
                                     RoundedRectangle(cornerRadius: 8, style: .continuous)
-                                        .stroke(Color.white.opacity(0.1), lineWidth: 1)
+                                        .stroke(AppTheme.cardBorder, lineWidth: 1)
                                 )
                         }
                         

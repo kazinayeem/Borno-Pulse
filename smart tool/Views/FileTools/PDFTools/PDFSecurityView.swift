@@ -126,13 +126,8 @@ public struct PDFSecurityView: View {
                                 Text("Export Privacy-Sanitized PDF")
                             }
                             .font(.system(size: 13, weight: .semibold))
-                            .padding(.horizontal, 16)
-                            .padding(.vertical, 8)
-                            .background(AppTheme.matrixGreen)
-                            .foregroundStyle(.black)
-                            .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
                         }
-                        .buttonStyle(.plain)
+                        .buttonStyle(.themedPrimary(fill: AppTheme.successFill))
                         .disabled(!service.isUnlocked)
                     }
                     .smartCard()

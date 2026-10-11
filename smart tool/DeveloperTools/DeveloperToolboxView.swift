@@ -50,8 +50,9 @@ public struct DeveloperToolboxView: View {
                             }
                             .padding(.horizontal, 10)
                             .padding(.vertical, 5)
-                            .background(activeTab == tab ? AppTheme.electricBlue.opacity(0.18) : Color.clear)
-                            .foregroundStyle(activeTab == tab ? AppTheme.electricBlue : AppTheme.textSecondary)
+                            .background(activeTab == tab ? AppTheme.selectionBackground : Color.clear)
+                            .foregroundStyle(AppTheme.selectableForeground(activeTab == tab))
+                            .contentShape(RoundedRectangle(cornerRadius: 6))
                             .clipShape(RoundedRectangle(cornerRadius: 6))
                         }
                         .buttonStyle(.plain)

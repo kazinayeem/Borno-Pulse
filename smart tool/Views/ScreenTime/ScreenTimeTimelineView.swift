@@ -63,7 +63,7 @@ public struct ScreenTimeTimelineView: View {
                         ZStack(alignment: .leading) {
                             // 24-hour background bar
                             RoundedRectangle(cornerRadius: 4)
-                                .fill(Color.white.opacity(0.06))
+                                .fill(AppTheme.chartTrack)
                                 .frame(height: 24)
                             
                             // App blocks
@@ -126,7 +126,7 @@ public struct ScreenTimeTimelineView: View {
                             }
                             .padding(.vertical, 3)
                             .padding(.horizontal, 6)
-                            .background(Color.white.opacity(0.02))
+                            .background(AppTheme.tableRowAlternate)
                             .clipShape(RoundedRectangle(cornerRadius: 4))
                         }
                     }

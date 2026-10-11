@@ -75,6 +75,8 @@ public final class WidgetAlertService: ObservableObject {
     // Cooldown tracking to deduplicate and prevent alert fatigue
     private var lastTriggeredDates: [String: Date] = [:]
     public var cooldownSeconds: TimeInterval = 300.0 // 5 minutes
+    /// When false, rules are still evaluated and returned but no user notification is posted.
+    public var deliversNotifications = true
 
     private init() {
         let defaults = UserDefaults.standard
@@ -200,6 +202,7 @@ public final class WidgetAlertService: ObservableObject {
     }
 
     private func sendNotification(title: String, body: String) {
+        guard deliversNotifications else { return }
         let content = UNMutableNotificationContent()
         content.title = title
         content.body = body

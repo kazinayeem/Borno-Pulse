@@ -195,7 +195,7 @@ public struct BatchRenamerView: View {
                             }
                             .padding(.horizontal, 10)
                             .padding(.vertical, 6)
-                            .background(Color.white.opacity(0.02))
+                            .background(AppTheme.insetBackground)
                             .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
                         }
                     }
@@ -211,13 +211,8 @@ public struct BatchRenamerView: View {
                                 Text("Apply Rename (\(service.previewItems.count) files)")
                             }
                             .font(.system(size: 13, weight: .semibold))
-                            .padding(.horizontal, 16)
-                            .padding(.vertical, 8)
-                            .background(AppTheme.matrixGreen)
-                            .foregroundStyle(.black)
-                            .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
                         }
-                        .buttonStyle(.plain)
+                        .buttonStyle(.themedPrimary(fill: AppTheme.successFill))
                         .disabled(service.isRenaming || service.previewItems.contains(where: { $0.hasCollision }))
                         
                         Spacer()

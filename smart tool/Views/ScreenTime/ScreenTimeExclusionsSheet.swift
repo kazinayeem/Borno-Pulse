@@ -104,8 +104,7 @@ public struct ScreenTimeExclusionsSheet: View {
                                 .textFieldStyle(.plain)
                                 .font(.system(size: 12))
                                 .padding(6)
-                                .background(Color.white.opacity(0.04))
-                                .clipShape(RoundedRectangle(cornerRadius: 6))
+                                .themedInputField()
                             
                             Button("Add") {
                                 let trimmed = newAppBundleToExclude.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -144,7 +143,7 @@ public struct ScreenTimeExclusionsSheet: View {
                                 }
                                 .padding(.horizontal, 10)
                                 .padding(.vertical, 6)
-                                .background(Color.black.opacity(0.15))
+                                .background(AppTheme.insetBackground)
                                 .clipShape(RoundedRectangle(cornerRadius: 4))
                             }
                         }

@@ -79,7 +79,7 @@ public struct LargestFilesBarChart: View {
                                     let barRatio = max(0.04, Double(item.sizeBytes) / maxSize)
                                     ZStack(alignment: .leading) {
                                         RoundedRectangle(cornerRadius: 3, style: .continuous)
-                                            .fill(Color.white.opacity(0.05))
+                                            .fill(AppTheme.chartTrack)
                                             .frame(height: 5)
                                         
                                         RoundedRectangle(cornerRadius: 3, style: .continuous)
@@ -91,7 +91,7 @@ public struct LargestFilesBarChart: View {
                             }
                             .padding(.vertical, 3)
                             .padding(.horizontal, 6)
-                            .background(Color.white.opacity(0.02))
+                            .background(AppTheme.tableRowAlternate)
                             .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
                         }
                         .buttonStyle(.plain)

@@ -48,9 +48,7 @@ public struct JWTInspectorView: View {
                     .scrollContentBackground(.hidden)
                     .padding(8)
                     .frame(height: 100)
-                    .background(AppTheme.cardBackground)
-                    .clipShape(RoundedRectangle(cornerRadius: 6))
-                    .overlay(RoundedRectangle(cornerRadius: 6).stroke(AppTheme.cardBorder, lineWidth: 1))
+                    .themedInputField()
                     .onChange(of: inputToken) { _, newVal in
                         parseToken(newVal)
                     }
@@ -89,7 +87,7 @@ public struct JWTInspectorView: View {
                                 .scrollContentBackground(.hidden)
                                 .padding(8)
                                 .frame(height: 140)
-                                .background(AppTheme.cardBackground)
+                                .background(AppTheme.inputBackground)
                                 .clipShape(RoundedRectangle(cornerRadius: 6))
                                 .overlay(RoundedRectangle(cornerRadius: 6).stroke(AppTheme.electricCyan.opacity(0.3), lineWidth: 1))
                         }
@@ -110,7 +108,7 @@ public struct JWTInspectorView: View {
                                 .scrollContentBackground(.hidden)
                                 .padding(8)
                                 .frame(height: 140)
-                                .background(AppTheme.cardBackground)
+                                .background(AppTheme.inputBackground)
                                 .clipShape(RoundedRectangle(cornerRadius: 6))
                                 .overlay(RoundedRectangle(cornerRadius: 6).stroke(AppTheme.purpleAccent.opacity(0.3), lineWidth: 1))
                         }
@@ -178,7 +176,7 @@ public struct JWTInspectorView: View {
                                     .buttonStyle(.plain)
                                 }
                                 .padding(8)
-                                .background(Color.white.opacity(0.02))
+                                .background(AppTheme.subtleFill)
                                 .clipShape(RoundedRectangle(cornerRadius: 4))
                             }
                         }

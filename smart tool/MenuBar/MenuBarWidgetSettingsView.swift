@@ -327,7 +327,7 @@ public struct MenuBarWidgetSettingsView: View {
                 }
                 .padding(.horizontal, 10)
                 .padding(.vertical, 6)
-                .background(Color.white.opacity(0.08))
+                .background(AppTheme.subtleFillStrong)
                 .clipShape(RoundedRectangle(cornerRadius: 6))
                 .overlay(RoundedRectangle(cornerRadius: 6).stroke(AppTheme.cardBorder, lineWidth: 0.5))
             }
@@ -354,8 +354,8 @@ public struct MenuBarWidgetSettingsView: View {
                         }
                         .frame(maxWidth: .infinity, minHeight: 48)
                         .padding(8)
-                        .background(preferences.layoutStyle == style ? AppTheme.electricBlue.opacity(0.18) : Color.white.opacity(0.04))
-                        .foregroundStyle(preferences.layoutStyle == style ? AppTheme.electricBlue : AppTheme.textSecondary)
+                        .background(AppTheme.selectableFill(preferences.layoutStyle == style))
+                        .foregroundStyle(AppTheme.selectableForeground(preferences.layoutStyle == style))
                         .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
                         .overlay(
                             RoundedRectangle(cornerRadius: 8, style: .continuous)
@@ -408,8 +408,8 @@ public struct MenuBarWidgetSettingsView: View {
                             .font(.system(size: 11, weight: .medium))
                             .padding(.horizontal, 10)
                             .padding(.vertical, 5)
-                            .background(selectedCategoryTab == cat ? AppTheme.electricBlue.opacity(0.18) : Color.white.opacity(0.04))
-                            .foregroundStyle(selectedCategoryTab == cat ? AppTheme.electricBlue : AppTheme.textSecondary)
+                            .background(AppTheme.selectableFill(selectedCategoryTab == cat))
+                            .foregroundStyle(AppTheme.selectableForeground(selectedCategoryTab == cat))
                             .clipShape(RoundedRectangle(cornerRadius: 6))
                         }
                         .buttonStyle(.plain)
@@ -567,13 +567,15 @@ public struct MenuBarWidgetSettingsView: View {
                             Spacer()
                             Image(systemName: isEnabled ? "checkmark.circle.fill" : "circle")
                                 .font(.system(size: 12))
-                                .foregroundStyle(isEnabled ? AppTheme.electricBlue : Color.gray.opacity(0.4))
+                                .foregroundStyle(isEnabled ? AppTheme.electricBlue : AppTheme.textTertiary)
                         }
                         .padding(8)
-                        .background(isEnabled ? AppTheme.electricBlue.opacity(0.12) : AppTheme.cardBackgroundSecondary)
+                        .background(isEnabled ? AppTheme.selectionBackground : AppTheme.cardBackgroundSecondary)
                         .clipShape(RoundedRectangle(cornerRadius: 6))
+                        .contentShape(RoundedRectangle(cornerRadius: 6))
                     }
                     .buttonStyle(.plain)
+                    .accessibilityAddTraits(isEnabled ? .isSelected : [])
                 }
             }
         }
