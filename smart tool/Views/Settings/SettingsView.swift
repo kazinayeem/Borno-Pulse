@@ -9,6 +9,7 @@ public enum SettingsSectionTab: String, CaseIterable, Identifiable {
     case appearanceTypography = "Appearance & Typography"
     case menuBarWidget = "Menu Bar & Widget"
     case general = "General & System"
+    case clipboard = "Clipboard"
     case alerts = "Alerts & Exclusions"
 
     public var id: String { rawValue }
@@ -18,6 +19,7 @@ public enum SettingsSectionTab: String, CaseIterable, Identifiable {
         case .appearanceTypography: return "textformat.size"
         case .menuBarWidget: return "gauge.with.dots.needle.bottom.100percent"
         case .general: return "gearshape.fill"
+        case .clipboard: return "doc.on.clipboard"
         case .alerts: return "bell.badge.fill"
         }
     }
@@ -25,6 +27,7 @@ public enum SettingsSectionTab: String, CaseIterable, Identifiable {
 
 public struct SettingsView: View {
     @ObservedObject var settings = AppSettings.shared
+    @ObservedObject private var navigation = SettingsNavigation.shared
     @State private var selectedTab: SettingsSectionTab = .appearanceTypography
     @State private var newExclusionPath = ""
     @State private var testResults: (passed: Int, failed: Int, logs: [String])? = nil
@@ -78,11 +81,24 @@ public struct SettingsView: View {
                 MenuBarWidgetSettingsView()
             case .general:
                 generalSettingsContent
+            case .clipboard:
+                ScrollView {
+                    ClipboardSettingsView()
+                        .padding(20)
+                }
             case .alerts:
                 alertsSettingsContent
             }
         }
         .background(AppTheme.background)
+        .onAppear(perform: applyRequestedTab)
+        .onChange(of: navigation.requestedTab) { _, _ in applyRequestedTab() }
+    }
+
+    private func applyRequestedTab() {
+        guard let tab = navigation.requestedTab else { return }
+        selectedTab = tab
+        navigation.requestedTab = nil
     }
     
     // MARK: - Appearance & Typography Tab Content
@@ -559,10 +575,7 @@ public struct SettingsView: View {
                         .font(AppTypography.font(size: 14, weight: .semibold))
                         .foregroundStyle(AppTheme.textPrimary)
                     
-                    Toggle("Launch at Login (ServiceManagement)", isOn: $settings.launchAtLogin)
-                        .onChange(of: settings.launchAtLogin) { _, newValue in
-                            LaunchAtLoginService.shared.setEnabled(newValue)
-                        }
+                    LaunchAtLoginToggle(title: "Launch at Login (ServiceManagement)")
                     
                     Divider().opacity(0.2)
 

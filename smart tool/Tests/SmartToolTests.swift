@@ -1241,6 +1241,9 @@ public enum SmartToolTests {
             }
         }
 
+        // 111–124. Clipboard history, global shortcut, picker, paste and lifecycle
+        runClipboardTests(assert)
+
         return (passed, failed, logs)
     }
 }

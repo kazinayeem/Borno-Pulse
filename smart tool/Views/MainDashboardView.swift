@@ -75,6 +75,7 @@ public struct MainDashboardView: View {
     @State private var showingQuickLauncher: Bool = false
     @ObservedObject var settings = AppSettings.shared
     @ObservedObject var monitor = SystemMonitor.shared
+    @Environment(\.openWindow) private var openWindow
     
     public init() {}
     
@@ -111,6 +112,12 @@ public struct MainDashboardView: View {
         }
         .onReceive(NotificationCenter.default.publisher(for: .navigateToSection)) { notification in
             if let section = notification.object as? NavigationSection {
+                selectedSection = section
+            }
+        }
+        .onAppear {
+            MainWindowRouter.shared.register(openWindow: openWindow)
+            if let section = MainWindowRouter.shared.consumePendingSection() {
                 selectedSection = section
             }
         }

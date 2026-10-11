@@ -165,6 +165,9 @@ public enum ClipboardRetention: Int, CaseIterable, Identifiable, Sendable {
 
     public var id: Int { rawValue }
 
+    /// Nil means unpinned items are only removed by the item and storage limits.
+    public var days: Int? { rawValue == 0 ? nil : rawValue }
+
     public var label: String {
         switch self {
         case .oneDay: return "1 Day"

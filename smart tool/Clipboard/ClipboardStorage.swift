@@ -36,6 +36,13 @@ public final class ClipboardStorage {
             try? fm.createDirectory(at: dir, withIntermediateDirectories: true, attributes: [.posixPermissions: 0o700])
             try? fm.setAttributes([.posixPermissions: 0o700], ofItemAtPath: dir.path)
         }
+        // Files written by earlier versions used default (world-readable) permissions.
+        for name in ["clipboard_history.json"] + storedImageNames().map({ "Images/\($0)" }) {
+            let path = rootDirectory.appendingPathComponent(name).path
+            if fm.fileExists(atPath: path) {
+                try? fm.setAttributes([.posixPermissions: 0o600], ofItemAtPath: path)
+            }
+        }
         var root = rootDirectory
         var values = URLResourceValues()
         values.isExcludedFromBackup = true

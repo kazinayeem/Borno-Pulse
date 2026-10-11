@@ -65,14 +65,27 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         
         // Start system monitoring engine
         SystemMonitor.shared.startMonitoring()
+
+        // Clipboard history, global shortcut and clipboard status item live for the whole app session.
+        ClipboardBackgroundController.shared.start()
+        TempClipboardVerification.runIfRequested()
     }
     
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
         // Keep running in menu bar even when main dashboard window is closed!
         return false
     }
+
+    func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
+        if !flag {
+            MainWindowRouter.shared.showMainWindow()
+            return false
+        }
+        return true
+    }
     
     func applicationWillTerminate(_ notification: Notification) {
+        ClipboardBackgroundController.shared.stop()
         SystemMonitor.shared.stopMonitoring()
     }
 }

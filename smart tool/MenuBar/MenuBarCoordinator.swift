@@ -42,7 +42,7 @@ public final class MenuBarCoordinator: NSObject {
                     self?.openMainWindow()
                 },
                 onOpenSettings: { [weak self] in
-                    self?.openMainWindow()
+                    self?.openMainWindow(navigatingTo: .settings)
                 },
                 onQuickCleanup: { [weak self] in
                     self?.openMainWindow()
@@ -143,18 +143,7 @@ public final class MenuBarCoordinator: NSObject {
     
     public func openMainWindow(navigatingTo section: NavigationSection? = nil) {
         popover?.performClose(nil)
-        NSApplication.shared.activate(ignoringOtherApps: true)
-        
-        // Find or create window
-        if let window = NSApplication.shared.windows.first(where: { !($0 is NSPanel) && $0.isVisible }) {
-            window.makeKeyAndOrderFront(nil)
-        } else if let window = NSApplication.shared.windows.first(where: { !($0 is NSPanel) }) {
-            window.makeKeyAndOrderFront(nil)
-        }
-
-        if let target = section {
-            NotificationCenter.default.post(name: .navigateToSection, object: target)
-        }
+        MainWindowRouter.shared.showMainWindow(section: section)
     }
 }
 
