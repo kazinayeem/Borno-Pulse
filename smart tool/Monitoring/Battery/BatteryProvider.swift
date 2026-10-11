@@ -71,22 +71,10 @@ public final class BatteryProvider: @unchecked Sendable {
         
         if foundBattery {
             // Read hardware telemetry and power calculations via BatteryPowerService
-            let telemetry: BatteryPowerTelemetry
-            if Thread.isMainThread {
-                telemetry = MainActor.assumeIsolated {
-                    BatteryPowerService.shared.queryHardwarePowerTelemetry(
-                        isPluggedIn: metrics.isPluggedIn,
-                        isCharging: metrics.isCharging
-                    )
-                }
-            } else {
-                telemetry = DispatchQueue.main.sync {
-                    BatteryPowerService.shared.queryHardwarePowerTelemetry(
-                        isPluggedIn: metrics.isPluggedIn,
-                        isCharging: metrics.isCharging
-                    )
-                }
-            }
+            let telemetry = BatteryPowerService.shared.queryHardwarePowerTelemetry(
+                isPluggedIn: metrics.isPluggedIn,
+                isCharging: metrics.isCharging
+            )
             
             if let v = telemetry.voltageVolts { metrics.voltageVolts = v }
             if let a = telemetry.amperageAmps { metrics.amperageAmps = a }
@@ -112,38 +100,18 @@ public final class BatteryProvider: @unchecked Sendable {
             }
             
             // Enrich through dedicated estimation service
-            let estimation: (estimatedMinutes: Int?, confidence: BatteryEstimateConfidence, state: BatteryStateOfCharge, ratePerHour: Double?, formatted: String)
-            if Thread.isMainThread {
-                estimation = MainActor.assumeIsolated {
-                    BatteryEstimationService.shared.processSample(
-                        hasBattery: true,
-                        percentage: metrics.percentage,
-                        isCharging: metrics.isCharging,
-                        isPluggedIn: metrics.isPluggedIn,
-                        timeToEmptyMinutes: metrics.timeToEmptyMinutes,
-                        timeToFullMinutes: metrics.timeToFullMinutes,
-                        voltageVolts: metrics.voltageVolts,
-                        amperageAmps: metrics.amperageAmps,
-                        wattage: metrics.wattage,
-                        temperatureCelsius: metrics.registryTemperatureCelsius
-                    )
-                }
-            } else {
-                estimation = DispatchQueue.main.sync {
-                    BatteryEstimationService.shared.processSample(
-                        hasBattery: true,
-                        percentage: metrics.percentage,
-                        isCharging: metrics.isCharging,
-                        isPluggedIn: metrics.isPluggedIn,
-                        timeToEmptyMinutes: metrics.timeToEmptyMinutes,
-                        timeToFullMinutes: metrics.timeToFullMinutes,
-                        voltageVolts: metrics.voltageVolts,
-                        amperageAmps: metrics.amperageAmps,
-                        wattage: metrics.wattage,
-                        temperatureCelsius: metrics.registryTemperatureCelsius
-                    )
-                }
-            }
+            let estimation = BatteryEstimationService.shared.processSample(
+                hasBattery: true,
+                percentage: metrics.percentage,
+                isCharging: metrics.isCharging,
+                isPluggedIn: metrics.isPluggedIn,
+                timeToEmptyMinutes: metrics.timeToEmptyMinutes,
+                timeToFullMinutes: metrics.timeToFullMinutes,
+                voltageVolts: metrics.voltageVolts,
+                amperageAmps: metrics.amperageAmps,
+                wattage: metrics.wattage,
+                temperatureCelsius: metrics.registryTemperatureCelsius
+            )
             
             metrics.estimatedMinutes = estimation.estimatedMinutes
             metrics.estimateConfidence = estimation.confidence

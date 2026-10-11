@@ -61,30 +61,30 @@ final class PDFEditorCanvasView: PDFView, NSMenuItemValidation {
 
         let center = NotificationCenter.default
         observers.append(center.addObserver(forName: .PDFViewScaleChanged, object: self, queue: .main) { [weak self] _ in
-            MainActor.assumeIsolated {
+            DispatchQueue.main.async {
                 guard let self else { return }
                 self.service?.zoomPercent = Int((self.scaleFactor * 100).rounded())
                 self.overlay.needsDisplay = true
             }
         })
         observers.append(center.addObserver(forName: .PDFViewPageChanged, object: self, queue: .main) { [weak self] _ in
-            MainActor.assumeIsolated { self?.syncCurrentPage() }
+            DispatchQueue.main.async { self?.syncCurrentPage() }
         })
         observers.append(center.addObserver(forName: .PDFViewDocumentChanged, object: self, queue: .main) { [weak self] _ in
-            MainActor.assumeIsolated {
+            DispatchQueue.main.async {
                 self?.attachScrollObserverIfNeeded()
                 self?.overlay.needsDisplay = true
             }
         })
         observers.append(center.addObserver(forName: .PDFViewAnnotationWillHit, object: self, queue: .main) { [weak self] note in
             let isWidget = (note.userInfo?["PDFAnnotationHit"] as? PDFAnnotation)?.type == "Widget"
-            MainActor.assumeIsolated {
+            DispatchQueue.main.async {
                 if isWidget { self?.service?.markDocumentEdited() }
             }
         })
         observers.append(center.addObserver(forName: NSControl.textDidChangeNotification, object: nil, queue: .main) { [weak self] note in
             let field = note.object as? NSView
-            MainActor.assumeIsolated {
+            DispatchQueue.main.async {
                 guard let self, let field, field.isDescendant(of: self) else { return }
                 self.service?.markDocumentEdited()
             }

@@ -315,7 +315,7 @@ public final class GlobalHotKeyService: ObservableObject {
                 return OSStatus(eventNotHandledErr)
             }
             let id = hotKeyID.id
-            MainActor.assumeIsolated {
+            DispatchQueue.main.async {
                 GlobalHotKeyService.shared.handleHotKey(id: id)
             }
             return noErr

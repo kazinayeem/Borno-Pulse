@@ -624,7 +624,7 @@ private struct PageReorderDropDelegate: DropDelegate {
 
     func dropEntered(info: DropInfo) {
         guard let draggingID, draggingID != targetID else { return }
-        MainActor.assumeIsolated {
+        DispatchQueue.main.async {
             withAnimation(.easeInOut(duration: 0.15)) {
                 service.movePage(id: draggingID, before: targetID)
             }
