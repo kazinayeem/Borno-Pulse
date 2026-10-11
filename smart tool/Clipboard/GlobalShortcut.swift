@@ -8,6 +8,10 @@
 //  to Borno Pulse instead of the focused app, so the shortcut is only registered
 //  when clipboard history and the shortcut are both enabled.
 //
+//  Conflict detection covers reserved editing shortcuts, enabled System Settings
+//  shortcuts and common in-app shortcuts. macOS does not report hot keys registered
+//  by other apps, so those conflicts cannot be detected in advance.
+//
 
 import AppKit
 import Carbon.HIToolbox
@@ -259,7 +263,7 @@ public final class GlobalHotKeyService: ObservableObject {
             hotKeyRef = ref
             status = .registered(spec)
         } else if result == OSStatus(eventHotKeyExistsErr) {
-            status = .failed("\(spec.displayString) is already registered by another app. Choose a different shortcut.")
+            status = .failed("\(spec.displayString) is already registered as a hot key. Choose a different shortcut.")
         } else {
             status = .failed("macOS could not register \(spec.displayString) (error \(result)).")
         }

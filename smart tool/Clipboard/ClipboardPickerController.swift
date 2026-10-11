@@ -38,7 +38,6 @@ final class ClipboardPickerPanel: NSPanel {
         standardWindowButton(.closeButton)?.isHidden = true
         standardWindowButton(.miniaturizeButton)?.isHidden = true
         standardWindowButton(.zoomButton)?.isHidden = true
-        setFrameAutosaveName("BornoPulseClipboardPicker")
     }
 
     override var canBecomeKey: Bool { true }
@@ -141,7 +140,7 @@ final class ClipboardPickerController: NSObject, NSWindowDelegate {
         let panel = self.panel ?? makePanel()
         self.panel = panel
         // A fresh hosting view each time re-runs onAppear, which focuses the search field.
-        panel.contentView = NSHostingView(rootView: ClipboardPickerView(
+        let hosting = NSHostingView(rootView: ClipboardPickerView(
             model: model,
             service: service,
             onChoose: { [weak self] item in self?.choose(item) },
@@ -151,6 +150,9 @@ final class ClipboardPickerController: NSObject, NSWindowDelegate {
                 MainWindowRouter.shared.openSettings(tab: .clipboard)
             }
         ))
+        // The panel owns its size; otherwise the list's content height resizes the window past the screen.
+        hosting.sizingOptions = []
+        panel.contentView = hosting
         position(panel)
         panel.makeKeyAndOrderFront(nil)
     }

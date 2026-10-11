@@ -120,7 +120,7 @@ struct ClipboardSettingsView: View {
             }
             hotKeyStatus
 
-            note("Registered with the standard macOS hot-key service: no Accessibility or Input Monitoring permission and no keyboard monitoring. While active, macOS sends this key combination to Borno Pulse in every app, so apps won't receive it. ⌘V is never intercepted. The shortcut is released when history or the shortcut is turned off.")
+            note("Registered with the standard macOS hot-key service: no Accessibility or Input Monitoring permission and no keyboard monitoring. While active, macOS sends this key combination to Borno Pulse in every app, so apps won't receive it. ⌘V is never intercepted. The shortcut is released when history or the shortcut is turned off. Conflicts with System Settings shortcuts are detected; shortcuts claimed by other apps can't be detected in advance.")
         }
     }
 

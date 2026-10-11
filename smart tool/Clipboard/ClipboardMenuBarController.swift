@@ -325,12 +325,14 @@ struct ClipboardMenuBarPopoverView: View {
             Divider().overlay(AppTheme.cardBorder)
 
             HStack(spacing: 6) {
-                Button("Clipboard Manager", action: actions.openManager)
+                Button("Open Manager", action: actions.openManager)
+                    .help("Open Clipboard Manager")
                 Button("Settings…", action: actions.openSettings)
-                Spacer()
+                Spacer(minLength: 4)
                 Button("Quit Borno Pulse", action: actions.quit)
             }
             .controlSize(.small)
+            .fixedSize(horizontal: false, vertical: true)
         }
         .padding(14)
         .frame(width: 340)
