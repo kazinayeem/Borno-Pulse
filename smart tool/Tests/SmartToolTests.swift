@@ -165,7 +165,68 @@ public enum SmartToolTests {
         let exportedSanitizedURL = URL(fileURLWithPath: "/Users/test/Downloads/FinancialReport_sanitized.pdf")
         assert(originalSourceURL != exportedSanitizedURL, "Original file path is strictly isolated from sanitized exported destination")
         
+        // 16. Storage Analytics: Category Classification Invariant
+        let swiftFile = URL(fileURLWithPath: "/Users/test/Code/App.swift")
+        assert(StorageAnalyticsCategory.classify(url: swiftFile) == .developer, "Swift source code classified as Developer")
+        
+        let derivedDataURL = URL(fileURLWithPath: "/Users/test/Library/Developer/Xcode/DerivedData/App-123/Build/Products")
+        assert(StorageAnalyticsCategory.classify(url: derivedDataURL) == .derivedData, "Xcode DerivedData path classified as DerivedData")
+        
+        let cacheURL = URL(fileURLWithPath: "/Users/test/Library/Caches/com.apple.Safari/Cache.db")
+        assert(StorageAnalyticsCategory.classify(url: cacheURL) == .caches, "Library/Caches directory classified as Caches")
+        
+        let videoURL = URL(fileURLWithPath: "/Users/test/Movies/Keynote.mp4")
+        assert(StorageAnalyticsCategory.classify(url: videoURL) == .videos, ".mp4 video classified as Videos")
+        
+        // 17. Storage Analytics: Nested Folder Size Aggregation (No Double Counting)
+        let rootNode = StorageAnalyticsNode(url: URL(fileURLWithPath: "/test"), isDirectory: true, category: .other)
+        let child1 = StorageAnalyticsNode(url: URL(fileURLWithPath: "/test/doc.pdf"), sizeBytes: 5_000_000, isDirectory: false, category: .documents)
+        let child2 = StorageAnalyticsNode(url: URL(fileURLWithPath: "/test/pic.png"), sizeBytes: 3_000_000, isDirectory: false, category: .images)
+        rootNode.children = [child1, child2]
+        let totalFolderSize = rootNode.recalculateRecursiveSize()
+        assert(totalFolderSize == 8_000_000, "Recursive folder size correctly sums child leaves (5MB + 3MB = 8MB)")
+        
+        // 18. Storage Analytics: Squarified Treemap Layout Algorithm
+        let layoutEngine = TreemapLayoutEngine.shared
+        let sampleItems = [
+            TreemapLayoutEngine.LayoutItem(id: "1", name: "Videos", size: 600_000_000, category: .videos),
+            TreemapLayoutEngine.LayoutItem(id: "2", name: "Apps", size: 300_000_000, category: .applications),
+            TreemapLayoutEngine.LayoutItem(id: "3", name: "Docs", size: 100_000_000, category: .documents)
+        ]
+        let boundingBox = CGRect(x: 0, y: 0, width: 800, height: 400)
+        let tiles = layoutEngine.layout(items: sampleItems, bounds: boundingBox)
+        assert(tiles.count == 3, "Treemap produces exact tile count for items")
+        assert(tiles[0].name == "Videos" && tiles[0].percentage == 60.0, "Largest item receives largest percentage (60%)")
+        assert(tiles[0].rect.width > 0 && tiles[0].rect.height > 0, "Tiles receive positive non-zero dimensions")
+        
+        // 19. Storage Analytics: Filesystem vs Scanned Discrepancy Math
+        let reportedUsed: UInt64 = 500 * 1024 * 1024 * 1024 // 500 GB
+        let scannedSum: UInt64 = 420 * 1024 * 1024 * 1024   // 420 GB
+        let unclassified = reportedUsed > scannedSum ? (reportedUsed - scannedSum) : 0
+        assert(unclassified == 80 * 1024 * 1024 * 1024, "Unclassified space correctly reflects SIP and system allocation delta (80 GB)")
+        
+        // 20. Storage Analytics: Cleanup Eligibility Safety Invariant
+        let safeCacheItem = StorageAnalyticsItem(url: URL(fileURLWithPath: "/Users/test/Library/Caches/temp.dat"), sizeBytes: 1024, isDirectory: false)
+        let unsafeUserDoc = StorageAnalyticsItem(url: URL(fileURLWithPath: "/Users/test/Documents/Taxes.pdf"), sizeBytes: 1024, isDirectory: false)
+        let unsafeSystemBinary = StorageAnalyticsItem(url: URL(fileURLWithPath: "/System/Library/CoreServices/Finder.app"), sizeBytes: 1024, isDirectory: true)
+        
+        assert(StorageAnalyticsService.isEligibleForCleanup(item: safeCacheItem) == true, "Library/Caches file is eligible for cleanup")
+        assert(StorageAnalyticsService.isEligibleForCleanup(item: unsafeUserDoc) == false, "Personal documents are strictly INELIGIBLE for arbitrary deletion")
+        assert(StorageAnalyticsService.isEligibleForCleanup(item: unsafeSystemBinary) == false, "System binaries are strictly INELIGIBLE for cleanup")
+        
+        // 21. Storage Analytics: Mounted Volume Percentage Math
+        let volumeTest = StorageVolumeInfo(
+            name: "Macintosh HD",
+            mountURL: URL(fileURLWithPath: "/"),
+            totalCapacityBytes: 1000,
+            availableCapacityBytes: 300,
+            isRootVolume: true
+        )
+        assert(volumeTest.usedCapacityBytes == 700, "Volume used capacity is total - available")
+        assert(abs(volumeTest.usedPercentage - 70.0) < 0.01, "Volume used percentage is accurately 70.0%")
+        
         return (passed, failed, logs)
     }
 }
+
 

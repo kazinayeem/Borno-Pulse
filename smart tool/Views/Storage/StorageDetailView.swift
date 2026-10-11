@@ -112,6 +112,37 @@ public struct StorageDetailView: View {
                     }
                 }
                 .smartCard()
+                
+                // Deep Storage Analytics Call-to-Action
+                VStack(alignment: .leading, spacing: 12) {
+                    HStack {
+                        VStack(alignment: .leading, spacing: 3) {
+                            Text("Deep Storage Analytics & Visual Treemap")
+                                .font(.system(size: 14, weight: .bold))
+                                .foregroundStyle(AppTheme.textPrimary)
+                            Text("Inspect interactive squarified treemaps, largest folders, ranked files, and category distributions.")
+                                .font(.system(size: 11))
+                                .foregroundStyle(AppTheme.textSecondary)
+                        }
+                        
+                        Spacer()
+                        
+                        NavigationLink(value: NavigationSection.storageAnalytics) {
+                            HStack(spacing: 6) {
+                                Image(systemName: "chart.pie.fill")
+                                Text("Open Storage Analytics")
+                            }
+                            .font(.system(size: 12, weight: .semibold))
+                            .padding(.horizontal, 14)
+                            .padding(.vertical, 7)
+                            .background(AppTheme.electricBlue)
+                            .foregroundStyle(.white)
+                            .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+                .smartCard()
             }
             .padding(20)
         }

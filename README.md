@@ -101,7 +101,32 @@ smart tool/
 │   ├── Battery/BatteryDetailView.swift  # Battery chemistry, cycle count, and energy tips
 │   ├── Processes/ProcessMonitorView.swift # Process table, search, sort, and safe termination sheet
 │   ├── Cleaner/CacheCleanerView.swift   # Category cards, review files, dry-run, and safe cleaner
-│   ├── StorageAnalyzer/StorageAnalyzerView.swift # Folder explorer, category allocation & large files
+├── StorageAnalyzer/
+│   ├── StorageAnalyticsModels.swift     # Volume info, categories, nodes, treemap & snapshot models
+│   ├── StorageAnalyticsService.swift    # Background scanning, mounted volumes, tree builder & cleanup
+│   ├── TreemapLayoutEngine.swift        # Pure Swift squarified treemap partition algorithm
+│   └── HistoricalStorageService.swift   # Lightweight local snapshot persistence & user consent
+├── Views/
+│   ├── MainDashboardView.swift          # Primary NavigationSplitView with sidebar
+│   ├── Overview/OverviewView.swift      # 7-card hardware snapshot with live sparklines
+│   ├── CPU/CPUDetailView.swift          # Per-core utilization grid and user/sys/idle breakdown
+│   ├── GPU/GPUDetailView.swift          # Metal architecture, ANE status, and GPU memory
+│   ├── Memory/MemoryDetailView.swift    # RAM breakdown bar, pressure gauge, and swap stats
+│   ├── Sensors/SensorsDetailView.swift  # macOS thermal envelope and throttling diagnostics
+│   ├── Storage/StorageDetailView.swift  # APFS containers, mounted volumes, and purgeable stats
+│   ├── Network/NetworkDetailView.swift  # Live throughput charts, total transfer, and interfaces
+│   ├── Battery/BatteryDetailView.swift  # Battery chemistry, cycle count, and energy tips
+│   ├── Processes/ProcessMonitorView.swift # Process table, search, sort, and safe termination sheet
+│   ├── Cleaner/CacheCleanerView.swift   # Category cards, review files, dry-run, and safe cleaner
+│   ├── StorageAnalyzer/                 # Storage Analytics Suite Views
+│   │   ├── StorageAnalyticsDashboardView.swift # Summary cards, volume switcher, composition bar & hub
+│   │   ├── TreemapView.swift            # Interactive squarified treemap with drill-down & breadcrumbs
+│   │   ├── StorageCategoryDonutChart.swift # Swift Charts category donut with sector filter
+│   │   ├── LargestFoldersBarChart.swift # Top 10/20 horizontal folder bars with Finder reveal
+│   │   ├── LargestFilesBarChart.swift   # Ranked heavy consumer files with parent paths
+│   │   ├── StorageCompositionBarView.swift # Filesystem used vs scanned files vs available space bar
+│   │   ├── HistoricalStorageTrendView.swift# Swift Charts line/area chart over scan history
+│   │   └── StorageExplorerTableView.swift # Searchable, sortable table, CSV export & safe cleanup
 │   ├── FileTools/                       # File Tools Workspace Views
 │   │   ├── FileToolsDashboardView.swift # Central Hub & quick launch view
 │   │   ├── Components/FileDropZoneView.swift # Universal drag-and-drop zone
@@ -112,14 +137,48 @@ smart tool/
 │   └── Settings/SettingsView.swift      # Preferences, thresholds, exclusions & test suite runner
 └── Tests/
     ├── MockProviders.swift              # Mock providers for CPU, Sensors, and Storage
-    └── SmartToolTests.swift             # 15 In-app and terminal unit test suites
+    └── SmartToolTests.swift             # 21 In-app and terminal unit test suites
 ```
 
 ---
 
 ## 3. Features
 
-### A. File Tools Suite (100% Offline & Private)
+### A. Advanced Storage Analytics Dashboard
+A dedicated, visual storage analysis engine that explains exactly what is consuming disk space across all mounted volumes:
+
+1. **Main Storage Overview**:
+   - Summary cards displaying **Total Capacity**, **Used vs. Free Storage**, **Largest Discovered File**, **Scanned File/Folder Counts**, and **Last Scan Timestamp**.
+   - **Mounted Volume Switcher**: Detects mounted APFS containers, external USB/Thunderbolt drives, and custom folder targets.
+   - **Storage Composition Bar**: Visualizes the exact proportion of scanned files, unclassified/reserved system space, and available free capacity, explaining filesystem discrepancies (APFS snapshots, SIP restrictions).
+
+2. **Interactive Squarified Treemap**:
+   - Area-proportional rectangles visualising categories, folders, and heavy files.
+   - Click any folder or category tile to **Drill Down** into nested subdirectories.
+   - **Breadcrumb Navigation**: Shows the complete folder path with one-click navigation to parent folders, plus **Back** and **Reset View** actions.
+   - **Hover Tooltips**: Live popover detailing item name, byte size, and percentage of current view.
+   - **Virtualization & Aggregation**: Smooth 60fps rendering even on folders with 10,000+ files by aggregating minor tail items into a readable "Other (N items)" tile.
+   - Expandable full-canvas visualization mode.
+
+3. **Storage Charts & Visualizations**:
+   - **Category Donut Chart**: Powered by Swift Charts `SectorMark`, displaying distribution across Applications, Documents, Images, Videos, Audio, Downloads, Developer Files, Xcode DerivedData, Archives, and Caches. Clicking a segment filters the file explorer.
+   - **Largest Discovered Folders**: Ranked horizontal bar chart of the top folders by cumulative recursive size with one-click Finder reveal.
+   - **Largest Individual Files**: Ranked bar chart with parent paths and file type badges.
+   - **Historical Storage Trend**: Local snapshot tracking over successive scans (with user consent) with an informative empty state.
+
+4. **Largest Files & Folders Explorer**:
+   - Searchable, sortable table: Name, Category, Size, % of Total, Modification Date, and Location.
+   - Filters: Minimum size (`>100 MB`, `>500 MB`, `>1 GB`), Item type (Files only, Folders only, All), and display limits (Top 10, 25, 50, All).
+   - Actions: Reveal in Finder, Open File, Copy Path, and Export scan results to CSV.
+
+5. **Safe Storage Cleanup Integration**:
+   - Evaluates items for cleanup eligibility (Xcode DerivedData, application caches, temp files).
+   - Never offers deletion for arbitrary system or personal files.
+   - Explains potential consequences in a confirmation modal and recalculates storage space after moving eligible items to Trash.
+
+---
+
+### B. File Tools Suite (100% Offline & Private)
 A collection of native macOS file tools built with `ImageIO`, `CoreGraphics`, `PDFKit`, and `CryptoKit`:
 
 1. **Image Tools**:
@@ -145,7 +204,7 @@ A collection of native macOS file tools built with `ImageIO`, `CoreGraphics`, `P
 
 ---
 
-### B. Menu Bar Popover & Dynamic Status Item
+### C. Menu Bar Popover & Dynamic Status Item
 - **Compact Popover**: Click the status item to view real-time CPU, RAM, GPU, Storage, Network, Battery, and Thermal status.
 - **Configurable Menu Bar Text**: Choose between:
   - Icon Only
@@ -156,20 +215,22 @@ A collection of native macOS file tools built with `ImageIO`, `CoreGraphics`, `P
   - CPU + Network
 - **Quick Actions**: One-click shortcuts to open the full Dashboard, run Quick Cleanup, open Settings, or Quit.
 
-### C. Main Dashboard & Monitoring (13 Sections)
+### D. Main Dashboard & Monitoring (14 Sections)
 1. **Overview**: Executive hardware snapshot featuring 7 dedicated hardware cards and real-time mini charts.
 2. **CPU**: Per-core utilization grid, user vs. system vs. idle ratios, and Darwin Mach kernel load info.
 3. **GPU & Neural Engine**: Metal device specs, unified memory architecture, and Apple Neural Engine integration.
 4. **Memory**: Page-accurate RAM distribution (App, Wired, Compressed, Free), pressure gauge, and swap usage.
 5. **Temperature & Fans**: Real-time macOS thermal pressure state, throttling detection, and hardware cooling diagnostics.
 6. **Storage**: APFS container breakdown, opportunistic/purgeable space awareness, and volume metrics.
-7. **Network**: Real-time download/upload speeds, lifetime byte counters, and active interface details.
-8. **Battery & Energy**: Battery health, cycle count, charging status, and energy optimization tips.
-9. **File Tools**: Full hub for Image Tools, PDF Tools, and File Utilities.
-10. **Processes**: Real-time process explorer powered by `libproc` with CPU/RAM sorting, search, and safe quit.
-11. **Cache Cleaner**: Two-step review-and-confirm workflow with **Dry-Run Simulation**.
-12. **Diagnostics & Self-Tests**: Hardware audit, API matrix, and **15 Invariant Self-Tests** with Markdown report export.
-13. **Settings**: Polling intervals, temperature units, theme appearance, launch-at-login, and cleanup exclusions.
+7. **Storage Analytics**: Deep visual analysis with interactive treemaps, category donuts, and ranked explorer.
+8. **Network**: Real-time download/upload speeds, lifetime byte counters, and active interface details.
+9. **Battery & Energy**: Battery health, cycle count, charging status, and energy optimization tips.
+10. **File Tools**: Full hub for Image Tools, PDF Tools, and File Utilities.
+11. **Processes**: Real-time process explorer powered by `libproc` with CPU/RAM sorting, search, and safe quit.
+12. **Cache Cleaner**: Two-step review-and-confirm workflow with **Dry-Run Simulation**.
+13. **Diagnostics & Self-Tests**: Hardware audit, API matrix, and **21 Invariant Self-Tests** with Markdown report export.
+14. **Settings**: Polling intervals, temperature units, theme appearance, launch-at-login, and cleanup exclusions.
+
 
 ### C. Desktop Widget (WidgetKit)
 - Provides `.systemSmall`, `.systemMedium`, and `.systemLarge` desktop widget layouts.
