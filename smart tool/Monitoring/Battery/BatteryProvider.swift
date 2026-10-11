@@ -6,14 +6,11 @@
 import Foundation
 import IOKit.ps
 
-public final class BatteryProvider: @unchecked Sendable {
-    private let lock = NSLock()
-    
+@MainActor
+public final class BatteryProvider {
     public init() {}
     
     public func sample() -> BatteryMetrics {
-        lock.lock()
-        defer { lock.unlock() }
         
         var metrics = BatteryMetrics()
         

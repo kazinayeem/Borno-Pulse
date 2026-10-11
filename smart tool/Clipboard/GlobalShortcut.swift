@@ -315,9 +315,13 @@ public final class GlobalHotKeyService: ObservableObject {
                 return OSStatus(eventNotHandledErr)
             }
             let id = hotKeyID.id
-            AppLog.concurrency.debug("[GlobalShortcut] HotKey event received on thread \(Thread.isMainThread ? "main" : "background"), dispatching to MainActor (id: \(id))")
-            DispatchQueue.main.async {
+            AppLog.concurrency.debug("[GlobalShortcut] HotKey event received on thread \(Thread.isMainThread ? "main" : "background"), id: \(id)")
+            if Thread.isMainThread {
                 GlobalHotKeyService.shared.handleHotKey(id: id)
+            } else {
+                DispatchQueue.main.async {
+                    GlobalHotKeyService.shared.handleHotKey(id: id)
+                }
             }
             return noErr
         }, 1, &eventSpec, nil, &handlerRef)

@@ -104,8 +104,6 @@ public final class BatteryEstimationService: ObservableObject {
     private var hasAlertedFullCharge: Bool = false
     private var hasAlertedRapidDischarge: Bool = false
     
-    private let stateLock = NSLock()
-
     private var historyFileURL: URL {
         let appSupport = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
         let dir = appSupport.appendingPathComponent("NaemSmartTool/Battery", isDirectory: true)
@@ -119,7 +117,7 @@ public final class BatteryEstimationService: ObservableObject {
     }
     
     // MARK: - Process Raw Battery Sample
-    public nonisolated func processSample(
+    public func processSample(
         hasBattery: Bool,
         percentage: Int,
         isCharging: Bool,
@@ -143,12 +141,20 @@ public final class BatteryEstimationService: ObservableObject {
         
         let now = Date()
         
-        stateLock.lock()
         // Check state transitions (charging changed or AC plugged changed)
         if let lastState = activeWindowSamples.last {
             if lastState.isPluggedIn != isPluggedIn || lastState.isCharging != isCharging {
                 // Reset active window on state transition
                 activeWindowSamples.removeAll()
+                if !isPluggedIn {
+                    // Reset full charge alert on unplugging
+                    hasAlertedFullCharge = false
+                }
+                if isPluggedIn {
+                    // Reset low battery and rapid discharge alerts on plugging in
+                    hasAlertedLowBattery = false
+                    hasAlertedRapidDischarge = false
+                }
             } else if now.timeIntervalSince(lastState.date) > 45.0 {
                 // Machine was asleep or large time gap -> reset window to avoid skewed rate
                 activeWindowSamples.removeAll()
@@ -160,14 +166,12 @@ public final class BatteryEstimationService: ObservableObject {
         // Keep active window bounded to last 15 minutes of samples
         let cutoff = now.addingTimeInterval(-900)
         activeWindowSamples.removeAll { $0.date < cutoff }
-        let currentWindow = activeWindowSamples
-        stateLock.unlock()
         
         let lowThreshold = AppSettings.shared.batteryAlertThreshold
         
         // Compute estimate
         let estimate = Self.computeEstimate(
-            samples: currentWindow,
+            samples: activeWindowSamples,
             lowBatteryThreshold: lowThreshold,
             osTimeToEmptyMinutes: timeToEmptyMinutes,
             osTimeToFullMinutes: timeToFullMinutes
@@ -182,44 +186,40 @@ public final class BatteryEstimationService: ObservableObject {
             formattedTimeRemaining: estimate.formatted,
             lastUpdated: now
         )
+        self.latestEstimate = estimateResult
         
-        Task { @MainActor [weak self] in
-            guard let self = self else { return }
-            self.latestEstimate = estimateResult
-            
-            // Append to historical samples (throttle history append to once every 30 seconds unless state changed)
-            let shouldRecordHistory: Bool
-            if let lastHistorical = self.history.last {
-                let elapsed = now.timeIntervalSince(lastHistorical.timestamp)
-                let stateChanged = lastHistorical.isCharging != isCharging || lastHistorical.isPluggedIn != isPluggedIn
-                shouldRecordHistory = elapsed >= 30.0 || stateChanged
-            } else {
-                shouldRecordHistory = true
-            }
-            
-            if shouldRecordHistory {
-                let sample = BatteryHistoricalSample(
-                    timestamp: now,
-                    percentage: percentage,
-                    isCharging: isCharging,
-                    isPluggedIn: isPluggedIn,
-                    ratePerHour: estimate.ratePerHour,
-                    wattage: wattage,
-                    estimatedMinutes: estimate.minutes
-                )
-                self.history.append(sample)
-                self.pruneAndPersistHistory()
-            }
-            
-            // Evaluate notifications
-            self.evaluateNotifications(
+        // Append to historical samples (throttle history append to once every 30 seconds unless state changed)
+        let shouldRecordHistory: Bool
+        if let lastHistorical = history.last {
+            let elapsed = now.timeIntervalSince(lastHistorical.timestamp)
+            let stateChanged = lastHistorical.isCharging != isCharging || lastHistorical.isPluggedIn != isPluggedIn
+            shouldRecordHistory = elapsed >= 30.0 || stateChanged
+        } else {
+            shouldRecordHistory = true
+        }
+        
+        if shouldRecordHistory {
+            let sample = BatteryHistoricalSample(
+                timestamp: now,
                 percentage: percentage,
                 isCharging: isCharging,
                 isPluggedIn: isPluggedIn,
                 ratePerHour: estimate.ratePerHour,
-                formattedRemaining: estimate.formatted
+                wattage: wattage,
+                estimatedMinutes: estimate.minutes
             )
+            history.append(sample)
+            pruneAndPersistHistory()
         }
+        
+        // Evaluate notifications
+        evaluateNotifications(
+            percentage: percentage,
+            isCharging: isCharging,
+            isPluggedIn: isPluggedIn,
+            ratePerHour: estimate.ratePerHour,
+            formattedRemaining: estimate.formatted
+        )
         
         return (
             estimatedMinutes: estimate.minutes,

@@ -61,32 +61,56 @@ final class PDFEditorCanvasView: PDFView, NSMenuItemValidation {
 
         let center = NotificationCenter.default
         observers.append(center.addObserver(forName: .PDFViewScaleChanged, object: self, queue: .main) { [weak self] _ in
-            DispatchQueue.main.async {
+            if Thread.isMainThread {
                 guard let self else { return }
                 self.service?.zoomPercent = Int((self.scaleFactor * 100).rounded())
                 self.overlay.needsDisplay = true
+            } else {
+                DispatchQueue.main.async {
+                    guard let self else { return }
+                    self.service?.zoomPercent = Int((self.scaleFactor * 100).rounded())
+                    self.overlay.needsDisplay = true
+                }
             }
         })
         observers.append(center.addObserver(forName: .PDFViewPageChanged, object: self, queue: .main) { [weak self] _ in
-            DispatchQueue.main.async { self?.syncCurrentPage() }
+            if Thread.isMainThread {
+                self?.syncCurrentPage()
+            } else {
+                DispatchQueue.main.async { self?.syncCurrentPage() }
+            }
         })
         observers.append(center.addObserver(forName: .PDFViewDocumentChanged, object: self, queue: .main) { [weak self] _ in
-            DispatchQueue.main.async {
+            if Thread.isMainThread {
                 self?.attachScrollObserverIfNeeded()
                 self?.overlay.needsDisplay = true
+            } else {
+                DispatchQueue.main.async {
+                    self?.attachScrollObserverIfNeeded()
+                    self?.overlay.needsDisplay = true
+                }
             }
         })
         observers.append(center.addObserver(forName: .PDFViewAnnotationWillHit, object: self, queue: .main) { [weak self] note in
             let isWidget = (note.userInfo?["PDFAnnotationHit"] as? PDFAnnotation)?.type == "Widget"
-            DispatchQueue.main.async {
-                if isWidget { self?.service?.markDocumentEdited() }
+            if isWidget {
+                if Thread.isMainThread {
+                    self?.service?.markDocumentEdited()
+                } else {
+                    DispatchQueue.main.async { self?.service?.markDocumentEdited() }
+                }
             }
         })
         observers.append(center.addObserver(forName: NSControl.textDidChangeNotification, object: nil, queue: .main) { [weak self] note in
             let field = note.object as? NSView
-            DispatchQueue.main.async {
+            if Thread.isMainThread {
                 guard let self, let field, field.isDescendant(of: self) else { return }
                 self.service?.markDocumentEdited()
+            } else {
+                DispatchQueue.main.async {
+                    guard let self, let field, field.isDescendant(of: self) else { return }
+                    self.service?.markDocumentEdited()
+                }
             }
         })
     }
@@ -130,7 +154,11 @@ final class PDFEditorCanvasView: PDFView, NSMenuItemValidation {
         observedClipView = clip
         clip.postsBoundsChangedNotifications = true
         observers.append(NotificationCenter.default.addObserver(forName: NSView.boundsDidChangeNotification, object: clip, queue: .main) { [weak self] _ in
-            DispatchQueue.main.async { self?.overlay.needsDisplay = true }
+            if Thread.isMainThread {
+                self?.overlay.needsDisplay = true
+            } else {
+                DispatchQueue.main.async { self?.overlay.needsDisplay = true }
+            }
         })
     }
 
