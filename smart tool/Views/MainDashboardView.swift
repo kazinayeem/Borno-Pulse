@@ -16,6 +16,7 @@ public enum NavigationSection: String, CaseIterable, Identifiable {
     case battery = "Battery & Energy"
     case processes = "Processes"
     case cleaner = "Cache Cleaner"
+    case fileTools = "File Tools"
     case diagnostics = "Diagnostics"
     case settings = "Settings"
     
@@ -33,6 +34,7 @@ public enum NavigationSection: String, CaseIterable, Identifiable {
         case .battery: return "battery.100.bolt"
         case .processes: return "list.bullet.rectangle.portrait"
         case .cleaner: return "sparkles"
+        case .fileTools: return "folder.badge.gearshape"
         case .diagnostics: return "waveform.path.ecg.rectangle"
         case .settings: return "gearshape.fill"
         }
@@ -68,6 +70,10 @@ public struct MainDashboardView: View {
                 sidebarItem(.storage)
                 sidebarItem(.network)
                 sidebarItem(.battery)
+            }
+            
+            Section("File Tools") {
+                sidebarItem(.fileTools)
             }
             
             Section("System Utilities") {
@@ -108,6 +114,7 @@ public struct MainDashboardView: View {
         case .battery: return AppTheme.successGreen
         case .processes: return AppTheme.electricBlueLight
         case .cleaner: return AppTheme.electricCyan
+        case .fileTools: return AppTheme.neonCyan
         case .diagnostics: return AppTheme.electricBlue
         case .settings: return AppTheme.textSecondary
         }
@@ -168,6 +175,8 @@ public struct MainDashboardView: View {
             ProcessMonitorView()
         case .cleaner:
             CacheCleanerView()
+        case .fileTools:
+            FileToolsDashboardView()
         case .diagnostics:
             DiagnosticsView()
         case .settings:

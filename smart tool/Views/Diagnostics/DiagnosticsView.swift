@@ -91,10 +91,76 @@ public struct DiagnosticsView: View {
                         .foregroundStyle(AppTheme.textSecondary)
                 }
                 .smartCard()
+                
+                // Self-Test Suite & Invariant Validation
+                selfTestSection
             }
             .padding(20)
         }
     }
+    
+    @State private var testResults: (passed: Int, failed: Int, logs: [String])? = nil
+    @State private var isRunningTests = false
+    
+    private var selfTestSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                Label("Invariant Self-Test Suite & Verification", systemImage: "checklist")
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundStyle(AppTheme.electricBlue)
+                
+                Spacer()
+                
+                Button {
+                    isRunningTests = true
+                    DispatchQueue.global(qos: .userInitiated).async {
+                        let res = SmartToolTests.runAllTests()
+                        DispatchQueue.main.async {
+                            testResults = res
+                            isRunningTests = false
+                        }
+                    }
+                } label: {
+                    HStack(spacing: 6) {
+                        Image(systemName: "play.circle.fill")
+                        Text(isRunningTests ? "Running Tests..." : "Run All Invariant Tests")
+                    }
+                }
+                .buttonStyle(.borderedProminent)
+                .tint(AppTheme.electricBlue)
+                .disabled(isRunningTests)
+            }
+            
+            if let results = testResults {
+                HStack(spacing: 16) {
+                    Text("Passed: \(results.passed)")
+                        .font(.system(size: 12, weight: .bold))
+                        .foregroundStyle(AppTheme.successGreen)
+                    
+                    Text("Failed: \(results.failed)")
+                        .font(.system(size: 12, weight: .bold))
+                        .foregroundStyle(results.failed == 0 ? AppTheme.textSecondary : AppTheme.dangerRed)
+                }
+                
+                VStack(alignment: .leading, spacing: 4) {
+                    ForEach(results.logs, id: \.self) { log in
+                        Text(log)
+                            .font(.system(size: 11, design: .monospaced))
+                            .foregroundStyle(log.contains("PASS") ? AppTheme.successGreen : AppTheme.dangerRed)
+                    }
+                }
+                .padding(10)
+                .background(Color.black.opacity(0.2))
+                .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
+            } else {
+                Text("Verify system calculation invariants, image format conversion math, no-upscaling guards, PDF split/merge ranges, batch renamer collision detectors, and cryptographic hashing routines.")
+                    .font(.system(size: 11))
+                    .foregroundStyle(AppTheme.textTertiary)
+            }
+        }
+        .smartCard()
+    }
+
     
     private func apiRow(name: String, status: String, available: Bool) -> some View {
         HStack {

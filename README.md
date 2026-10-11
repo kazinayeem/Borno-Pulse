@@ -68,6 +68,27 @@ smart tool/
 │   └── MenuBarPopoverView.swift         # Compact menu bar panel with live mini gauges & actions
 ├── WidgetExtension/
 │   └── SmartToolWidget.swift            # WidgetKit desktop widget (Small, Medium, Large layouts)
+├── FileTools/
+│   ├── ImageTools/
+│   │   ├── ImageToolModels.swift             # Models, formats, presets & metadata structures
+│   │   ├── ImageFormatConverterService.swift # ImageIO/CoreGraphics format conversion & alpha flattening
+│   │   ├── ImageCompressorService.swift      # Lossy/lossless compression, presets & size reduction
+│   │   ├── ImageResizerService.swift         # Aspect ratio scaling, pixel/preset & no-upscaling guard
+│   │   └── ImageMetadataService.swift        # EXIF, camera info, color profile & location scrub exporter
+│   ├── PDFTools/
+│   │   ├── PDFToolModels.swift               # PDF page items, presets & metadata records
+│   │   ├── PDFCompressorService.swift        # PDF stream optimization & image downsampling
+│   │   ├── PDFToImagesService.swift          # CoreGraphics page rasterizer (DPI & page range selection)
+│   │   ├── ImagesToPDFService.swift          # PDFPage & A4/Letter/Custom canvas layout generator
+│   │   ├── PDFMergerSplitterService.swift    # Multi-doc merger & page range/interval splitter
+│   │   ├── PDFPageToolsService.swift         # 90° page rotation, deletion & thumbnail organizer
+│   │   └── PDFSecurityService.swift          # Encryption unlock, metadata audit & privacy sanitizer
+│   └── FileUtilities/
+│       ├── ChecksumService.swift             # CryptoKit SHA-256, MD5, SHA-1 hashing & verifier
+│       ├── BatchRenamerService.swift         # Find/replace, prefix/suffix, numbering & collision guard
+│       ├── DuplicateFinderService.swift      # Two-tier size bucketing & SHA-256 duplicate finder
+│       ├── ArchiveUtilityService.swift       # ZIP compressor & extractor with path traversal guard
+│       └── TextEncodingInspectorService.swift# UTF-8/UTF-16/BOM/ASCII detector & CRLF/LF line ending analysis
 ├── Views/
 │   ├── MainDashboardView.swift          # Primary NavigationSplitView with sidebar
 │   ├── Overview/OverviewView.swift      # 7-card hardware snapshot with live sparklines
@@ -81,18 +102,50 @@ smart tool/
 │   ├── Processes/ProcessMonitorView.swift # Process table, search, sort, and safe termination sheet
 │   ├── Cleaner/CacheCleanerView.swift   # Category cards, review files, dry-run, and safe cleaner
 │   ├── StorageAnalyzer/StorageAnalyzerView.swift # Folder explorer, category allocation & large files
+│   ├── FileTools/                       # File Tools Workspace Views
+│   │   ├── FileToolsDashboardView.swift # Central Hub & quick launch view
+│   │   ├── Components/FileDropZoneView.swift # Universal drag-and-drop zone
+│   │   ├── ImageTools/                  # Converter, Compressor, Resizer & Metadata Views
+│   │   ├── PDFTools/                    # PDF Compressor, PDF2Img, Img2PDF, Merge/Split, Pages, Security
+│   │   └── FileUtilities/               # Checksum, Renamer, Duplicates, ZIP & Text Inspector
 │   ├── Diagnostics/DiagnosticsView.swift # System audit, API matrix, and redacted report export
 │   └── Settings/SettingsView.swift      # Preferences, thresholds, exclusions & test suite runner
 └── Tests/
     ├── MockProviders.swift              # Mock providers for CPU, Sensors, and Storage
-    └── SmartToolTests.swift             # In-app and terminal unit test suite
+    └── SmartToolTests.swift             # 15 In-app and terminal unit test suites
 ```
 
 ---
 
 ## 3. Features
 
-### A. Menu Bar Popover & Dynamic Status Item
+### A. File Tools Suite (100% Offline & Private)
+A collection of native macOS file tools built with `ImageIO`, `CoreGraphics`, `PDFKit`, and `CryptoKit`:
+
+1. **Image Tools**:
+   - **Format Converter**: Batch convert PNG, JPG, WebP, HEIC, TIFF, BMP. For PNG to JPG conversion, includes an interactive background color picker (default white) to flatten transparency cleanly. Preserves dimensions and orientation.
+   - **Image Compressor**: Compress JPG, PNG, and WebP using presets (High Quality 85%, Balanced 70%, Small File 50%, or Custom). Displays before-and-after sizes and percentage savings.
+   - **Image Resizer**: Scale by pixels, percentage, or social/display presets with aspect ratio lock and an anti-upscaling safety guard.
+   - **Metadata Viewer**: Inspect EXIF tags, camera details, color profile, and export location-scrubbed copies.
+
+2. **PDF Tools**:
+   - **PDF Compressor**: Streamlines PDF streams and downsamples images without altering vector text or page geometry.
+   - **PDF to Images**: High-resolution rasterization to PNG or JPG with selectable DPI (72, 150, 300, 600) and page ranges.
+   - **Images to PDF**: Combine multiple images into multi-page PDFs with A4, US Letter, or custom canvas sizing.
+   - **PDF Merger & Splitter**: Merge documents in custom order or split by page ranges, every page, or every N pages.
+   - **PDF Page Organizer**: 90° clockwise rotation, page removal, and export of a modified document copy.
+   - **PDF Security & Privacy**: Password unlock interface for encrypted PDFs and one-click export of metadata-stripped copies.
+
+3. **File Utilities**:
+   - **Checksum Calculator**: Compute SHA-256, MD5, and SHA-1 hashes with live comparison and verification against expected checksums.
+   - **Batch File Renamer**: Find & replace, prefix/suffix, number sequencing, and casing transformations with live collision detection.
+   - **Duplicate File Finder**: Two-tier scanner using exact file size bucketing followed by SHA-256 cryptographic match, with safe confirmation deletion.
+   - **ZIP Archive Utility**: Create and extract ZIP archives natively with strict path traversal (Zip-Slip) protection.
+   - **Text Encoding Inspector**: Detects UTF-8, UTF-16, ASCII, Windows-1252, BOM headers, and CRLF vs LF line endings.
+
+---
+
+### B. Menu Bar Popover & Dynamic Status Item
 - **Compact Popover**: Click the status item to view real-time CPU, RAM, GPU, Storage, Network, Battery, and Thermal status.
 - **Configurable Menu Bar Text**: Choose between:
   - Icon Only
@@ -103,19 +156,20 @@ smart tool/
   - CPU + Network
 - **Quick Actions**: One-click shortcuts to open the full Dashboard, run Quick Cleanup, open Settings, or Quit.
 
-### B. Main Dashboard (12 Sections)
+### C. Main Dashboard & Monitoring (13 Sections)
 1. **Overview**: Executive hardware snapshot featuring 7 dedicated hardware cards and real-time mini charts.
-2. **CPU**: Per-core utilization grid, user vs. system vs. idle ratios, logical processor count, and Darwin Mach kernel load info.
-3. **GPU & Neural Engine**: Metal device specs, unified memory architecture, working set sizes, and Apple Neural Engine integration.
-4. **Memory**: Page-accurate RAM distribution (App, Wired, Compressed, Free), memory pressure level, and APFS swap usage.
+2. **CPU**: Per-core utilization grid, user vs. system vs. idle ratios, and Darwin Mach kernel load info.
+3. **GPU & Neural Engine**: Metal device specs, unified memory architecture, and Apple Neural Engine integration.
+4. **Memory**: Page-accurate RAM distribution (App, Wired, Compressed, Free), pressure gauge, and swap usage.
 5. **Temperature & Fans**: Real-time macOS thermal pressure state, throttling detection, and hardware cooling diagnostics.
 6. **Storage**: APFS container breakdown, opportunistic/purgeable space awareness, and volume metrics.
-7. **Network**: Real-time download/upload speeds, lifetime byte counters, and active interface details (IP, Wi-Fi, Ethernet).
-8. **Battery & Energy**: Battery health, cycle count, charging status, power adapter detection, and energy optimization tips.
-9. **Processes**: Real-time process explorer powered by `libproc` with CPU/RAM sorting, search, and a safe confirmation sheet for quitting processes.
-10. **Cache Cleaner**: Two-step review-and-confirm workflow for user application caches, temp files, Xcode DerivedData, and diagnostic logs. Includes **Dry-Run Simulation**.
-11. **Diagnostics**: Hardware audit, native API availability matrix, and an **Exportable Diagnostic Report** with automatic privacy redaction.
-12. **Settings**: Polling intervals, temperature units (°C/°F), theme appearance, launch-at-login, alert thresholds, and cleanup exclusions.
+7. **Network**: Real-time download/upload speeds, lifetime byte counters, and active interface details.
+8. **Battery & Energy**: Battery health, cycle count, charging status, and energy optimization tips.
+9. **File Tools**: Full hub for Image Tools, PDF Tools, and File Utilities.
+10. **Processes**: Real-time process explorer powered by `libproc` with CPU/RAM sorting, search, and safe quit.
+11. **Cache Cleaner**: Two-step review-and-confirm workflow with **Dry-Run Simulation**.
+12. **Diagnostics & Self-Tests**: Hardware audit, API matrix, and **15 Invariant Self-Tests** with Markdown report export.
+13. **Settings**: Polling intervals, temperature units, theme appearance, launch-at-login, and cleanup exclusions.
 
 ### C. Desktop Widget (WidgetKit)
 - Provides `.systemSmall`, `.systemMedium`, and `.systemLarge` desktop widget layouts.

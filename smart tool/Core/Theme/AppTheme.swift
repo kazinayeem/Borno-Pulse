@@ -10,9 +10,11 @@ public enum AppTheme {
     public static let electricBlue = Color(red: 0.08, green: 0.55, blue: 1.00)
     public static let electricBlueLight = Color(red: 0.25, green: 0.68, blue: 1.00)
     public static let electricCyan = Color(red: 0.00, green: 0.84, blue: 0.95)
+    public static let neonCyan = electricCyan
     
     // Status Colors
     public static let successGreen = Color(red: 0.20, green: 0.84, blue: 0.52)
+    public static let matrixGreen = successGreen
     public static let warningAmber = Color(red: 1.00, green: 0.72, blue: 0.18)
     public static let dangerRed = Color(red: 1.00, green: 0.32, blue: 0.36)
     public static let purpleAccent = Color(red: 0.68, green: 0.42, blue: 1.00)
@@ -20,6 +22,7 @@ public enum AppTheme {
     
     // Surfaces
     public static let graphiteCanvas = Color(red: 0.07, green: 0.08, blue: 0.10)
+    public static let background = graphiteCanvas
     public static let cardBackground = Color(red: 0.12, green: 0.13, blue: 0.17)
     public static let cardBackgroundSecondary = Color(red: 0.15, green: 0.16, blue: 0.21)
     public static let cardBorder = Color.white.opacity(0.08)

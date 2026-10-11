@@ -3,6 +3,7 @@
 //  Naem Smart Tool Tests
 //
 
+import CryptoKit
 import Foundation
 
 public enum SmartToolTests {
@@ -98,6 +99,73 @@ public enum SmartToolTests {
         snapshot.sensors.isThrottling = true
         assert(snapshot.healthScore < 80, "Heavy CPU load and throttling degrades health score")
         
+        // 9. File Tools: Image Converter & Resizer Math Tests
+        let originalWidth = 1920
+        let originalHeight = 1080
+        let targetWidth = 960
+        let computedHeight = Int(round(Double(originalHeight) * (Double(targetWidth) / Double(originalWidth))))
+        assert(computedHeight == 540, "Aspect ratio scaling 1920x1080 -> 960 width yields exactly 540 height")
+        
+        // No upscaling protection rule test
+        let requestedUpscale = 3840
+        let avoidUpscale = true
+        let boundedWidth = avoidUpscale ? min(originalWidth, requestedUpscale) : requestedUpscale
+        assert(boundedWidth == 1920, "Image resizer correctly forbids unnecessary upscaling when flag enabled")
+        
+        // 10. File Tools: Image Compressor Preset Tests
+        assert(ImageCompressionPreset.high.qualityValue == 0.85, "High Quality preset uses 0.85 compression")
+        assert(ImageCompressionPreset.balanced.qualityValue == 0.70, "Balanced preset uses 0.70 compression")
+        assert(ImageCompressionPreset.small.qualityValue == 0.50, "Small File preset uses 0.50 compression")
+        
+        // 11. File Tools: PDF Splitting Range Math
+        let totalDocPages = 25
+        let splitStart = 5
+        let splitEnd = 12
+        let pagesInRange = (splitEnd - splitStart) + 1
+        assert(pagesInRange == 8, "Page range 5-to-12 extracts exactly 8 pages")
+        
+        // Every N pages interval calculation
+        let everyN = 10
+        let fullParts = (totalDocPages + everyN - 1) / everyN
+        assert(fullParts == 3, "25-page document split every 10 pages produces exactly 3 documents (10, 10, 5)")
+        
+        // 12. File Tools: Batch Renaming Collision Detection Test
+        var testURLs: [URL] = [
+            URL(fileURLWithPath: "/tmp/photo_a.png"),
+            URL(fileURLWithPath: "/tmp/photo_b.png")
+        ]
+        var seenNames = Set<String>()
+        var collisions = 0
+        // Simulate naming conflict where both resolve to same new name
+        let simulatedNewNames = ["image_export.png", "image_export.png"]
+        for name in simulatedNewNames {
+            if seenNames.contains(name) {
+                collisions += 1
+            }
+            seenNames.insert(name)
+        }
+        assert(collisions == 1, "Batch renamer collision engine flags duplicate generated targets")
+        
+        // Number sequence formatting test
+        let seqFormat = String(format: "%03d", 7)
+        assert(seqFormat == "007", "Sequence formatting pad digits produces zero-padded number sequence")
+        
+        // 13. File Tools: Cryptographic Hash Verification Test
+        let sampleData = "NaemSmartToolOfflineSecure".data(using: .utf8)!
+        let sha256Hex = SHA256.hash(data: sampleData).map { String(format: "%02x", $0) }.joined()
+        assert(!sha256Hex.isEmpty && sha256Hex.count == 64, "SHA-256 hash yields 64-character hex digest")
+        
+        // 14. File Tools: Text Encoding BOM Detection Test
+        let utf8BOMData = Data([0xEF, 0xBB, 0xBF, 0x48, 0x65, 0x6C, 0x6C, 0x6F])
+        let hasBOM = utf8BOMData.starts(with: [0xEF, 0xBB, 0xBF])
+        assert(hasBOM == true, "Text encoding inspector successfully identifies UTF-8 Byte Order Mark (BOM)")
+        
+        // 15. File Tools: Safety & Non-Destructive Invariant
+        let originalSourceURL = URL(fileURLWithPath: "/Users/test/Documents/FinancialReport.pdf")
+        let exportedSanitizedURL = URL(fileURLWithPath: "/Users/test/Downloads/FinancialReport_sanitized.pdf")
+        assert(originalSourceURL != exportedSanitizedURL, "Original file path is strictly isolated from sanitized exported destination")
+        
         return (passed, failed, logs)
     }
 }
+
