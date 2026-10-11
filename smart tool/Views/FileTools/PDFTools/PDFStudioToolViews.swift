@@ -624,6 +624,7 @@ private struct PageReorderDropDelegate: DropDelegate {
 
     func dropEntered(info: DropInfo) {
         guard let draggingID, draggingID != targetID else { return }
+        AppLog.concurrency.debug("[PDFStudio] Reorder drop entered on thread \(Thread.isMainThread ? "main" : "background"), animating on main queue")
         DispatchQueue.main.async {
             withAnimation(.easeInOut(duration: 0.15)) {
                 service.movePage(id: draggingID, before: targetID)

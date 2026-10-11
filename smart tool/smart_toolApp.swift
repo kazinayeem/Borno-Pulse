@@ -50,6 +50,7 @@ struct smart_toolApp: App {
     }
 }
 
+@MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationWillFinishLaunching(_ notification: Notification) {
         AppearanceController.shared.start()
@@ -184,9 +185,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
     
     func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
-        let proceed = MainActor.assumeIsolated {
-            PDFEditorService.shared.confirmProceedWithUnsavedChanges(before: "quitting")
-        }
+        let proceed = PDFEditorService.shared.confirmProceedWithUnsavedChanges(before: "quitting")
         return proceed ? .terminateNow : .terminateCancel
     }
 

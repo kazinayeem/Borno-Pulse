@@ -115,7 +115,7 @@ public final class BatteryPowerService: ObservableObject {
     public init() {}
 
     // MARK: - Hardware Telemetry Acquisition
-    public nonisolated func queryHardwarePowerTelemetry(isPluggedIn: Bool, isCharging: Bool) -> BatteryPowerTelemetry {
+    public func queryHardwarePowerTelemetry(isPluggedIn: Bool, isCharging: Bool) -> BatteryPowerTelemetry {
         let matching = IOServiceMatching("AppleSmartBattery")
         var iterator: io_iterator_t = 0
 
@@ -138,11 +138,8 @@ public final class BatteryPowerService: ObservableObject {
         }
 
         let telemetry = Self.parseAppleSmartBatteryProperties(dict, isPluggedIn: isPluggedIn, isCharging: isCharging)
-        Task { @MainActor [weak self] in
-            guard let self = self else { return }
-            self.latestTelemetry = telemetry
-            self.recordSample(telemetry: telemetry, isCharging: isCharging, isPluggedIn: isPluggedIn)
-        }
+        self.latestTelemetry = telemetry
+        recordSample(telemetry: telemetry, isCharging: isCharging, isPluggedIn: isPluggedIn)
         return telemetry
     }
 

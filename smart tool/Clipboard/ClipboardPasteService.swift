@@ -180,7 +180,9 @@ public final class ClipboardHUD {
 
         hideWorkItem?.cancel()
         let work = DispatchWorkItem { [weak self] in
-            MainActor.assumeIsolated { self?.panel?.orderOut(nil) }
+            DispatchQueue.main.async {
+                self?.panel?.orderOut(nil)
+            }
         }
         hideWorkItem = work
         DispatchQueue.main.asyncAfter(deadline: .now() + 2.8, execute: work)

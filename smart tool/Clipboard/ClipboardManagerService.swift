@@ -261,7 +261,9 @@ public final class ClipboardManagerService: ObservableObject {
         lastChangeCount = pasteboard.changeCount
         guard environment.usesTimers else { return }
         let timer = Timer(timeInterval: Self.pollInterval, repeats: true) { [weak self] _ in
-            MainActor.assumeIsolated { _ = self?.captureIfChanged() }
+            Task { @MainActor [weak self] in
+                _ = self?.captureIfChanged()
+            }
         }
         timer.tolerance = 0.25
         RunLoop.main.add(timer, forMode: .common)
@@ -324,7 +326,7 @@ public final class ClipboardManagerService: ObservableObject {
         resumeTimer = nil
         guard environment.usesTimers, let until = pausedUntil else { return }
         let timer = Timer(fire: until, interval: 0, repeats: false) { [weak self] _ in
-            MainActor.assumeIsolated {
+            Task { @MainActor [weak self] in
                 guard let self, self.isPaused else { return }
                 self.resume()
             }

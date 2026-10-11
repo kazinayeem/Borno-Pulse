@@ -130,7 +130,7 @@ final class PDFEditorCanvasView: PDFView, NSMenuItemValidation {
         observedClipView = clip
         clip.postsBoundsChangedNotifications = true
         observers.append(NotificationCenter.default.addObserver(forName: NSView.boundsDidChangeNotification, object: clip, queue: .main) { [weak self] _ in
-            MainActor.assumeIsolated { self?.overlay.needsDisplay = true }
+            DispatchQueue.main.async { self?.overlay.needsDisplay = true }
         })
     }
 
@@ -714,6 +714,7 @@ final class PDFEditorCanvasView: PDFView, NSMenuItemValidation {
 }
 
 /// Transparent, click-through layer that draws selection borders, handles and live previews.
+@MainActor
 final class PDFEditorOverlayView: NSView {
     weak var canvas: PDFEditorCanvasView?
 
@@ -721,9 +722,7 @@ final class PDFEditorOverlayView: NSView {
     override func hitTest(_ point: NSPoint) -> NSView? { nil }
 
     override func draw(_ dirtyRect: NSRect) {
-        MainActor.assumeIsolated {
-            canvas?.drawOverlay(in: self)
-        }
+        canvas?.drawOverlay(in: self)
     }
 }
 

@@ -193,7 +193,7 @@ public final class PDFEditorService: ObservableObject {
         undoManager.levelsOfUndo = 200
         for name in [Notification.Name.NSUndoManagerDidUndoChange, .NSUndoManagerDidRedoChange, .NSUndoManagerDidCloseUndoGroup] {
             NotificationCenter.default.addObserver(forName: name, object: undoManager, queue: .main) { [weak self] _ in
-                MainActor.assumeIsolated { self?.refreshUndoState() }
+                DispatchQueue.main.async { self?.refreshUndoState() }
             }
         }
     }
@@ -476,7 +476,7 @@ public final class PDFEditorService: ObservableObject {
 
     private func registerUndo(_ name: String, undo: @escaping @MainActor () -> Void, redo: @escaping @MainActor () -> Void) {
         undoManager.registerUndo(withTarget: self) { target in
-            MainActor.assumeIsolated {
+            DispatchQueue.main.async {
                 undo()
                 target.registerUndo(name, undo: redo, redo: undo)
                 target.afterMutation(page: nil)
