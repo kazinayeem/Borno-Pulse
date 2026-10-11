@@ -161,6 +161,7 @@ public enum PDFAnnotationToolType: String, CaseIterable, Identifiable, Sendable 
     case line = "Line"
     case arrow = "Arrow"
     case stickyNote = "Sticky Note"
+    case cover = "Cover Region"
     case signatureStamp = "Signature"
 
     public var id: String { rawValue }
@@ -178,7 +179,37 @@ public enum PDFAnnotationToolType: String, CaseIterable, Identifiable, Sendable 
         case .line: return "line.diagonal"
         case .arrow: return "arrow.up.right"
         case .stickyNote: return "note.text"
+        case .cover: return "rectangle.fill"
         case .signatureStamp: return "signature"
+        }
+    }
+
+    /// Tools that create something by clicking/dragging on the page canvas.
+    public static let canvasTools: [PDFAnnotationToolType] = [
+        .select, .text, .highlight, .underline, .strikeout, .pen,
+        .rectangle, .circle, .line, .arrow, .stickyNote, .cover
+    ]
+
+    public var usageHint: String {
+        switch self {
+        case .select:
+            return "Click an object to select it. Drag to move, drag corner handles to resize, press Delete to remove. ⌥-click cycles through overlapping objects. Click empty page areas to select PDF text or fill form fields."
+        case .highlight, .underline, .strikeout:
+            return "Drag across text to mark it up. Dragging over an area with no text marks the dragged rectangle."
+        case .text:
+            return "Click to place a text box, or drag to size it. Edit the text, font, size and color in the inspector."
+        case .pen:
+            return "Drag to draw freehand. Each stroke becomes its own ink annotation."
+        case .rectangle, .circle:
+            return "Drag to draw. Hold Shift for a square/circle."
+        case .line, .arrow:
+            return "Drag from start to end point. Hold Shift to snap to 45°."
+        case .stickyNote:
+            return "Click to place a comment note, then type the comment in the inspector."
+        case .cover:
+            return "Drag to cover a region with an opaque box (whiteout). This hides content visually but does not remove the underlying text — it is not secure redaction."
+        case .signatureStamp:
+            return "Draw or import a signature; it is placed as a movable, resizable image."
         }
     }
 }
