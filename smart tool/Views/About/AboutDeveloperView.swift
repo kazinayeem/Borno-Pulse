@@ -57,14 +57,7 @@ public struct AboutDeveloperView: View {
                     // Developer Profile Card
                     VStack(alignment: .leading, spacing: 12) {
                         HStack(spacing: 14) {
-                            ZStack {
-                                Circle()
-                                    .fill(AppTheme.electricBlue.opacity(0.15))
-                                    .frame(width: 52, height: 52)
-                                Image(systemName: "person.crop.circle.fill")
-                                    .font(.system(size: 44))
-                                    .foregroundStyle(AppTheme.electricBlue)
-                            }
+                            DeveloperAvatarView(size: 56)
 
                             VStack(alignment: .leading, spacing: 3) {
                                 Text("Mohammad Ali Nayeem")
@@ -130,5 +123,36 @@ public struct AboutDeveloperView: View {
         }
         .frame(width: 480, height: 420)
         .background(AppTheme.graphiteCanvas)
+    }
+}
+
+// MARK: - Reusable Developer Avatar View
+public struct DeveloperAvatarView: View {
+    public let size: CGFloat
+
+    public init(size: CGFloat = 48) {
+        self.size = size
+    }
+
+    public var body: some View {
+        ZStack {
+            Circle()
+                .fill(AppTheme.electricBlue.opacity(0.12))
+                .frame(width: size, height: size)
+
+            if let img = NSImage(named: "DeveloperAvatar") ?? NSImage(contentsOfFile: "/Users/mohammadalinayeem/Project & Code/ios/smart tool/smart tool/developer_avatar.png") {
+                Image(nsImage: img)
+                    .resizable()
+                    .aspectRatio(contentMode: .fill)
+                    .frame(width: size, height: size)
+                    .clipShape(Circle())
+                    .overlay(Circle().stroke(AppTheme.electricBlue.opacity(0.6), lineWidth: 1.5))
+                    .shadow(color: AppTheme.electricBlue.opacity(0.2), radius: 3, x: 0, y: 1)
+            } else {
+                Image(systemName: "person.crop.circle.fill")
+                    .font(.system(size: size * 0.82))
+                    .foregroundStyle(AppTheme.electricBlue)
+            }
+        }
     }
 }

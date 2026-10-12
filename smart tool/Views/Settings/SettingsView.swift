@@ -227,39 +227,41 @@ public struct SettingsView: View {
                     .stroke(!searchQuery.isEmpty ? AppTheme.electricBlue : AppTheme.cardBorder, lineWidth: !searchQuery.isEmpty ? 1.5 : 0.5)
             )
 
-            // Category Tab Selector
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 6) {
-                    ForEach(SettingsSectionTab.allCases) { tab in
-                        let isSelected = (selectedTab == tab && !isSearching)
-                        Button {
-                            withAnimation(.easeInOut(duration: 0.15)) {
-                                selectedTab = tab
-                                searchQuery = ""
-                                proxy.scrollTo(topAnchorID, anchor: .top)
-                            }
-                        } label: {
-                            HStack(spacing: 6) {
-                                Image(systemName: tab.icon)
-                                    .font(.system(size: 11))
-                                Text(tab.rawValue)
-                                    .font(AppTypography.font(size: 12, weight: isSelected ? .semibold : .medium))
-                            }
-                            .padding(.horizontal, 12)
-                            .padding(.vertical, 7)
-                            .background(AppTheme.selectableFill(isSelected))
-                            .foregroundStyle(AppTheme.selectableForeground(isSelected))
-                            .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 6, style: .continuous)
-                                    .stroke(isSelected ? AppTheme.electricBlue : Color.clear, lineWidth: 1)
-                            )
+            // Category Tab Selector (Responsive Multi-Row Wrapping Layout)
+            FlowLayout(horizontalSpacing: 8, verticalSpacing: 8) {
+                ForEach(SettingsSectionTab.allCases) { tab in
+                    let isSelected = (selectedTab == tab && !isSearching)
+                    Button {
+                        withAnimation(.easeInOut(duration: 0.15)) {
+                            selectedTab = tab
+                            searchQuery = ""
+                            proxy.scrollTo(topAnchorID, anchor: .top)
                         }
-                        .buttonStyle(.plain)
+                    } label: {
+                        HStack(spacing: 6) {
+                            Image(systemName: tab.icon)
+                                .font(.system(size: 11))
+                            Text(tab.rawValue)
+                                .font(AppTypography.font(size: 12, weight: isSelected ? .semibold : .medium))
+                                .lineLimit(1)
+                        }
+                        .padding(.horizontal, 11)
+                        .padding(.vertical, 7)
+                        .background(AppTheme.selectableFill(isSelected))
+                        .foregroundStyle(AppTheme.selectableForeground(isSelected))
+                        .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 6, style: .continuous)
+                                .stroke(isSelected ? AppTheme.electricBlue : AppTheme.cardBorder.opacity(0.4), lineWidth: isSelected ? 1.2 : 0.5)
+                        )
                     }
+                    .buttonStyle(.plain)
+                    .help(tab.rawValue)
+                    .accessibilityLabel(Text("\(tab.rawValue) Settings"))
+                    .accessibilityAddTraits(isSelected ? [.isSelected] : [])
                 }
-                .padding(.vertical, 2)
             }
+            .padding(.vertical, 2)
         }
     }
 
@@ -1006,14 +1008,7 @@ public struct SettingsView: View {
 
                 // Founder & Developer Profile
                 HStack(spacing: 12) {
-                    ZStack {
-                        Circle()
-                            .fill(AppTheme.electricBlue.opacity(0.14))
-                            .frame(width: 44, height: 44)
-                        Image(systemName: "person.crop.circle.fill")
-                            .font(.system(size: 38))
-                            .foregroundStyle(AppTheme.electricBlue)
-                    }
+                    DeveloperAvatarView(size: 44)
 
                     VStack(alignment: .leading, spacing: 2) {
                         Text("Mohammad Ali Nayeem")

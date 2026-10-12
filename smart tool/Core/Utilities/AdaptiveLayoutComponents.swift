@@ -297,3 +297,65 @@ public struct AdaptiveCardGrid<Content: View>: View {
         }
     }
 }
+
+// MARK: - Flow Layout (Multi-Row Wrapping HStack)
+public struct FlowLayout: Layout {
+    public var horizontalSpacing: CGFloat
+    public var verticalSpacing: CGFloat
+
+    public init(horizontalSpacing: CGFloat = 8, verticalSpacing: CGFloat = 8) {
+        self.horizontalSpacing = horizontalSpacing
+        self.verticalSpacing = verticalSpacing
+    }
+
+    public func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
+        let width = proposal.width ?? .infinity
+        var currentX: CGFloat = 0
+        var currentY: CGFloat = 0
+        var lineHeight: CGFloat = 0
+        var maxWidth: CGFloat = 0
+
+        for subview in subviews {
+            let size = subview.sizeThatFits(.unspecified)
+            if currentX + size.width > width && currentX > 0 {
+                // Wrap to next row
+                currentX = 0
+                currentY += lineHeight + verticalSpacing
+                lineHeight = 0
+            }
+
+            lineHeight = max(lineHeight, size.height)
+            currentX += size.width + horizontalSpacing
+            maxWidth = max(maxWidth, currentX - horizontalSpacing)
+        }
+
+        let totalHeight = currentY + lineHeight
+        return CGSize(width: min(width, maxWidth), height: totalHeight)
+    }
+
+    public func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
+        let width = bounds.width
+        var currentX = bounds.minX
+        var currentY = bounds.minY
+        var lineHeight: CGFloat = 0
+
+        for subview in subviews {
+            let size = subview.sizeThatFits(.unspecified)
+            if currentX + size.width > bounds.minX + width && currentX > bounds.minX {
+                // Wrap to next row
+                currentX = bounds.minX
+                currentY += lineHeight + verticalSpacing
+                lineHeight = 0
+            }
+
+            subview.place(
+                at: CGPoint(x: currentX, y: currentY),
+                anchor: .topLeading,
+                proposal: ProposedViewSize(size)
+            )
+
+            lineHeight = max(lineHeight, size.height)
+            currentX += size.width + horizontalSpacing
+        }
+    }
+}

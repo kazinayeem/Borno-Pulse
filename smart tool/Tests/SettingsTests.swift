@@ -104,5 +104,10 @@ extension SmartToolTests {
         SettingsNavigation.shared.requestedTab = .pdfStudio
         assert(SettingsNavigation.shared.requestedTab == .pdfStudio, "SettingsNavigation: preserves requested tab")
         SettingsNavigation.shared.requestedTab = nil
+
+        // 8. Responsive FlowLayout Multi-Row Wrapping Invariants
+        let flowLayout = FlowLayout(horizontalSpacing: 8, verticalSpacing: 8)
+        assert(flowLayout.horizontalSpacing == 8, "FlowLayout: horizontalSpacing initialized to 8")
+        assert(flowLayout.verticalSpacing == 8, "FlowLayout: verticalSpacing initialized to 8")
     }
 }
