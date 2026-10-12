@@ -133,7 +133,7 @@ public enum ScreenshotAutomationService {
             // --- Capture Navigation Sections ---
             for item in sectionMapping {
                 NotificationCenter.default.post(name: .navigateToSection, object: item.section)
-                await runloopSleep(0.4)
+                await runloopSleep(0.55)
 
                 if let (data, w, h) = capturePNG(view: contentView) {
                     let fileURL = mode.dir.appendingPathComponent("\(item.file).png")
@@ -148,7 +148,7 @@ public enum ScreenshotAutomationService {
             for tabItem in settingsTabs {
                 SettingsNavigation.shared.requestedTab = tabItem.tab
                 NotificationCenter.default.post(name: .navigateToSection, object: NavigationSection.settings)
-                await runloopSleep(0.35)
+                await runloopSleep(0.45)
 
                 if let (data, w, h) = capturePNG(view: contentView) {
                     let fileURL = mode.dir.appendingPathComponent("\(tabItem.file).png")

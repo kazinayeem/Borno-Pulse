@@ -101,7 +101,7 @@ public struct ScreenTimeChartsSectionView: View {
                     AxisMarks(values: [0, 4, 8, 12, 16, 20].map { "\($0)h" }) { value in
                         AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5, dash: [2, 3]))
                             .foregroundStyle(AppTheme.chartGrid)
-                        AxisValueLabel(anchor: .top) {
+                        AxisValueLabel {
                             if let label = value.as(String.self) {
                                 Text(label)
                                     .font(AppTypography.caption)
@@ -180,7 +180,7 @@ public struct ScreenTimeChartsSectionView: View {
                     AxisMarks(values: Array(milestoneKeys)) { value in
                         AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5, dash: [2, 3]))
                             .foregroundStyle(AppTheme.chartGrid)
-                        AxisValueLabel(anchor: .top) {
+                        AxisValueLabel {
                             if let dayKey = value.as(String.self),
                                let point = trend.first(where: { $0.dayKey == dayKey }) {
                                 Text(isWeek ? point.weekdayLabel : point.shortDateLabel)

@@ -605,7 +605,7 @@ public struct BatteryDetailView: View {
                         AxisMarks(values: .automatic(desiredCount: 5)) { _ in
                             AxisGridLine()
                             AxisTick()
-                            AxisValueLabel(format: .dateTime.minute().second(), anchor: .top)
+                            AxisValueLabel(format: .dateTime.minute().second())
                         }
                     }
                     .frame(height: 180)
@@ -874,7 +874,7 @@ public struct BatteryDetailView: View {
                             AxisMarks(values: .automatic(desiredCount: 5)) { _ in
                                 AxisGridLine()
                                 AxisTick()
-                                AxisValueLabel(format: .dateTime.minute().second(), anchor: .top)
+                                AxisValueLabel(format: .dateTime.minute().second())
                             }
                         }
                         .frame(height: 180)
