@@ -56,9 +56,16 @@ public enum ScreenshotAutomationService {
 
         // 1. Show main dashboard window and set canonical size
         MainWindowRouter.shared.showMainWindow(section: .overview)
-        await runloopSleep(0.8)
+        var resolvedWindow: NSWindow? = nil
+        for _ in 0..<25 {
+            await runloopSleep(0.2)
+            if let win = MainWindowRouter.shared.mainWindow ?? NSApp.windows.first(where: { !($0 is NSPanel) && $0.canBecomeKey }) {
+                resolvedWindow = win
+                break
+            }
+        }
 
-        guard let window = NSApp.windows.first(where: { $0.identifier?.rawValue.contains("main-window") == true }),
+        guard let window = resolvedWindow,
               let contentView = window.contentView else {
             print("❌ Error: Main dashboard window could not be found.")
             exit(1)

@@ -86,6 +86,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             }
 
             Task { @MainActor in
+                try? await Task.sleep(nanoseconds: 800_000_000)
                 await ScreenshotAutomationService.run(outputDir: outputDir)
                 exit(0)
             }

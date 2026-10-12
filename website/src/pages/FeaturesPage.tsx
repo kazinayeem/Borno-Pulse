@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useLanguage } from '../context/LanguageContext';
 import { featuresList } from '../data/featuresData';
 import { ScreenshotLightbox } from '../components/ScreenshotLightbox';
+import { AppScreenshot } from '../components/AppScreenshot';
 import type { ScreenshotItem } from '../types';
 
 import { screenshotsList } from '../data/screenshotsData';
@@ -173,17 +174,14 @@ export const FeaturesPage: React.FC = () => {
                   </button>
                 </div>
 
-                <div
-                  onClick={() => {
-                    const found = screenshotsList.find((s) => s.id === feat.id);
-                    if (found) setSelectedLightboxItem(found);
-                  }}
-                  className="cursor-pointer group rounded-2xl bg-gray-100 border border-gray-200 overflow-hidden shadow-md hover:shadow-xl transition-all"
-                >
-                  <img
+                <div className="w-full">
+                  <AppScreenshot
                     src={imgSrc}
                     alt={lang === 'en' ? feat.titleEn : feat.titleBn}
-                    className="w-full object-cover group-hover:scale-[1.01] transition-transform"
+                    onClick={() => {
+                      const found = screenshotsList.find((s) => s.id === feat.id);
+                      if (found) setSelectedLightboxItem(found);
+                    }}
                   />
                 </div>
               </div>

@@ -38,9 +38,15 @@ export const ScreenshotLightbox: React.FC<LightboxProps> = ({ item, items, onClo
   const currentSrc = viewMode === 'light' ? item.lightSrc : item.darkSrc;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-md p-4 sm:p-6 transition-opacity">
+    <div
+      onClick={onClose}
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-md p-3 sm:p-6 transition-opacity"
+    >
       {/* Container Box */}
-      <div className="relative w-full max-w-5xl bg-gray-900 border border-gray-800 rounded-2xl overflow-hidden shadow-2xl flex flex-col max-h-[92vh]">
+      <div
+        onClick={(e) => e.stopPropagation()}
+        className="relative w-full max-w-6xl bg-gray-900 border border-gray-800 rounded-2xl overflow-hidden shadow-2xl flex flex-col max-h-[94vh]"
+      >
         {/* Header Bar */}
         <div className="flex items-center justify-between px-5 py-3.5 border-b border-gray-800 bg-gray-950/70">
           <div className="flex items-center gap-3">
@@ -93,7 +99,7 @@ export const ScreenshotLightbox: React.FC<LightboxProps> = ({ item, items, onClo
           <img
             src={currentSrc}
             alt={lang === 'en' ? item.titleEn : item.titleBn}
-            className="max-h-[70vh] w-auto object-contain rounded-lg shadow-lg border border-gray-800/80"
+            className="max-h-[78vh] max-w-full w-auto object-contain rounded-lg shadow-2xl border border-gray-800/80"
           />
 
           {/* Navigation Arrows */}

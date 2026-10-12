@@ -1,7 +1,7 @@
 import type { ScreenshotItem } from '../types';
 
-
 export const screenshotsList: ScreenshotItem[] = [
+  // System Monitoring ('telemetry')
   {
     id: 'overview',
     titleEn: 'System Telemetry Overview',
@@ -17,7 +17,7 @@ export const screenshotsList: ScreenshotItem[] = [
     titleEn: 'Advanced System & Node.js Cleaner',
     titleBn: 'অ্যাডভান্সড সিস্টেম ও নোড মডিউল ক্লিনার',
     descriptionEn: 'Scan and safely clean cache, Xcode build artifacts, logs, and unused node_modules preserving source code.',
-    descriptionBn: 'সোর্স কোড অক্ষত রেখে সিস্টেম ক্যাশ, এক্সকোড বিল্ড ডিরেক্টরি এবং অব্যবহৃত নোড_মডিউলস নিরাপদ পরিচ্ছন্নকরণ।',
+    descriptionBn: 'সোর্স কোড অক্ষত রেখে সিস্টেম ক্যাশ, এক্সকোড বিল্ড ডিরেক্টরি এবং অপ্রয়োজনীয় node_modules নিরাপদ পরিচ্ছন্নকরণ।',
     category: 'telemetry',
     lightSrc: '/screenshots/light/cleaner.png',
     darkSrc: '/screenshots/dark/cleaner.png',
@@ -25,7 +25,7 @@ export const screenshotsList: ScreenshotItem[] = [
   {
     id: 'clamshell_mode',
     titleEn: 'Clamshell Mode (Lid-Closed Operation)',
-    titleBn: 'ক্ল্যামশেল মোড (ঢাকনা বন্ধে সচল)',
+    titleBn: 'ক্ল্যামশেল মোড (ঢাকনা বন্ধে সচল রাখা)',
     descriptionEn: 'Native IOKit sleep assertion engine keeping servers, Docker, and background scripts alive with closed lid.',
     descriptionBn: 'ম্যাকবুকের ঢাকনা বন্ধ রেখেই ডকার ও ব্যাকগ্রাউন্ড সার্ভার সচল রাখার জন্য নেটিভ আইওকিট স্লিপ অ্যাসার্শন।',
     category: 'telemetry',
@@ -57,7 +57,7 @@ export const screenshotsList: ScreenshotItem[] = [
     titleEn: 'Virtual Memory & Mach Pressure',
     titleBn: 'ভার্চুয়াল মেমোরি ও সোয়াপ চাপ',
     descriptionEn: 'Active, inactive, wired, compressed memory footprint and APFS swap usage.',
-    descriptionBn: 'এক্টিভ, ওয়ার্ড় ও কম্প্রেসড র‍্যামের চাপ এবং এপিএফএস সোয়াপ পরিমাপ।',
+    descriptionBn: 'এক্টিভ, ওয়্যার্ড ও কম্প্রেসড র‍্যামের চাপ এবং এপিএফএস সোয়াপ পরিমাপ।',
     category: 'telemetry',
     lightSrc: '/screenshots/light/memory.png',
     darkSrc: '/screenshots/dark/memory.png',
@@ -82,6 +82,48 @@ export const screenshotsList: ScreenshotItem[] = [
     lightSrc: '/screenshots/light/sensors.png',
     darkSrc: '/screenshots/dark/sensors.png',
   },
+  {
+    id: 'storage',
+    titleEn: 'APFS Storage & Volume Metrics',
+    titleBn: 'এপিএফএস স্টোরেজ ও ভলিউম মেট্রিক্স',
+    descriptionEn: 'Real-time APFS volume breakdown, purgeable space, system overhead, and read/write bandwidth.',
+    descriptionBn: 'এপিএফএস ডিস্ক ভলিউমের ব্যবহার, পার্জেবল স্পেস ও সিস্টেম স্টোরেজের রিয়েল-টাইম বিভাজন।',
+    category: 'telemetry',
+    lightSrc: '/screenshots/light/storage.png',
+    darkSrc: '/screenshots/dark/storage.png',
+  },
+  {
+    id: 'network',
+    titleEn: 'Network Interface & Bandwidth Monitor',
+    titleBn: 'নেটওয়ার্ক ইন্টারফেস ও ব্যান্ডউইথ মনিটর',
+    descriptionEn: 'Per-interface packet throughput, upload/download bandwidth, and interface topology.',
+    descriptionBn: 'প্রতিটি নেটওয়ার্ক ইন্টারফেসের প্যাকেট আদান-প্রদান এবং ডাউনলোড ও আপলোড স্পিড ট্র্যাকার।',
+    category: 'telemetry',
+    lightSrc: '/screenshots/light/network.png',
+    darkSrc: '/screenshots/dark/network.png',
+  },
+  {
+    id: 'processes',
+    titleEn: 'Process Inspector & Resource Consumer Monitor',
+    titleBn: 'প্রসেস ইন্সপেক্টর ও রিসোর্স কনজিউমার মনিটর',
+    descriptionEn: 'Real-time Darwin processes with PID, per-process CPU%, memory pressure, and graceful kill commands.',
+    descriptionBn: 'ম্যাকের রানিং প্রসেসগুলোর পিআইডি, সিপিইউ ও র‍্যাম ব্যবহার এবং নিরাপদ প্রসেস বন্ধ করার সুবিধা।',
+    category: 'telemetry',
+    lightSrc: '/screenshots/light/processes.png',
+    darkSrc: '/screenshots/dark/processes.png',
+  },
+  {
+    id: 'diagnostics',
+    titleEn: 'System Health & Hardware Diagnostics',
+    titleBn: 'সিস্টেম হেলথ ও হার্ডওয়্যার ডায়াগনস্টিকস',
+    descriptionEn: 'Comprehensive Darwin kernel checks, thermal throttling status, and power supply verification.',
+    descriptionBn: 'কার্নেল অবস্থা, থার্মাল থ্রটলিং সতর্কতা ও পাওয়ার সাপ্লাই যাচাই করার স্বয়ংক্রিয় ডায়াগনস্টিকস।',
+    category: 'telemetry',
+    lightSrc: '/screenshots/light/diagnostics.png',
+    darkSrc: '/screenshots/dark/diagnostics.png',
+  },
+
+  // Developer Tools ('developer')
   {
     id: 'port_manager',
     titleEn: 'BSD Listening Socket & Port Auditor',
@@ -112,6 +154,8 @@ export const screenshotsList: ScreenshotItem[] = [
     lightSrc: '/screenshots/light/network_toolkit.png',
     darkSrc: '/screenshots/dark/network_toolkit.png',
   },
+
+  // PDF & Files ('files')
   {
     id: 'pdf_studio',
     titleEn: 'Offline PDF Studio & Canvas Editor',
@@ -153,6 +197,28 @@ export const screenshotsList: ScreenshotItem[] = [
     darkSrc: '/screenshots/dark/clipboard.png',
   },
   {
+    id: 'file_tools',
+    titleEn: 'File Tools & Hash Generator',
+    titleBn: 'ফাইল টুলস ও ক্রিপ্টোগ্রাফিক হ্যাশ জেনারেটর',
+    descriptionEn: 'Compute SHA-256, SHA-512, MD5 checksums locally and perform batch file renaming operations.',
+    descriptionBn: 'ফাইল যাচাইয়ের জন্য অফলাইন SHA-256, SHA-512 হ্যাশ গণনা এবং ব্যাচ ফাইল রিনেম করার সুবিধা।',
+    category: 'files',
+    lightSrc: '/screenshots/light/file_tools.png',
+    darkSrc: '/screenshots/dark/file_tools.png',
+  },
+  {
+    id: 'focus_pomodoro',
+    titleEn: 'Focus & Customizable Pomodoro Timer',
+    titleBn: 'ফোকাস ও কাস্টমাইজযোগ্য পোমোডোরো টাইমার',
+    descriptionEn: 'Distraction-free focus sessions with customizable work intervals, break alerts, and screen dimming.',
+    descriptionBn: 'কাস্টম সময়সীমা ও বিরতি সমন্বিত নিরবচ্ছিন্ন কাজের জন্য প্রোডাক্টিভ ফোকাস টাইমার।',
+    category: 'files',
+    lightSrc: '/screenshots/light/focus_pomodoro.png',
+    darkSrc: '/screenshots/dark/focus_pomodoro.png',
+  },
+
+  // Settings & Navigation ('settings')
+  {
     id: 'quick_launcher',
     titleEn: 'Quick Launcher Command Palette (⌘K)',
     titleBn: 'কুইক লঞ্চার কমান্ড প্যালেট (⌘K)',
@@ -172,6 +238,48 @@ export const screenshotsList: ScreenshotItem[] = [
     lightSrc: '/screenshots/light/settings_appearance.png',
     darkSrc: '/screenshots/dark/settings_appearance.png',
   },
+  {
+    id: 'settings_menubar',
+    titleEn: 'Menu Bar Status Tokens & Indicators',
+    titleBn: 'মেনু বার স্ট্যাটাস টোকেন কনফিগারেশন',
+    descriptionEn: 'Configure visible telemetry tokens on your status bar: CPU load, RAM pressure, and battery.',
+    descriptionBn: 'ম্যাকের স্ট্যাটাস বারে কোন কোন মেট্রিক্স সরাসরি প্রদর্শিত হবে তা নির্ধারণের সেটিংস।',
+    category: 'settings',
+    lightSrc: '/screenshots/light/settings_menubar.png',
+    darkSrc: '/screenshots/dark/settings_menubar.png',
+  },
+  {
+    id: 'settings_general',
+    titleEn: 'General & Launch at Login Preferences',
+    titleBn: 'সাধারণ সেটিংস ও লগইনে স্বয়ংক্রিয় স্টার্ট',
+    descriptionEn: 'Window persistence, Dock visibility, launch at startup, and default launch module preferences.',
+    descriptionBn: 'লগইনে চালু হওয়া, ডক আইকন আচরণ এবং উইন্ডো প্রিজারভেশন কনফিগারেশন।',
+    category: 'settings',
+    lightSrc: '/screenshots/light/settings_general.png',
+    darkSrc: '/screenshots/dark/settings_general.png',
+  },
+  {
+    id: 'privacy_security',
+    titleEn: 'Privacy & Security Center',
+    titleBn: 'প্রাইভেসি ও সিকিউরিটি সেন্টার',
+    descriptionEn: 'Local security audit verifying Full Disk Access, Camera/Mic permissions, and cryptographic file hash verification.',
+    descriptionBn: 'ম্যাকের ডিস্ক অ্যাক্সেস, পারমিশন অডিট ও লোকাল ফাইল হ্যাশ ভেরিফিকেশন ড্যাশবোর্ড।',
+    category: 'settings',
+    lightSrc: '/screenshots/light/privacy_security.png',
+    darkSrc: '/screenshots/dark/privacy_security.png',
+  },
+  {
+    id: 'settings_alerts',
+    titleEn: 'Hardware Threshold Alerts & Notifications',
+    titleBn: 'হার্ডওয়্যার থ্রেশহোল্ড অ্যালার্ট ও নোটিফিকেশন',
+    descriptionEn: 'Set custom warning thresholds for CPU overheating, high RAM pressure, and battery discharge.',
+    descriptionBn: 'সিপিইউ তাপমাত্রা, অতিরিক্ত র‍্যাম ব্যবহার ও ব্যাটারি লো হলে নোটিফিকেশন পাওয়ার সীমা নির্ধারণ।',
+    category: 'settings',
+    lightSrc: '/screenshots/light/settings_alerts.png',
+    darkSrc: '/screenshots/dark/settings_alerts.png',
+  },
+
+  // Menu Bar Widget ('widget')
   {
     id: 'widget_actions',
     titleEn: 'Menu Bar Widget — 21-Action Grid',
@@ -200,6 +308,16 @@ export const screenshotsList: ScreenshotItem[] = [
     descriptionBn: 'চার্জিং ওয়াটেজ, তাপমাত্রা এবং ব্যাটারি ক্ষয়ের লাইভ সমীকরণ।',
     category: 'widget',
     lightSrc: '/screenshots/widget/light-battery.png',
-    darkSrc: '/screenshots/widget/dark-battery.png',
+    darkSrc: '/screenshots/dark/battery.png',
+  },
+  {
+    id: 'widget_audio',
+    titleEn: 'Menu Bar Widget — Audio Device Mixer',
+    titleBn: 'মেনু বার উইজেট — অডিও ডিভাইস মিক্সার',
+    descriptionEn: 'Instantly toggle input/output devices, airplay endpoints, and fine-tune system volume levels.',
+    descriptionBn: 'উইন্ডো না খুলেই সরাসরি মেনু বার থেকে ইনপুট/আউটপুট অডিও ডিভাইস পরিবর্তন ও ভলিউম নিয়ন্ত্রণ।',
+    category: 'widget',
+    lightSrc: '/screenshots/widget/light-audio.png',
+    darkSrc: '/screenshots/widget/dark-audio.png',
   },
 ];

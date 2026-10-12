@@ -6,6 +6,7 @@ import { screenshotsList } from '../data/screenshotsData';
 import { ScreenshotLightbox } from '../components/ScreenshotLightbox';
 import type { ScreenshotItem } from '../types';
 import { GithubIcon } from '../components/GithubIcon';
+import { AppScreenshot } from '../components/AppScreenshot';
 import {
   Download,
   Cpu,
@@ -47,7 +48,7 @@ export const HomePage: React.FC = () => {
 
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-6">
           {/* Release & Platform Badges */}
-          <div className="inline-flex flex-wrap items-center justify-center gap-2 px-3 py-1.5 rounded-full bg-white/90 border border-gray-200/80 shadow-xs text-xs font-medium text-gray-700">
+          <div className="animate-fade-up inline-flex flex-wrap items-center justify-center gap-2 px-3 py-1.5 rounded-full bg-white/90 border border-gray-200/80 shadow-xs text-xs font-medium text-gray-700">
             <span className="flex items-center gap-1 text-blue-600 font-semibold">
               <span className="w-2 h-2 rounded-full bg-blue-600 animate-pulse" />
               {t.versionBadge}
@@ -59,7 +60,7 @@ export const HomePage: React.FC = () => {
           </div>
 
           {/* Main Title & Tagline */}
-          <h1 className="text-4xl sm:text-6xl font-extrabold text-gray-950 tracking-tight leading-[1.12]">
+          <h1 className="animate-fade-up delay-100 text-4xl sm:text-6xl font-extrabold text-gray-950 tracking-tight leading-[1.12]">
             {lang === 'en' ? (
               <>
                 Smart Mac Utilities & <br className="hidden sm:inline" />
@@ -78,15 +79,15 @@ export const HomePage: React.FC = () => {
           </h1>
 
           {/* Subtitle */}
-          <p className="max-w-2xl mx-auto text-base sm:text-lg text-gray-600 leading-relaxed font-normal">
+          <p className="animate-fade-up delay-200 max-w-2xl mx-auto text-base sm:text-lg text-gray-600 leading-relaxed font-normal">
             {t.heroSubtitle}
           </p>
 
           {/* Call to Action Buttons */}
-          <div className="pt-2 flex flex-wrap items-center justify-center gap-3.5">
+          <div className="animate-fade-up delay-300 pt-2 flex flex-wrap items-center justify-center gap-3.5">
             <Link
               to="/download"
-              className="inline-flex items-center gap-2.5 px-6 py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm sm:text-base shadow-md shadow-blue-500/25 active:scale-98 transition-all"
+              className="inline-flex items-center gap-2.5 px-6 py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm sm:text-base shadow-md shadow-blue-500/25 active:scale-98 transition-all hover-lift"
             >
               <Download className="w-5 h-5" />
               <span>{t.downloadDMG}</span>
@@ -97,7 +98,7 @@ export const HomePage: React.FC = () => {
               href="https://github.com/kazinayeem/Borno-Pulse"
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-white hover:bg-gray-50 border border-gray-200/90 text-gray-800 font-semibold text-sm sm:text-base shadow-xs transition-colors"
+              className="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-white hover:bg-gray-50 border border-gray-200/90 text-gray-800 font-semibold text-sm sm:text-base shadow-xs transition-colors hover-lift"
             >
               <GithubIcon className="w-5 h-5" />
               <span>{t.sourceCode}</span>
@@ -105,7 +106,7 @@ export const HomePage: React.FC = () => {
 
             <Link
               to="/screenshots"
-              className="inline-flex items-center gap-1.5 px-4 py-3 rounded-xl text-gray-600 hover:text-gray-900 text-sm font-medium transition-colors"
+              className="inline-flex items-center gap-1.5 px-4 py-3 rounded-xl text-gray-600 hover:text-gray-900 text-sm font-medium transition-colors hover-lift"
             >
               <span>{t.viewGallery}</span>
               <ArrowRight className="w-4 h-4" />
@@ -113,7 +114,7 @@ export const HomePage: React.FC = () => {
           </div>
 
           {/* Interactive Mac Window Demo with Real Screenshots */}
-          <div className="pt-8 max-w-5xl mx-auto">
+          <div className="animate-fade-up delay-400 pt-8 max-w-5xl mx-auto">
             {/* macOS Window Shell */}
             <div className="rounded-2xl bg-white border border-gray-200/90 shadow-2xl mac-shadow overflow-hidden text-left transition-all">
               {/* Window Titlebar */}
@@ -166,11 +167,18 @@ export const HomePage: React.FC = () => {
               </div>
 
               {/* Window Body Image */}
-              <div className="relative bg-[#1E1E24] p-1 sm:p-2 aspect-[16/10] overflow-hidden flex items-center justify-center">
+              <div
+                onClick={() => {
+                  const match = screenshotsList.find((s) => s.id === activeHeroTab.id);
+                  if (match) setSelectedLightboxItem(match);
+                }}
+                className="relative bg-[#1A1A1E] p-1.5 sm:p-2.5 overflow-hidden flex items-center justify-center cursor-pointer group"
+                title={lang === 'en' ? 'Click to inspect full screenshot' : 'পূর্ণাঙ্গ স্ক্রিনশট দেখতে ক্লিক করুন'}
+              >
                 <img
                   src={heroMode === 'light' ? activeHeroTab.src : activeHeroTab.darkSrc}
                   alt={`Borno Pulse ${activeHeroTab.label}`}
-                  className="w-full h-full object-contain object-top rounded-lg"
+                  className="w-full h-auto max-h-[620px] object-contain rounded-lg transition-transform duration-300 group-hover:scale-[1.005]"
                 />
               </div>
             </div>
@@ -278,16 +286,13 @@ export const HomePage: React.FC = () => {
             </div>
           </div>
 
-          <div
-            onClick={() => setSelectedLightboxItem(screenshotsList.find((s) => s.id === 'cleaner') || null)}
-            className="group cursor-pointer rounded-2xl bg-white border border-gray-200/90 p-2 shadow-xl hover:shadow-2xl transition-all"
-          >
-            <img
+          <div className="space-y-2">
+            <AppScreenshot
               src="/screenshots/light/cleaner.png"
               alt="System Cleaner Screen"
-              className="rounded-xl w-full object-cover group-hover:scale-[1.01] transition-transform"
+              onClick={() => setSelectedLightboxItem(screenshotsList.find((s) => s.id === 'cleaner') || null)}
             />
-            <div className="p-3 text-center text-xs text-gray-500 font-medium">
+            <div className="text-center text-xs text-gray-500 font-medium">
               {lang === 'en' ? 'Click to inspect high-resolution preview' : 'হাই-রেজোলিউশন প্রিভিউ দেখতে ক্লিক করুন'}
             </div>
           </div>
@@ -297,16 +302,13 @@ export const HomePage: React.FC = () => {
       {/* 4. SHOWCASE: CLAMSHELL MODE & LID-CLOSED OPERATION */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-          <div
-            onClick={() => setSelectedLightboxItem(screenshotsList.find((s) => s.id === 'clamshell_mode') || null)}
-            className="group cursor-pointer rounded-2xl bg-white border border-gray-200/90 p-2 shadow-xl hover:shadow-2xl transition-all order-2 lg:order-1"
-          >
-            <img
+          <div className="space-y-2 order-2 lg:order-1">
+            <AppScreenshot
               src="/screenshots/light/clamshell_mode.png"
               alt="Clamshell Mode Screen"
-              className="rounded-xl w-full object-cover group-hover:scale-[1.01] transition-transform"
+              onClick={() => setSelectedLightboxItem(screenshotsList.find((s) => s.id === 'clamshell_mode') || null)}
             />
-            <div className="p-3 text-center text-xs text-gray-500 font-medium">
+            <div className="text-center text-xs text-gray-500 font-medium">
               {lang === 'en' ? 'Real Clamshell Mode screen capture' : 'ক্ল্যামশেল মোডের আসল স্ক্রিনশট'}
             </div>
           </div>
@@ -454,16 +456,17 @@ export const HomePage: React.FC = () => {
             <div
               key={item.id}
               onClick={() => setSelectedLightboxItem(item)}
-              className="group cursor-pointer rounded-2xl bg-white border border-gray-200/80 p-2 shadow-xs hover:shadow-xl transition-all"
+              className="group cursor-pointer rounded-2xl bg-white border border-gray-200/80 p-3 shadow-xs hover:shadow-xl transition-all space-y-3 flex flex-col justify-between"
             >
-              <div className="aspect-[16/10] overflow-hidden rounded-xl bg-gray-100">
+              <div className="relative w-full rounded-xl bg-gray-950/5 border border-gray-200/70 p-1 flex items-center justify-center overflow-hidden min-h-[170px]">
                 <img
                   src={item.lightSrc}
                   alt={lang === 'en' ? item.titleEn : item.titleBn}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                  className="w-full h-auto max-h-[220px] object-contain rounded-lg transition-transform duration-300 group-hover:scale-[1.01]"
+                  loading="lazy"
                 />
               </div>
-              <div className="p-3 space-y-1">
+              <div className="px-1 space-y-1">
                 <h4 className="text-sm font-bold text-gray-900 group-hover:text-blue-600 transition-colors">
                   {lang === 'en' ? item.titleEn : item.titleBn}
                 </h4>

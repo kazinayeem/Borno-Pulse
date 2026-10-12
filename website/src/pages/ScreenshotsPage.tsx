@@ -3,7 +3,6 @@ import { useLanguage } from '../context/LanguageContext';
 import { screenshotsList } from '../data/screenshotsData';
 import { ScreenshotLightbox } from '../components/ScreenshotLightbox';
 import type { ScreenshotItem } from '../types';
-
 import { Sun, Moon, Search, Layers, Maximize2 } from 'lucide-react';
 
 export const ScreenshotsPage: React.FC = () => {
@@ -14,12 +13,12 @@ export const ScreenshotsPage: React.FC = () => {
   const [selectedItem, setSelectedItem] = useState<ScreenshotItem | null>(null);
 
   const categories = [
-    { id: 'all', label: lang === 'en' ? 'All Surfaces (80+)' : 'সকল স্ক্রিন (৮০+)' },
-    { id: 'telemetry', label: lang === 'en' ? 'Telemetry & Hardware' : 'টেলিমেট্রি ও হার্ডওয়্যার' },
-    { id: 'developer', label: lang === 'en' ? 'Developer & Port' : 'ডেভেলপার ও পোর্ট' },
-    { id: 'files', label: lang === 'en' ? 'PDF & File Tools' : 'পিডিএফ ও ফাইল' },
-    { id: 'settings', label: lang === 'en' ? 'Settings & Quick Launcher' : 'সেটিংস ও লঞ্চার' },
-    { id: 'widget', label: lang === 'en' ? 'Menu Bar Widget' : 'মেনু বার উইজেট' },
+    { id: 'all', label: lang === 'en' ? 'All Screens' : 'সকল স্ক্রিন' },
+    { id: 'telemetry', label: lang === 'en' ? 'System Monitoring' : 'সিস্টেম মনিটরিং' },
+    { id: 'developer', label: lang === 'en' ? 'Developer Tools' : 'ডেভেলপার টুলস' },
+    { id: 'files', label: lang === 'en' ? 'PDF & Files' : 'পিডিএফ ও ফাইল' },
+    { id: 'settings', label: lang === 'en' ? 'Settings' : 'সেটিংস' },
+    { id: 'widget', label: lang === 'en' ? 'Widget' : 'মেনু বার উইজেট' },
   ];
 
   const filteredItems = screenshotsList.filter((item) => {
@@ -38,15 +37,15 @@ export const ScreenshotsPage: React.FC = () => {
       {/* Header */}
       <div className="text-center max-w-3xl mx-auto space-y-4">
         <span className="text-xs font-bold uppercase tracking-widest text-blue-600">
-          {lang === 'en' ? '100% Authentic Native UI' : 'প্রকৃত অ্যাপের স্ক্রিনশট গ্যালারি'}
+          {lang === 'en' ? '100% Authentic Native UI' : 'প্রকৃত ম্যাক অ্যাপের আসল স্ক্রিনশট'}
         </span>
         <h1 className="text-4xl sm:text-5xl font-extrabold text-gray-950 tracking-tight">
           {lang === 'en' ? 'Screenshot Gallery' : 'স্ক্রিনশট গ্যালারি'}
         </h1>
         <p className="text-base text-gray-600 leading-relaxed">
           {lang === 'en'
-            ? 'Every screenshot is captured programmatically from Borno Pulse running natively on macOS Sonoma and Sequoia. Filter by interface category or switch between Light and Dark mode.'
-            : 'প্রতিটি স্ক্রিনশট ম্যাকওএসে চলমান Borno Pulse অ্যাপ থেকে সরাসরি গৃহীত। ক্যাটাগরি ও লাইট/ডার্ক মোড ফিল্টার করে বিস্তারিত পর্যবেক্ষণ করুন।'}
+            ? 'Every screenshot is captured programmatically from Borno Pulse running natively on macOS. Fully intact windows with uncropped sidebars, traffic light controls, and complete layouts.'
+            : 'প্রতিটি স্ক্রিনশট ম্যাকওএসে চলমান আসল Borno Pulse অ্যাপ থেকে স্বয়ংক্রিয়ভাবে সংগৃহীত। সম্পূর্ণ সাইডবার, ট্রাফিক লাইট বাটন ও মেনু অক্ষত রেখে পূর্ণাঙ্গ রূপে প্রদর্শিত।'}
         </p>
       </div>
 
@@ -79,7 +78,7 @@ export const ScreenshotsPage: React.FC = () => {
               }`}
             >
               <Layers className="w-3.5 h-3.5 inline mr-1" />
-              <span>{lang === 'en' ? 'All' : 'উভয়'}</span>
+              <span>{lang === 'en' ? 'All' : 'উভয়'}</span>
             </button>
             <button
               onClick={() => setAppearanceFilter('light')}
@@ -107,42 +106,44 @@ export const ScreenshotsPage: React.FC = () => {
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder={lang === 'en' ? 'Search gallery...' : 'খুঁজুন...'}
+              placeholder={lang === 'en' ? 'Search gallery...' : 'স্ক্রিন খুঁজুন...'}
               className="w-full pl-8 pr-3 py-1.5 text-xs rounded-lg border border-gray-200 focus:outline-hidden focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
             />
           </div>
         </div>
       </div>
 
-      {/* Grid of Screenshots */}
+      {/* Grid of Uncropped Screenshots */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {filteredItems.map((item) => {
           const showLight = appearanceFilter === 'both' || appearanceFilter === 'light';
           const showDark = appearanceFilter === 'both' || appearanceFilter === 'dark';
+          const currentImg = appearanceFilter === 'dark' ? item.darkSrc : item.lightSrc;
 
           return (
             <div
               key={item.id}
               onClick={() => setSelectedItem(item)}
-              className="group cursor-pointer rounded-2xl bg-white border border-gray-200/90 p-3 shadow-xs hover:shadow-xl transition-all space-y-3"
+              className="group cursor-pointer rounded-2xl bg-white border border-gray-200/90 p-3 shadow-xs hover:shadow-xl transition-all space-y-3 flex flex-col justify-between"
             >
-              {/* Media Card */}
-              <div className="relative aspect-[16/10] overflow-hidden rounded-xl bg-gray-900 flex items-center justify-center">
+              {/* Screenshot Display Card — Uncropped Object-Contain */}
+              <div className="relative w-full rounded-xl bg-gray-950/5 border border-gray-200/70 p-1.5 flex items-center justify-center overflow-hidden min-h-[190px]">
                 <img
-                  src={appearanceFilter === 'dark' ? item.darkSrc : item.lightSrc}
+                  src={currentImg}
                   alt={lang === 'en' ? item.titleEn : item.titleBn}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                  className="w-full h-auto max-h-[260px] object-contain rounded-lg transition-transform duration-300 group-hover:scale-[1.01]"
+                  loading="lazy"
                 />
-                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                  <div className="px-3 py-1.5 rounded-lg bg-white/90 text-gray-900 font-semibold text-xs flex items-center gap-1.5 shadow-md">
-                    <Maximize2 className="w-3.5 h-3.5" />
+                <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
+                  <div className="px-3 py-1.5 rounded-lg bg-white/95 text-gray-900 font-semibold text-xs flex items-center gap-1.5 shadow-md">
+                    <Maximize2 className="w-3.5 h-3.5 text-blue-600" />
                     <span>{lang === 'en' ? 'Click to inspect' : 'পূর্ণাঙ্গ ভিউ'}</span>
                   </div>
                 </div>
               </div>
 
               {/* Title & Description */}
-              <div className="space-y-1 px-1">
+              <div className="space-y-1.5 px-1">
                 <div className="flex items-center justify-between">
                   <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded bg-blue-50 text-blue-600 border border-blue-200/60">
                     {item.category}

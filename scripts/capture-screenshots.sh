@@ -20,9 +20,10 @@ echo ""
 echo "==> Building smart tool target..."
 xcodebuild -project "$REPO_ROOT/smart tool.xcodeproj" \
            -scheme "smart tool" \
-           -destination "platform=macOS" \
-           -configuration Debug \
+           -destination "generic/platform=macOS" \
+           -configuration Release \
            build > /dev/null 2>&1
+
 
 # 2. Locate built executable
 DERIVED_DATA_BUILD="$HOME/Library/Developer/Xcode/DerivedData"
