@@ -14,6 +14,7 @@ public struct MenuBarWidgetSettingsView: View {
     @ObservedObject var alertService = WidgetAlertService.shared
     @ObservedObject var settings = AppSettings.shared
     @ObservedObject var monitor = SystemMonitor.shared
+    @ObservedObject var quickActionRegistry = QuickActionRegistry.shared
     
     @State private var selectedCategoryTab: WidgetMetricCategory = .cpu
     @State private var metricSearchQuery: String = ""
@@ -532,45 +533,117 @@ public struct MenuBarWidgetSettingsView: View {
     
     // MARK: - 6. Quick Action Shortcuts Section
     private var quickActionsSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            sectionHeader("Widget Footer Shortcuts", icon: "sparkles", color: AppTheme.purpleAccent)
+        VStack(alignment: .leading, spacing: 14) {
+            sectionHeader("Quick System Actions (Widget Grid)", icon: "sparkles", color: AppTheme.purpleAccent)
             
-            Text("Select which utility buttons appear at the bottom of the popover widget.")
+            Text("Customize which tools and shortcuts appear in the menu bar widget's Actions grid, and their display order.")
                 .font(.system(size: 11))
                 .foregroundStyle(AppTheme.textTertiary)
             
-            LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 8) {
-                ForEach(WidgetQuickActionId.allCases) { action in
-                    let isEnabled = preferences.enabledQuickActions.contains(action)
-                    Button {
-                        if isEnabled {
-                            preferences.enabledQuickActions.removeAll { $0 == action }
-                        } else {
-                            preferences.enabledQuickActions.append(action)
-                        }
-                    } label: {
-                        HStack(spacing: 6) {
-                            Image(systemName: action.icon)
-                                .font(.system(size: 11))
+            HStack {
+                Button("Restore Default Actions") {
+                    quickActionRegistry.resetToDefaults()
+                }
+                .buttonStyle(.bordered)
+                .controlSize(.small)
+                
+                Spacer()
+                
+                Text("\(quickActionRegistry.enabledActionIds.count) of \(QuickActionId.allCases.count) Active")
+                    .font(.system(size: 11, weight: .semibold))
+                    .foregroundStyle(AppTheme.textSecondary)
+            }
+            
+            VStack(spacing: 6) {
+                ForEach(quickActionRegistry.actionOrder) { id in
+                    if let item = quickActionRegistry.action(for: id) {
+                        let isEnabled = quickActionRegistry.enabledActionIds.contains(id)
+                        HStack(spacing: 8) {
+                            Image(systemName: item.icon)
+                                .font(.system(size: 13))
                                 .foregroundStyle(isEnabled ? AppTheme.electricBlue : AppTheme.textTertiary)
-                            Text(action.title)
-                                .font(.system(size: 11))
+                                .frame(width: 22)
+                            
+                            VStack(alignment: .leading, spacing: 1) {
+                                HStack(spacing: 4) {
+                                    Text(item.title)
+                                        .font(.system(size: 11, weight: .semibold))
+                                        .foregroundStyle(AppTheme.textPrimary)
+                                    if !item.isSupported {
+                                        Text("Guide")
+                                            .font(.system(size: 8, weight: .bold))
+                                            .padding(.horizontal, 4)
+                                            .padding(.vertical, 1)
+                                            .background(AppTheme.warningAmber.opacity(0.12))
+                                            .foregroundStyle(AppTheme.warningAmber)
+                                            .clipShape(Capsule())
+                                    }
+                                }
+                                Text(item.description)
+                                    .font(.system(size: 9.5))
+                                    .foregroundStyle(AppTheme.textTertiary)
+                                    .lineLimit(1)
+                            }
+                            
                             Spacer()
-                            Image(systemName: isEnabled ? "checkmark.circle.fill" : "circle")
-                                .font(.system(size: 12))
-                                .foregroundStyle(isEnabled ? AppTheme.electricBlue : AppTheme.textTertiary)
+                            
+                            // Reorder buttons
+                            Button {
+                                moveQuickAction(id: id, direction: -1)
+                            } label: {
+                                Image(systemName: "arrow.up")
+                                    .font(.system(size: 9.5))
+                                    .foregroundStyle(AppTheme.textSecondary)
+                            }
+                            .buttonStyle(.plain)
+                            .disabled(quickActionRegistry.actionOrder.first == id)
+                            
+                            Button {
+                                moveQuickAction(id: id, direction: 1)
+                            } label: {
+                                Image(systemName: "arrow.down")
+                                    .font(.system(size: 9.5))
+                                    .foregroundStyle(AppTheme.textSecondary)
+                            }
+                            .buttonStyle(.plain)
+                            .disabled(quickActionRegistry.actionOrder.last == id)
+                            
+                            Toggle("", isOn: Binding(
+                                get: { isEnabled },
+                                set: { val in
+                                    if val {
+                                        if !quickActionRegistry.enabledActionIds.contains(id) {
+                                            quickActionRegistry.enabledActionIds.append(id)
+                                        }
+                                    } else {
+                                        quickActionRegistry.enabledActionIds.removeAll { $0 == id }
+                                    }
+                                }
+                            ))
+                            .labelsHidden()
+                            .toggleStyle(.switch)
+                            .controlSize(.mini)
                         }
-                        .padding(8)
-                        .background(isEnabled ? AppTheme.selectionBackground : AppTheme.cardBackgroundSecondary)
-                        .clipShape(RoundedRectangle(cornerRadius: 6))
-                        .contentShape(RoundedRectangle(cornerRadius: 6))
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 6)
+                        .background(isEnabled ? AppTheme.cardBackgroundSecondary : AppTheme.cardBackgroundSecondary.opacity(0.4))
+                        .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
                     }
-                    .buttonStyle(.plain)
-                    .accessibilityAddTraits(isEnabled ? .isSelected : [])
                 }
             }
+            .frame(maxHeight: 280)
+            .clipped()
         }
         .smartCard()
+    }
+
+    private func moveQuickAction(id: QuickActionId, direction: Int) {
+        guard let idx = quickActionRegistry.actionOrder.firstIndex(of: id) else { return }
+        let newIdx = idx + direction
+        guard newIdx >= 0 && newIdx < quickActionRegistry.actionOrder.count else { return }
+        var updated = quickActionRegistry.actionOrder
+        updated.swapAt(idx, newIdx)
+        quickActionRegistry.actionOrder = updated
     }
     
     // MARK: - 7. Refresh Rate & Performance

@@ -56,6 +56,16 @@ public final class AppearanceController {
         let match = NSApp.effectiveAppearance.bestMatch(from: [.aqua, .darkAqua]) ?? .aqua
         return NSAppearance(named: match)
     }
+
+    public var isDarkMode: Bool {
+        NSApp.effectiveAppearance.bestMatch(from: [.aqua, .darkAqua]) == .darkAqua
+    }
+
+    public func toggleAppearance() {
+        let newMode: AppAppearanceMode = isDarkMode ? .light : .dark
+        AppSettings.shared.appearanceMode = newMode
+        apply(newMode)
+    }
 }
 
 public extension Notification.Name {

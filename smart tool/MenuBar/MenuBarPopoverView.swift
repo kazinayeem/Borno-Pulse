@@ -45,6 +45,7 @@ public struct MenuBarPopoverView: View {
     @ObservedObject var powerService = BatteryPowerService.shared
     @ObservedObject var settings = AppSettings.shared
     @ObservedObject var widgetPrefs = MenuBarWidgetPreferences.shared
+    @ObservedObject var quickActionsRegistry = QuickActionRegistry.shared
 
     @State private var selectedCategory: MenuBarCategory
     @State private var hasAvailableUpdate: Bool = false
@@ -106,8 +107,9 @@ public struct MenuBarPopoverView: View {
                 return CGFloat(28 + min(activeMetricsCount, 6) * 40 + 16)
             }
         case .quickActions:
-            // 4 sleek action items: each ~32pt + spacing (3*5=15) + padding (16) = ~159
-            return 162
+            let actionCount = QuickActionRegistry.shared.enabledActionIds.count
+            let rows = max(1, (actionCount + 3) / 4)
+            return min(360, CGFloat(24 + rows * 72 + 20))
         }
     }
 
@@ -726,87 +728,12 @@ public struct MenuBarPopoverView: View {
         }
     }
 
-    // MARK: - 3D. Quick Actions Section (Compact, Native macOS List)
+    // MARK: - 3D. Quick Actions Section (Responsive Icon Grid)
     private var quickActionsSection: some View {
-        VStack(spacing: 5.5) {
-            quickActionRow(
-                title: "Scan & Clean Cache",
-                subtitle: "Free up disk space safely",
-                icon: "sparkles",
-                iconColor: AppTheme.electricBlue,
-                action: onQuickCleanup
-            )
-
-            quickActionRow(
-                title: "Activity Monitor",
-                subtitle: "Inspect running processes & load",
-                icon: "chart.bar.xaxis",
-                iconColor: AppTheme.successGreen,
-                action: {
-                    NSWorkspace.shared.open(URL(fileURLWithPath: "/System/Applications/Utilities/Activity Monitor.app"))
-                }
-            )
-
-            quickActionRow(
-                title: "macOS Sound Settings",
-                subtitle: "Configure audio routing & output",
-                icon: "speaker.wave.3",
-                iconColor: AppTheme.purpleAccent,
-                action: {
-                    NSWorkspace.shared.open(URL(fileURLWithPath: "/System/Library/PreferencePanes/Sound.prefPane"))
-                }
-            )
-
-            quickActionRow(
-                title: "macOS System Settings",
-                subtitle: "Open system preferences & displays",
-                icon: "gearshape.2",
-                iconColor: AppTheme.textSecondary,
-                action: {
-                    NSWorkspace.shared.open(URL(fileURLWithPath: "/System/Applications/System Settings.app"))
-                }
-            )
-        }
-    }
-
-    private func quickActionRow(
-        title: String,
-        subtitle: String,
-        icon: String,
-        iconColor: Color,
-        action: @escaping () -> Void
-    ) -> some View {
-        Button(action: action) {
-            HStack(spacing: 8) {
-                Image(systemName: icon)
-                    .font(.system(size: 11, weight: .semibold))
-                    .foregroundStyle(iconColor)
-                    .frame(width: 22, height: 22)
-                    .background(iconColor.opacity(0.12))
-                    .clipShape(RoundedRectangle(cornerRadius: 5, style: .continuous))
-
-                VStack(alignment: .leading, spacing: 1) {
-                    Text(title)
-                        .font(AppTypography.font(size: 10.5, weight: .semibold))
-                        .foregroundStyle(AppTheme.textPrimary)
-                    Text(subtitle)
-                        .font(AppTypography.font(size: 8.5))
-                        .foregroundStyle(AppTheme.textTertiary)
-                }
-
-                Spacer()
-
-                Image(systemName: "chevron.right")
-                    .font(.system(size: 8.5, weight: .semibold))
-                    .foregroundStyle(AppTheme.textTertiary)
-            }
-            .padding(.horizontal, 9)
-            .padding(.vertical, 5)
-            .background(AppTheme.cardBackgroundSecondary)
-            .clipShape(RoundedRectangle(cornerRadius: 7, style: .continuous))
-            .overlay(RoundedRectangle(cornerRadius: 7, style: .continuous).stroke(AppTheme.cardBorder, lineWidth: 0.5))
-        }
-        .buttonStyle(.plain)
+        QuickActionsGridView(
+            onOpenDashboard: onOpenDashboard,
+            onQuickCleanup: onQuickCleanup
+        )
     }
 
     // MARK: - Reusable UI Primitives

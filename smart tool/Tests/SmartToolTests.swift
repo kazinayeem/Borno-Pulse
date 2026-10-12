@@ -1257,7 +1257,55 @@ public enum SmartToolTests {
         // 132. Batch File Converter & Custom Pomodoro Durations
         BatchAndFocusTests.runTests(assert)
 
+        // 133. Quick System Actions Registry, Sleep Assertion & Safety Invariants
+        runQuickActionRegistryTests(assert)
+
         return (passed, failed, logs)
+    }
+
+    @MainActor
+    private static func runQuickActionRegistryTests(_ assert: (Bool, String) -> Void) {
+        let registry = QuickActionRegistry.shared
+
+        // 1. Action Registry completeness
+        assert(QuickActionId.allCases.count >= 18, "QuickActionId defines at least 18 system actions (got \(QuickActionId.allCases.count))")
+        for id in QuickActionId.allCases {
+            let item = registry.action(for: id)
+            assert(item != nil, "QuickActionRegistry provides definition for \(id.rawValue)")
+            assert(item?.icon.isEmpty == false, "\(id.rawValue) has non-empty icon")
+            assert(item?.title.isEmpty == false, "\(id.rawValue) has non-empty display title")
+        }
+
+        // 2. Safety & confirmation requirements
+        let trashAction = registry.action(for: .emptyTrash)
+        assert(trashAction?.requiresConfirmation == true, "Empty Trash explicitly requires user confirmation before execution")
+        assert(trashAction?.confirmationTitle?.isEmpty == false, "Empty Trash defines confirmation title")
+
+        // 3. Documented hardware & system restrictions
+        let notchAction = registry.action(for: .hideNotch)
+        assert(notchAction?.isSupported == false, "Hardware Notch is honestly marked unsupported")
+        assert(notchAction?.unsupportedReason?.contains("hardware") == true, "Hardware Notch explains physical camera cutout limitation")
+
+        let desktopIconsAction = registry.action(for: .hideDesktopIcons)
+        assert(desktopIconsAction?.isSupported == false, "Desktop Icons direct killall hack is honestly avoided")
+
+        // 4. Sleep prevention service assertion lifecycle
+        let awakeService = KeepAwakeService.shared
+        assert(!awakeService.isActive, "KeepAwakeService initially inactive")
+        awakeService.start()
+        assert(awakeService.isActive, "KeepAwakeService starts power assertion successfully")
+        awakeService.stop()
+        assert(!awakeService.isActive, "KeepAwakeService stops and releases power assertion cleanly")
+
+        // 5. Customization and ordering invariants
+        let initialCount = registry.enabledActionIds.count
+        assert(initialCount > 0, "Default enabled quick actions is non-empty")
+        assert(registry.enabledActionIds.contains(.keepAwake), "Default quick actions contains Keep Awake")
+        assert(registry.enabledActionIds.contains(.toggleDarkMode), "Default quick actions contains Dark Mode")
+        assert(registry.enabledActionIds.contains(.lockScreen), "Default quick actions contains Lock Screen")
+
+        registry.resetToDefaults()
+        assert(registry.enabledActionIds == QuickActionRegistry.defaultActions, "Reset restores default quick actions")
     }
 }
 
