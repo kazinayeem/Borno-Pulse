@@ -13,6 +13,16 @@
   <a href="docs/SCREEN_INVENTORY.md"><img src="https://img.shields.io/badge/Swift-6.0%20Strict%20Concurrency-orange.svg" alt="Swift 6"></a>
 </p>
 
+<p align="center">
+  <a href="https://github.com/kazinayeem/Borno-Pulse/raw/main/releases/Borno-Pulse-macOS.dmg">
+    <img src="https://img.shields.io/badge/⚡️_Download_DMG-Direct_macOS_Installer-007AFF?style=for-the-badge&logo=apple&logoColor=white" alt="Direct Download Borno Pulse DMG">
+  </a>
+  &nbsp;
+  <a href="https://github.com/kazinayeem/Borno-Pulse/releases">
+    <img src="https://img.shields.io/badge/All_Releases-GitHub-333333?style=for-the-badge&logo=github&logoColor=white" alt="GitHub Releases">
+  </a>
+</p>
+
 ---
 
 ## 1. Overview
@@ -33,7 +43,48 @@ Engineered with an **offline-first philosophy**, Borno Pulse contacts no remote 
 
 ---
 
-## 2. Visual Tour & Screenshot Gallery
+## 2. Download & Installation
+
+### Option 1: Direct DMG Download (One-Click)
+
+<p align="center">
+  <a href="https://github.com/kazinayeem/Borno-Pulse/raw/main/releases/Borno-Pulse-macOS.dmg">
+    <img src="https://img.shields.io/badge/⬇️_Click_to_Download-Borno--Pulse--macOS.dmg_(17_MB)-2ea44f?style=for-the-badge&logo=apple&logoColor=white" alt="Click to Download DMG">
+  </a>
+</p>
+
+| Package | Format | Architecture | Direct Download |
+|:---|:---:|:---:|:---:|
+| **Borno Pulse Disk Image** | `.dmg` (17 MB) | Universal (`arm64` Apple Silicon & `x86_64` Intel) | [**⬇️ Direct Download Borno-Pulse-macOS.dmg**](https://github.com/kazinayeem/Borno-Pulse/raw/main/releases/Borno-Pulse-macOS.dmg) |
+| **GitHub Releases Mirror** | Release Assets | Universal (`arm64` Apple Silicon & `x86_64` Intel) | [**GitHub Releases Portal**](https://github.com/kazinayeem/Borno-Pulse/releases) |
+
+#### Quick Install Steps:
+1. Click the [**Download Borno-Pulse-macOS.dmg**](https://github.com/kazinayeem/Borno-Pulse/raw/main/releases/Borno-Pulse-macOS.dmg) button above to download directly.
+2. Double-click to open the DMG disk image.
+3. Drag the **Borno Pulse** app icon into the **Applications** folder shortcut.
+4. Launch **Borno Pulse** from Launchpad, Spotlight, or Applications.
+
+> [!TIP]
+> **First-Launch Gatekeeper Notice:** For direct downloads on macOS Sequoia (15.x) or Sonoma (14.x), right-click (or Control-click) **Borno Pulse.app** in `/Applications` and select **Open**, or run the following command in Terminal to clear quarantine:
+> ```bash
+> xattr -cr "/Applications/Borno Pulse.app"
+> ```
+
+---
+
+### Option 2: Build & Install via Script
+
+If you have Xcode installed, compile the universal binary and install directly into `/Applications` with one command:
+
+```bash
+git clone https://github.com/kazinayeem/Borno-Pulse.git
+cd Borno-Pulse
+./scripts/package-release.sh --install
+```
+
+---
+
+## 3. Visual Tour & Screenshot Gallery
 
 Every screenshot below was captured programmatically from the running, compiled application across **Light Mode** and **Dark Mode** via [`scripts/capture-screenshots.sh`](scripts/capture-screenshots.sh).
 
@@ -60,7 +111,7 @@ Every screenshot below was captured programmatically from the running, compiled 
 
 ---
 
-## 3. Implemented Features & Architecture
+## 4. Implemented Features & Architecture
 
 Borno Pulse includes **25 dedicated navigation sections** and system tools:
 
@@ -101,7 +152,7 @@ smart tool/
 
 ---
 
-## 4. System Requirements
+## 5. System Requirements
 
 - **Operating System**: macOS 14.0 (Sonoma) or macOS 15+ (Sequoia)
 - **Architecture**: Universal binary supporting both **Apple Silicon** (`arm64`, M1/M2/M3/M4) and **Intel** (`x86_64`)
@@ -111,7 +162,7 @@ smart tool/
 
 ---
 
-## 5. Building from Source
+## 6. Building from Source
 
 ### 1. Clone the Repository
 ```bash
@@ -153,11 +204,20 @@ APP_BIN=$(find "$HOME/Library/Developer/Xcode/DerivedData" -name "smart tool" -t
 ./scripts/capture-screenshots.sh
 ```
 
+### 6. Package DMG Installer & Install
+```bash
+# Package universal DMG and ZIP into dist/
+./scripts/package-release.sh
+
+# Or compile, package, and install to /Applications
+./scripts/package-release.sh --install
+```
+
 *Full build, signing, and packaging documentation is available in [`docs/BUILDING.md`](docs/BUILDING.md).*
 
 ---
 
-## 6. Usage Guide
+## 7. Usage Guide
 
 - **Opening the Dashboard**: Click the Borno Pulse Dock icon or press **⌘O** from the menu bar widget.
 - **Command Palette (⌘K)**: Press **⌘K** anywhere to open the Quick Launcher search across all 25 system modules.
@@ -168,7 +228,7 @@ APP_BIN=$(find "$HOME/Library/Developer/Xcode/DerivedData" -name "smart tool" -t
 
 ---
 
-## 7. Privacy & Security
+## 8. Privacy & Security
 
 Borno Pulse is designed with a **100% local-first architecture**:
 - **Zero Remote Telemetry**: No third-party analytics SDKs, trackers, or remote telemetry.
@@ -179,7 +239,7 @@ Borno Pulse is designed with a **100% local-first architecture**:
 
 ---
 
-## 8. Contributing
+## 9. Contributing
 
 Contributions are welcome! Whether you are improving telemetry accuracy, adding new developer tools, or refining UI typography, please review our guidelines:
 1. Review [`CONTRIBUTING.md`](CONTRIBUTING.md) for branch guidelines and commit styles.
@@ -188,13 +248,13 @@ Contributions are welcome! Whether you are improving telemetry accuracy, adding 
 
 ---
 
-## 9. License
+## 10. License
 
 This project is licensed under the **MIT License**. See the [`LICENSE`](LICENSE) file for complete details.
 
 ---
 
-## 10. Support & Attribution
+## 11. Support & Attribution
 
 - **BornoSoft**: [https://bornosoft.bd](https://bornosoft.bd)
 - **Repository**: [https://github.com/kazinayeem/Borno-Pulse](https://github.com/kazinayeem/Borno-Pulse)

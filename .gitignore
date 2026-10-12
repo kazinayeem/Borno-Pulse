@@ -34,3 +34,9 @@ Pods/
 # App Test Artifacts
 *.xcresult
 *.ips
+
+# Build and Distribution Artifacts
+dist/
+*.zip
+*.dmg
+!releases/*.dmg

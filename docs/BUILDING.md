@@ -93,14 +93,24 @@ Screenshots are written directly to `screenshots/light/`, `screenshots/dark/`, a
 
 ---
 
-## 7. Packaging & Distribution
+## 7. Automated Packaging & Distribution
 
-To create a standalone distributable ZIP archive from a Release build:
+We provide an automated release packaging script [`scripts/package-release.sh`](../scripts/package-release.sh) that compiles universal binaries, builds a drag-and-drop `.dmg` installer, generates `.zip` archives, and calculates SHA-256 checksums:
 
 ```bash
-RELEASE_APP="$HOME/Library/Developer/Xcode/DerivedData/smart_tool-"*/Build/Products/Release/"smart tool.app"
-ditto -c -k --keepParent "$RELEASE_APP" "Borno-Pulse-macOS.zip"
+# Package DMG and ZIP into dist/
+./scripts/package-release.sh
+
+# Or package and immediately install to /Applications
+./scripts/package-release.sh --install
 ```
+
+Artifacts will be generated in `dist/`:
+- `dist/Borno-Pulse-v1.3.0.dmg` (Universal disk image installer with Applications symlink)
+- `dist/Borno-Pulse-macOS.dmg`
+- `dist/Borno-Pulse-macOS.zip` (Standalone compressed application bundle)
+- `dist/checksums-sha256.txt`
+
 
 For developer distribution outside the Mac App Store, sign the application with your Developer ID certificate and submit for Apple notarization:
 
