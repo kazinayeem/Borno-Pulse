@@ -148,6 +148,11 @@ public struct MainDashboardView: View {
                 selectedSection = section
             }
         }
+        .background(
+            WindowAccessor { window in
+                MainWindowRouter.shared.register(window: window)
+            }
+        )
         .onAppear {
             MainWindowRouter.shared.register(openWindow: openWindow)
             if CommandLine.arguments.contains("--settings") {
@@ -381,6 +386,29 @@ public struct MainDashboardView: View {
             DiagnosticsView()
         case .settings:
             SettingsView()
+        }
+    }
+}
+
+// MARK: - Window Accessor Helper
+private struct WindowAccessor: NSViewRepresentable {
+    let onWindow: (NSWindow) -> Void
+
+    func makeNSView(context: Context) -> NSView {
+        let view = NSView()
+        DispatchQueue.main.async {
+            if let window = view.window {
+                onWindow(window)
+            }
+        }
+        return view
+    }
+
+    func updateNSView(_ nsView: NSView, context: Context) {
+        DispatchQueue.main.async {
+            if let window = nsView.window {
+                onWindow(window)
+            }
         }
     }
 }

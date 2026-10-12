@@ -1392,6 +1392,9 @@ public enum SmartToolTests {
         AppSettings.shared.hasCompletedOnboarding = true
         assert(AppSettings.shared.hasCompletedOnboarding == true, "hasCompletedOnboarding successfully toggled to true")
         AppSettings.shared.hasCompletedOnboarding = initialOnboarding
+
+        // 8. System Cleaner & Lifecycle Tests
+        SystemCleanerAndLifecycleTests.runTests(assert: assert)
     }
 }
 

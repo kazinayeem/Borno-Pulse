@@ -176,6 +176,16 @@ public final class MenuBarCoordinator: NSObject {
         popover?.performClose(nil)
         MainWindowRouter.shared.showMainWindow(section: section)
     }
+
+    public func teardown() {
+        if let item = statusItem {
+            NSStatusBar.system.removeStatusItem(item)
+            statusItem = nil
+        }
+        popover?.performClose(nil)
+        popover = nil
+        cancellables.removeAll()
+    }
 }
 
 extension Notification.Name {

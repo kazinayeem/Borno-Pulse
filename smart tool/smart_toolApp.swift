@@ -57,7 +57,10 @@ struct smart_toolApp: App {
 
 @MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate {
+    public static var isQuitting: Bool = false
+
     func applicationWillFinishLaunching(_ notification: Notification) {
+        NSApp.setActivationPolicy(.regular)
         AppearanceController.shared.start()
     }
 
@@ -189,12 +192,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             }
         }
 
+        // Enforce normal macOS Dock application activation policy
+        NSApp.setActivationPolicy(.regular)
+
         // A second copy would add duplicate menu bar items and a second clipboard monitor.
         let ownPID = ProcessInfo.processInfo.processIdentifier
         if let bundleID = Bundle.main.bundleIdentifier,
            let existing = NSRunningApplication.runningApplications(withBundleIdentifier: bundleID)
             .first(where: { $0.processIdentifier != ownPID && !$0.isTerminated }) {
-            existing.activate()
+            existing.activate(options: [.activateIgnoringOtherApps])
             NSApp.terminate(nil)
             return
         }
@@ -207,28 +213,75 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         // Clipboard history, global shortcut and clipboard status item live for the whole app session.
         ClipboardBackgroundController.shared.start()
+
+        // Observe when windows become main to register them with the router and attach delegate
+        NotificationCenter.default.addObserver(
+            forName: NSWindow.didBecomeMainNotification,
+            object: nil,
+            queue: .main
+        ) { notification in
+            if let window = notification.object as? NSWindow,
+               !(window is NSPanel),
+               window.canBecomeKey {
+                MainWindowRouter.shared.register(window: window)
+            }
+        }
+
+        // Connect any already created main window
+        DispatchQueue.main.async {
+            if let window = NSApp.windows.first(where: { !($0 is NSPanel) && $0.canBecomeKey }) {
+                MainWindowRouter.shared.register(window: window)
+            }
+        }
     }
     
     func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
+        AppDelegate.isQuitting = true
         let proceed = PDFEditorService.shared.confirmProceedWithUnsavedChanges(before: "quitting")
-        return proceed ? .terminateNow : .terminateCancel
+        if !proceed {
+            AppDelegate.isQuitting = false
+            return .terminateCancel
+        }
+        return .terminateNow
     }
 
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
-        // Keep running in menu bar even when main dashboard window is closed!
+        // Keep running in menu bar and Dock even when main dashboard window is closed!
         return false
     }
 
     func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
-        if !flag {
-            MainWindowRouter.shared.showMainWindow()
-            return false
-        }
+        NSApp.setActivationPolicy(.regular)
+        MainWindowRouter.shared.showMainWindow()
         return true
+    }
+
+    func applicationDidBecomeActive(_ notification: Notification) {
+        NSApp.setActivationPolicy(.regular)
+        let hasVisibleMainWindow = NSApp.windows.contains { window in
+            !(window is NSPanel) && window.canBecomeKey && window.isVisible
+        }
+        if !hasVisibleMainWindow {
+            MainWindowRouter.shared.showMainWindow()
+        }
     }
     
     func applicationWillTerminate(_ notification: Notification) {
+        AppDelegate.isQuitting = true
+        // 1. Remove status bar items
+        MenuBarCoordinator.shared.teardown()
+        // 2. Stop clipboard monitoring and unregister hotkeys
         ClipboardBackgroundController.shared.stop()
+        // 3. Stop system monitoring timers
         SystemMonitor.shared.stopMonitoring()
+        // 4. Release power assertions and timers
+        KeepAwakeService.shared.stop()
+        ClamshellManager.shared.stop()
+        // 5. Invalidate pomodoro timer
+        FocusTimerService.shared.pause()
+        // 6. Dismiss any full-screen cleaning overlays
+        ScreenCleanOverlayService.shared.dismissActiveOverlay()
+        // 7. Diagnostics log
+        DiagnosticLogger.shared.info("Borno Pulse application cleanly terminated")
     }
 }

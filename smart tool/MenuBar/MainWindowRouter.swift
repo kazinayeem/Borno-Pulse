@@ -20,30 +20,65 @@ public final class SettingsNavigation: ObservableObject {
 }
 
 @MainActor
+public final class MainWindowDelegate: NSObject, NSWindowDelegate {
+    public static let shared = MainWindowDelegate()
+
+    public func windowShouldClose(_ sender: NSWindow) -> Bool {
+        if AppDelegate.isQuitting {
+            return true
+        }
+        // Red close button behavior: hide/orderOut the window only without terminating Borno Pulse.
+        // Borno Pulse remains running in the background and visible in the Dock.
+        sender.orderOut(nil)
+        return false
+    }
+}
+
+@MainActor
 public final class MainWindowRouter {
     public static let shared = MainWindowRouter()
 
-    static let windowID = "main-window"
+    public static let windowID = "main-window"
 
     private var openWindowAction: OpenWindowAction?
     private var pendingSection: NavigationSection?
+    private weak var registeredWindow: NSWindow?
 
     private init() {}
 
+    /// Registers the underlying NSWindow to attach the custom delegate and keep a reference.
+    public func register(window: NSWindow) {
+        self.registeredWindow = window
+        window.identifier = NSUserInterfaceItemIdentifier(Self.windowID)
+        window.delegate = MainWindowDelegate.shared
+    }
+
     /// Called by the main window's root view so the window can be recreated after it closes.
-    func register(openWindow: OpenWindowAction) {
+    public func register(openWindow: OpenWindowAction) {
         openWindowAction = openWindow
     }
 
-    var mainWindow: NSWindow? {
-        NSApp.windows.first { $0.identifier?.rawValue.hasPrefix(Self.windowID) == true }
+    public var mainWindow: NSWindow? {
+        if let window = registeredWindow {
+            return window
+        }
+        return NSApp.windows.first { window in
+            (window.identifier?.rawValue.contains(Self.windowID) == true ||
+             window.title == "Borno Pulse" ||
+             (!window.isKind(of: NSPanel.self) && window.canBecomeKey && window.styleMask.contains(.titled)))
+        }
     }
 
     public func showMainWindow(section: NavigationSection? = nil) {
-        NSApp.activate()
-        if let window = mainWindow, window.isVisible || window.isMiniaturized {
+        // Guarantee normal Dock application policy
+        NSApp.setActivationPolicy(.regular)
+        NSApp.activate(ignoringOtherApps: true)
+
+        if let window = mainWindow {
+            register(window: window)
             if window.isMiniaturized { window.deminiaturize(nil) }
             window.makeKeyAndOrderFront(nil)
+            window.orderFrontRegardless()
             if let section {
                 NotificationCenter.default.post(name: .navigateToSection, object: section)
             }
@@ -53,8 +88,10 @@ public final class MainWindowRouter {
         pendingSection = section
         if let openWindowAction {
             openWindowAction(id: Self.windowID)
-        } else if let window = mainWindow {
+        } else if let window = NSApp.windows.first(where: { !($0 is NSPanel) && $0.canBecomeKey }) {
+            register(window: window)
             window.makeKeyAndOrderFront(nil)
+            window.orderFrontRegardless()
         }
     }
 
@@ -64,7 +101,7 @@ public final class MainWindowRouter {
     }
 
     /// Section requested before the window existed; read once by the new window.
-    func consumePendingSection() -> NavigationSection? {
+    public func consumePendingSection() -> NavigationSection? {
         defer { pendingSection = nil }
         return pendingSection
     }
