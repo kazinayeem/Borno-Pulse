@@ -74,6 +74,7 @@ final class PDFEditorCanvasView: PDFView, NSMenuItemValidation {
         })
         observers.append(center.addObserver(forName: .PDFViewDocumentChanged, object: self, queue: .main) { [weak self] _ in
             MainActor.assumeIsolated {
+                self?.interaction = .idle
                 self?.attachScrollObserverIfNeeded()
                 self?.overlay.needsDisplay = true
             }
@@ -95,20 +96,23 @@ final class PDFEditorCanvasView: PDFView, NSMenuItemValidation {
         })
     }
 
-    // MARK: - View Lifecycle
-
-    override var document: PDFDocument? {
-        didSet {
-            interaction = .idle
-            attachScrollObserverIfNeeded()
-            overlay.needsDisplay = true
+    func cleanup() {
+        for token in observers {
+            NotificationCenter.default.removeObserver(token)
         }
+        observers.removeAll()
     }
+
+    // MARK: - View Lifecycle
 
     override func didAddSubview(_ subview: NSView) {
         super.didAddSubview(subview)
-        if subview !== overlay, overlay.superview === self {
-            addSubview(overlay, positioned: .above, relativeTo: nil)
+        guard subview !== overlay, overlay.superview === self else { return }
+        DispatchQueue.main.async { [weak self] in
+            guard let self, self.overlay.superview === self else { return }
+            if self.subviews.last !== self.overlay {
+                self.addSubview(self.overlay, positioned: .above, relativeTo: nil)
+            }
         }
     }
 
@@ -806,5 +810,6 @@ struct PDFEditorCanvasRepresentable: NSViewRepresentable {
         if host.canvas.service?.canvas === host.canvas {
             host.canvas.service?.canvas = nil
         }
+        host.canvas.cleanup()
     }
 }

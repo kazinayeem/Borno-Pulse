@@ -81,6 +81,20 @@ struct PDFEditorWorkspaceView: View {
         }
         .onChange(of: service.currentPageIndex) { _, newValue in pageField = "\(newValue + 1)" }
         .onAppear { pageField = "\(service.currentPageIndex + 1)" }
+        .onDrop(of: [.fileURL], isTargeted: $isDropTargeted) { providers in
+            guard let provider = providers.first else { return false }
+            _ = provider.loadObject(ofClass: URL.self) { url, _ in
+                guard let url else { return }
+                DispatchQueue.main.async {
+                    if UTType(filenameExtension: url.pathExtension)?.conforms(to: .pdf) == true {
+                        service.openDocument(at: url)
+                    } else {
+                        service.lastError = PDFEditorAlert(title: "Unsupported File", message: "“\(url.lastPathComponent)” is not a PDF. The editor opens PDF documents; use Images to PDF or Word & Office to PDF to convert other files first.")
+                    }
+                }
+            }
+            return true
+        }
     }
 
     private var hasDocument: Bool { service.document != nil }
@@ -800,7 +814,8 @@ struct PDFEditorInspectorView: View {
     private func commentItems() -> [CommentItem] {
         guard let doc = service.document else { return [] }
         var items: [CommentItem] = []
-        for index in 0..<doc.pageCount {
+        let maxPages = min(doc.pageCount, 100)
+        for index in 0..<maxPages {
             guard let page = doc.page(at: index) else { continue }
             for annotation in page.annotations where annotation.type == "Text" || annotation.type == "FreeText" {
                 items.append(CommentItem(id: ObjectIdentifier(annotation), annotation: annotation, text: annotation.contents ?? "", page: index))

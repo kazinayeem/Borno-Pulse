@@ -524,6 +524,16 @@ extension SmartToolTests {
             window.close()
         }
 
+        // Regression invariant: PDFKit's background page analyzer (PDFPageAnalyzerV2 on macOS)
+        // queries [canvas document] from a background dispatch queue. Verify that calling the
+        // Objective-C document getter off the main thread does not trigger a Swift 6 MainActor
+        // assertion failure / SIGTRAP crash.
+        let bgDoc: PDFDocument? = DispatchQueue.global(qos: .userInitiated).sync {
+            let view = canvas as PDFView
+            return view.perform(Selector(("document")))?.takeUnretainedValue() as? PDFDocument
+        }
+        assert(bgDoc === doc, "Canvas: background thread access to document getter is safe from actor assertions")
+
         func event(_ type: NSEvent.EventType, _ point: CGPoint, on page: PDFPage, flags: NSEvent.ModifierFlags = []) -> NSEvent {
             let viewPoint = canvas.convert(point, from: page)
             let windowPoint = canvas.convert(viewPoint, to: nil)

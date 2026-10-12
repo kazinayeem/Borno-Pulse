@@ -207,6 +207,10 @@ public final class PDFEditorService: ObservableObject {
 
     @discardableResult
     public func loadDocument(url: URL, password: String? = nil) -> LoadResult {
+        let isSecurityScoped = url.startAccessingSecurityScopedResource()
+        defer {
+            if isSecurityScoped { url.stopAccessingSecurityScopedResource() }
+        }
         guard let doc = PDFDocument(url: url) else {
             let message = "“\(url.lastPathComponent)” could not be opened. It may be damaged or not a PDF."
             statusMessage = message
@@ -393,6 +397,7 @@ public final class PDFEditorService: ObservableObject {
     }
 
     public func openDocument(at url: URL) {
+        guard confirmProceedWithUnsavedChanges(before: "opening another document") else { return }
         switch loadDocument(url: url) {
         case .opened:
             break
