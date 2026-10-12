@@ -870,6 +870,13 @@ public struct BatteryDetailView: View {
                             .lineStyle(StrokeStyle(lineWidth: 2))
                         }
                         .chartYScale(domain: 0...100)
+                        .chartXAxis {
+                            AxisMarks(values: .automatic(desiredCount: 5)) { _ in
+                                AxisGridLine()
+                                AxisTick()
+                                AxisValueLabel(format: .dateTime.minute().second(), anchor: .top)
+                            }
+                        }
                         .frame(height: 180)
                     }
                 }
