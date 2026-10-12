@@ -13,6 +13,7 @@ import SwiftUI
 public struct QuickActionsGridView: View {
     @ObservedObject var registry = QuickActionRegistry.shared
     @ObservedObject var awakeService = KeepAwakeService.shared
+    @ObservedObject var clamshellManager = ClamshellManager.shared
     @ObservedObject var settings = AppSettings.shared
 
     public var onOpenDashboard: () -> Void
@@ -63,6 +64,21 @@ public struct QuickActionsGridView: View {
                     .clipShape(Capsule())
                 }
 
+                if clamshellManager.isActive {
+                    HStack(spacing: 4) {
+                        Circle()
+                            .fill(AppTheme.warningAmber)
+                            .frame(width: 5, height: 5)
+                        Text("Clamshell: \(clamshellManager.formattedRemainingTime)")
+                            .font(AppTypography.font(size: 9, weight: .bold))
+                            .foregroundStyle(AppTheme.warningAmber)
+                    }
+                    .padding(.horizontal, 5)
+                    .padding(.vertical, 2)
+                    .background(AppTheme.warningAmber.opacity(0.12))
+                    .clipShape(Capsule())
+                }
+
                 Button {
                     showCustomizationSheet = true
                 } label: {
@@ -95,6 +111,9 @@ public struct QuickActionsGridView: View {
                 .clipShape(RoundedRectangle(cornerRadius: 5, style: .continuous))
                 .transition(.opacity.combined(with: .scale(scale: 0.95)))
             }
+
+            // Dedicated "Keep Running with Lid Closed" Control Card
+            clamshellDedicatedControlCard
 
             // 4-Column Responsive Icon Grid
             let actions = registry.activeOrderedActions
@@ -172,6 +191,118 @@ public struct QuickActionsGridView: View {
                 onDismiss: { showCustomizationSheet = false }
             )
         }
+    }
+
+    // MARK: - Dedicated Clamshell Operation Card
+    private var clamshellDedicatedControlCard: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            HStack(spacing: 6) {
+                Image(systemName: "laptopcomputer.and.arrow.down")
+                    .font(.system(size: 11, weight: .semibold))
+                    .foregroundStyle(clamshellManager.isActive ? AppTheme.warningAmber : AppTheme.electricBlue)
+
+                Text("Keep Running with Lid Closed")
+                    .font(AppTypography.font(size: 10.5, weight: .bold))
+                    .foregroundStyle(AppTheme.textPrimary)
+
+                Spacer()
+
+                // Status Badge
+                Text(clamshellManager.isActive
+                     ? "Active (\(clamshellManager.formattedRemainingTime))"
+                     : (clamshellManager.isOfficialClamshellSupported ? "Clamshell Ready" : "Display-Off Awake")
+                )
+                .font(AppTypography.font(size: 9, weight: .bold))
+                .padding(.horizontal, 5)
+                .padding(.vertical, 2)
+                .background(
+                    (clamshellManager.isActive
+                     ? AppTheme.warningAmber
+                     : (clamshellManager.isOfficialClamshellSupported ? AppTheme.successGreen : AppTheme.electricBlue)
+                    ).opacity(0.15)
+                )
+                .foregroundStyle(
+                    clamshellManager.isActive
+                     ? AppTheme.warningAmber
+                     : (clamshellManager.isOfficialClamshellSupported ? AppTheme.successGreen : AppTheme.electricBlue)
+                )
+                .clipShape(Capsule())
+
+                Button {
+                    onOpenDashboard()
+                    MainWindowRouter.shared.showMainWindow(section: .clamshellMode)
+                } label: {
+                    Image(systemName: "arrow.up.right.square")
+                        .font(.system(size: 10))
+                        .foregroundStyle(AppTheme.textTertiary)
+                }
+                .buttonStyle(.plain)
+                .help("Open Clamshell Mode details & diagnostics")
+            }
+
+            // Duration selector & Start/Stop controls
+            HStack(spacing: 8) {
+                // Duration menu
+                Menu {
+                    Button("1 Hour") { clamshellManager.selectedDuration = .oneHour }
+                    Button("2 Hours") { clamshellManager.selectedDuration = .twoHours }
+                    Button("3 Hours") { clamshellManager.selectedDuration = .threeHours }
+                    Button("Custom (1h 30m)") { clamshellManager.selectedDuration = .custom(hours: 1, minutes: 30) }
+                    Button("Until Stopped") { clamshellManager.selectedDuration = .untilStopped }
+                } label: {
+                    HStack(spacing: 4) {
+                        Image(systemName: "hourglass")
+                            .font(.system(size: 9.5))
+                        Text(clamshellManager.selectedDuration.label)
+                            .font(AppTypography.font(size: 10, weight: .medium))
+                        Image(systemName: "chevron.up.chevron.down")
+                            .font(.system(size: 8))
+                    }
+                    .padding(.horizontal, 6)
+                    .padding(.vertical, 3.5)
+                    .background(AppTheme.cardBackgroundSecondary)
+                    .clipShape(RoundedRectangle(cornerRadius: 5))
+                    .overlay(RoundedRectangle(cornerRadius: 5).stroke(AppTheme.cardBorder, lineWidth: 0.5))
+                }
+                .menuStyle(.borderlessButton)
+                .fixedSize()
+
+                Spacer()
+
+                // Start / Stop Button
+                Button {
+                    clamshellManager.toggle()
+                } label: {
+                    HStack(spacing: 4) {
+                        Image(systemName: clamshellManager.isActive ? "stop.fill" : "play.fill")
+                            .font(.system(size: 9, weight: .bold))
+                        Text(clamshellManager.isActive ? "Stop" : "Start")
+                            .font(AppTypography.font(size: 10, weight: .bold))
+                    }
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 4)
+                    .background(clamshellManager.isActive ? AppTheme.dangerRed : AppTheme.electricBlue)
+                    .foregroundStyle(Color.white)
+                    .clipShape(RoundedRectangle(cornerRadius: 5, style: .continuous))
+                }
+                .buttonStyle(.plain)
+            }
+
+            // Warning footnote when unsupported
+            if !clamshellManager.isOfficialClamshellSupported {
+                Text("⚠️ On battery / no external monitor: macOS hardware forces sleep on lid close. Display-Off Awake alternative keeps workloads running safely with lid open/ajar.")
+                    .font(AppTypography.font(size: 8.5, weight: .regular))
+                    .foregroundStyle(AppTheme.textTertiary)
+                    .lineLimit(2)
+            }
+        }
+        .padding(8)
+        .background(AppTheme.cardBackgroundSecondary.opacity(0.8))
+        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 8, style: .continuous)
+                .stroke(clamshellManager.isActive ? AppTheme.warningAmber.opacity(0.5) : AppTheme.cardBorder, lineWidth: 0.6)
+        )
     }
 
     // MARK: - Action Grid Cell

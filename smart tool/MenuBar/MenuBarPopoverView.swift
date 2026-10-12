@@ -108,8 +108,10 @@ public struct MenuBarPopoverView: View {
             }
         case .quickActions:
             let actionCount = QuickActionRegistry.shared.enabledActionIds.count
-            let rows = max(1, (actionCount + 3) / 4)
-            return min(360, CGFloat(24 + rows * 72 + 20))
+            let rows = CGFloat(max(1, (actionCount + 3) / 4))
+            let clamshellCardHeight: CGFloat = 84.0
+            let calculated: CGFloat = 24.0 + (rows * 72.0) + clamshellCardHeight + 20.0
+            return min(420.0, calculated)
         }
     }
 
@@ -196,7 +198,7 @@ public struct MenuBarPopoverView: View {
                 }
                 .padding(10)
             }
-            .frame(height: min(currentContentHeight, 370))
+            .frame(height: min(currentContentHeight, 420))
 
             Divider().opacity(0.12)
 

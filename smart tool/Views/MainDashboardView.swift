@@ -20,6 +20,7 @@ public enum NavigationSection: String, CaseIterable, Identifiable, Sendable {
     case developerToolbox = "Developer Toolbox"
     case networkToolkit = "Network Toolkit"
     case portManager = "Port Manager"
+    case clamshellMode = "Clamshell Mode"
     
     // Productivity & Utilities
     case clipboard = "Clipboard Manager"
@@ -55,6 +56,7 @@ public enum NavigationSection: String, CaseIterable, Identifiable, Sendable {
         case .developerToolbox: return "wrench.and.screwdriver.fill"
         case .networkToolkit: return "antenna.radiowaves.left.and.right"
         case .portManager: return "server.rack"
+        case .clamshellMode: return "laptopcomputer.and.arrow.down"
         case .clipboard: return "doc.on.clipboard"
         case .focusPomodoro: return "timer"
         case .batchConverter: return "arrow.triangle.2.circlepath"
@@ -123,6 +125,8 @@ public struct MainDashboardView: View {
                 selectedSection = .settings
             } else if CommandLine.arguments.contains("--port-manager") {
                 selectedSection = .portManager
+            } else if CommandLine.arguments.contains("--clamshell") {
+                selectedSection = .clamshellMode
             } else if let section = MainWindowRouter.shared.consumePendingSection() {
                 selectedSection = section
             }
@@ -165,6 +169,7 @@ public struct MainDashboardView: View {
                 sidebarItem(.developerToolbox)
                 sidebarItem(.networkToolkit)
                 sidebarItem(.portManager)
+                sidebarItem(.clamshellMode)
             }
             
             Section("Productivity & Files") {
@@ -295,6 +300,8 @@ public struct MainDashboardView: View {
             NetworkToolkitView()
         case .portManager:
             PortManagerView()
+        case .clamshellMode:
+            ClamshellModeView()
         case .clipboard:
             ClipboardManagerView()
         case .focusPomodoro:

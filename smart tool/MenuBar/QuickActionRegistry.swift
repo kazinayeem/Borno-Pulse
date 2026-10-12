@@ -59,6 +59,7 @@ public enum QuickActionId: String, CaseIterable, Identifiable, Codable, Sendable
     case openPortManager = "open_port_manager"
     case openNetworkToolkit = "open_network_toolkit"
     case openTerminal = "open_terminal"
+    case clamshellMode = "clamshell_mode"
 
     public var id: String { rawValue }
 }
@@ -196,6 +197,8 @@ public final class QuickActionRegistry: ObservableObject {
             return KeepAwakeService.shared.isActive
         case .toggleDarkMode:
             return AppearanceController.shared.isDarkMode
+        case .clamshellMode:
+            return ClamshellManager.shared.isActive
         default:
             return false
         }
@@ -333,6 +336,13 @@ public final class QuickActionRegistry: ObservableObject {
             category: .tools,
             description: "Launches macOS Terminal."
         ),
+        .clamshellMode: QuickActionItem(
+            id: .clamshellMode,
+            title: "Clamshell",
+            icon: "laptopcomputer.and.arrow.down",
+            category: .tools,
+            description: "Keep workloads running when lid is closed: audit hardware, configure duration, and verify background workloads."
+        ),
         // Documented & Honestly Handled Restrictions
         .hideDesktopIcons: QuickActionItem(
             id: .hideDesktopIcons,
@@ -468,6 +478,16 @@ public final class QuickActionRegistry: ObservableObject {
         case .openTerminal:
             NSWorkspace.shared.open(URL(fileURLWithPath: "/System/Applications/Utilities/Terminal.app"))
             return QuickActionResult(success: true, message: "Terminal opened")
+
+        case .clamshellMode:
+            if ClamshellManager.shared.isActive {
+                ClamshellManager.shared.stop()
+                return QuickActionResult(success: true, message: "Lid-closed operation stopped")
+            } else {
+                onOpenDashboard?()
+                MainWindowRouter.shared.showMainWindow(section: .clamshellMode)
+                return QuickActionResult(success: true, message: "Opened Clamshell Mode settings")
+            }
 
         case .hideDesktopIcons:
             NSWorkspace.shared.open(URL(fileURLWithPath: "/System/Applications/System Settings.app"))

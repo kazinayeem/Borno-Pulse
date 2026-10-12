@@ -1260,6 +1260,9 @@ public enum SmartToolTests {
         // 133. Quick System Actions Registry, Sleep Assertion & Safety Invariants
         runQuickActionRegistryTests(assert)
 
+        // 134. Clamshell Mode / Lid-Closed Operation, Durations & Workload Invariants
+        runClamshellTests(assert)
+
         return (passed, failed, logs)
     }
 
@@ -1306,6 +1309,71 @@ public enum SmartToolTests {
 
         registry.resetToDefaults()
         assert(registry.enabledActionIds == QuickActionRegistry.defaultActions, "Reset restores default quick actions")
+    }
+
+    @MainActor
+    private static func runClamshellTests(_ assert: (Bool, String) -> Void) {
+        // 1. Duration Calculation Tests
+        let oneHour = ClamshellDuration.oneHour
+        assert(oneHour.totalSeconds == 3600, "Clamshell duration 1h calculates to 3600 seconds")
+        assert(oneHour.label == "1 Hour", "Clamshell duration 1h label is accurate")
+
+        let twoHours = ClamshellDuration.twoHours
+        assert(twoHours.totalSeconds == 7200, "Clamshell duration 2h calculates to 7200 seconds")
+
+        let threeHours = ClamshellDuration.threeHours
+        assert(threeHours.totalSeconds == 10800, "Clamshell duration 3h calculates to 10800 seconds")
+
+        let custom90m = ClamshellDuration.custom(hours: 1, minutes: 30)
+        assert(custom90m.totalSeconds == 5400, "Clamshell custom 1h 30m calculates to 5400 seconds")
+        assert(custom90m.label.contains("1h 30m"), "Clamshell custom duration label contains 1h 30m")
+
+        let custom45m = ClamshellDuration.custom(hours: 0, minutes: 45)
+        assert(custom45m.totalSeconds == 2700, "Clamshell custom 45m calculates to 2700 seconds")
+
+        let untilStopped = ClamshellDuration.untilStopped
+        assert(untilStopped.totalSeconds == nil, "Clamshell Until Stopped has nil totalSeconds")
+        assert(untilStopped.label == "Until Stopped", "Clamshell Until Stopped label is accurate")
+
+        // 2. Clamshell Operating Modes
+        assert(!ClamshellOperatingMode.supportedClamshell.shortDescription.isEmpty, "Supported Clamshell has descriptive summary")
+        assert(!ClamshellOperatingMode.displayOffAwakeAlternative.shortDescription.isEmpty, "Display-Off Alternative has descriptive summary")
+
+        // 3. Clamshell Manager Telemetry & Readiness
+        let manager = ClamshellManager.shared
+        manager.refreshHardwareTelemetry()
+        assert(!manager.hardwareModel.isEmpty, "Hardware model successfully detected (\(manager.hardwareModel))")
+        assert(manager.readinessItems.count == 4, "Clamshell readiness checklist contains all 4 audit checks")
+
+        let hwItem = manager.readinessItems.first { $0.id == "laptop_hw" }
+        assert(hwItem != nil, "Readiness checklist contains laptop hardware check")
+
+        let acItem = manager.readinessItems.first { $0.id == "ac_power" }
+        assert(acItem != nil, "Readiness checklist contains AC power check")
+
+        let extItem = manager.readinessItems.first { $0.id == "ext_display" }
+        assert(extItem != nil, "Readiness checklist contains external display check")
+
+        let supportItem = manager.readinessItems.first { $0.id == "official_support" }
+        assert(supportItem != nil, "Readiness checklist contains official support item")
+
+        // 4. Clamshell Power Assertion Lifecycle
+        assert(!manager.isActive, "Clamshell manager is initially inactive")
+        manager.startSession(duration: .oneHour)
+        assert(manager.isActive, "Clamshell session started successfully")
+        assert(manager.remainingSeconds == 3600, "Clamshell session remaining seconds initialized to 3600")
+        assert(manager.startedAt != nil, "Clamshell session startedAt recorded")
+        assert(manager.formattedRemainingTime == "01:00:00", "Clamshell formattedRemainingTime returns 01:00:00")
+
+        manager.stop()
+        assert(!manager.isActive, "Clamshell session stopped cleanly")
+        assert(manager.remainingSeconds == nil, "Remaining seconds cleared on stop")
+        assert(manager.startedAt == nil, "startedAt cleared on stop")
+        assert(manager.formattedRemainingTime == "--", "Clamshell formattedRemainingTime returns '--' when stopped")
+
+        // 5. Workload Diagnostic Invariants
+        assert(manager.workloadReport.isMacAwake == true, "Workload report reflects macOS awake state")
+        assert(!manager.workloadReport.systemUptimeFormatted.isEmpty, "System uptime formatted string is non-empty")
     }
 }
 

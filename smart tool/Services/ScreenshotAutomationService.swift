@@ -107,7 +107,8 @@ public enum ScreenshotAutomationService {
             (.processes, "processes"),
             (.cleaner, "cleaner"),
             (.diagnostics, "diagnostics"),
-            (.settings, "settings")
+            (.settings, "settings"),
+            (.clamshellMode, "clamshell_mode")
         ]
 
         let settingsTabs: [(tab: SettingsSectionTab, file: String)] = [
