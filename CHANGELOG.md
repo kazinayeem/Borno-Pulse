@@ -3,6 +3,21 @@
 All notable changes to **Borno Pulse** are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.0] - 2026-10-12
+
+### Added
+- **Keep Running When Lid Is Closed (Clamshell Mode)**: Dedicated clamshell management system (`ClamshellManager`) utilizing native IOKit power assertions (`kIOPMAssertionTypePreventUserIdleSystemSleep`) to maintain background operations (Docker, local dev servers, scripts) with the lid closed.
+- **Hardware Readiness Audit Checklist**: Live verification of Mac laptop model, AC power connection (`IOPSGetProvidingPowerSourceType`), external display topology (`CGGetOnlineDisplayList`), and Apple official clamshell compliance.
+- **Workload Verification Diagnostics**: Real-time diagnostic panel monitoring Docker container status, active listening server sockets (Vite, Next.js, Django, FastAPI), background processes, and macOS awake uptime.
+- **Duration Presets & Countdown**: Configurable timers (1h, 2h, 3h, Until Stopped, or Custom hours & minutes) with real-time remaining countdown and visual status pill.
+- **Quick Actions 21-Action Grid**: Responsive grid in the Menu Bar Widget with circular icons, hover interactions, destructive action confirmations (Empty Trash), and system action launchers.
+- **Clamshell Mode Invariant Tests**: Expanded test suite to **854+ tests** validating duration calculations, hardware readiness checklists, and power assertion lifecycles.
+
+### Fixed
+- **CoreFoundation Autorelease Pool Crash**: Resolved `EXC_BAD_ACCESS` in `objc_release` caused by unretained `IOPSGetPowerSourceDescription` dictionary bridging by transitioning to direct `IOPSGetProvidingPowerSourceType` string evaluation.
+- **Timer Execution Efficiency**: Eliminated redundant nested `Task { @MainActor }` calls within main runloop telemetry timers.
+- **Fixed-Buffer Safety**: Added safe UTF-8 prefix bounds checks to Darwin `proc_bsdinfo.pbi_comm` string parsing.
+
 ---
 
 ## [1.2.0] - 2026-10-12

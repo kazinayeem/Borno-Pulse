@@ -24,10 +24,11 @@ Engineered with an **offline-first philosophy**, Borno Pulse contacts no remote 
 ### Highlights
 - 📊 **Hardware Telemetry Engine**: Per-core CPU load, Metal GPU utilization, Mach virtual memory pressure, swap footprint, and APFS purgeable volume tracking.
 - 🔋 **Empirical Battery Estimation**: Real-time power draw in Watts, empirical decay slope ($\%/hr$), lithium-ion saturation curve compensation, and 7-day retention persistence.
+- 💻 **Clamshell Mode (Lid-Closed Operation)**: Native IOKit sleep assertions keeping Docker, local servers, and background scripts running with the lid closed, complete with duration presets, countdown timer, hardware audit, and workload verification.
 - 🌐 **Developer & Port Manager**: BSD listening socket auditor (`*:3000`, `127.0.0.1:8000`), dev server detection (Vite, Next.js, Django, FastAPI), Docker port correlation, JSON studio, JWT claim decoding, and ICMP ping latency graphs.
 - 📄 **Offline PDF Studio**: 12 local tools including an interactive PDF Canvas Editor, Images to PDF, Merge, Split, Lossless Compression, and Apple Neural Engine Vision OCR.
 - 📋 **Privacy-Preserving Clipboard**: Local clipboard history with automated credential & API key masking.
-- ⚡️ **Menu Bar Utility Widget**: Compact 4-category menu bar popover (Audio Mixer, Battery Telemetry, Hardware Load, Quick Actions) with customizable status item metric tokens.
+- ⚡️ **Menu Bar Utility Widget & Quick Actions**: Compact 4-category menu bar popover (Audio Mixer, Battery Telemetry, Hardware Load, 21-Action Icon Grid) with customizable status item metric tokens.
 - 🎨 **Typography & Appearance Engine**: Live Light/Dark/System theme switching, font family selection (SF Pro, New York, SF Mono, Menlo, Helvetica Neue), and font scaling presets.
 
 ---
@@ -46,15 +47,16 @@ Every screenshot below was captured programmatically from the running, compiled 
 |:---:|:---:|
 | ![Menu Bar Widget Light](screenshots/widget/light-widget.png) | ![Menu Bar Widget Dark](screenshots/widget/dark-widget.png) |
 
-### Hardware Telemetry & Developer Tools
+### Hardware Telemetry, Clamshell & Developer Tools
 | Category | Light Appearance | Dark Appearance |
 |:---|:---:|:---:|
 | **CPU Monitoring** | ![CPU Light](screenshots/light/cpu.png) | ![CPU Dark](screenshots/dark/cpu.png) |
+| **Clamshell Mode** | ![Clamshell Light](screenshots/light/clamshell_mode.png) | ![Clamshell Dark](screenshots/dark/clamshell_mode.png) |
 | **Port Manager** | ![Port Manager Light](screenshots/light/port_manager.png) | ![Port Manager Dark](screenshots/dark/port_manager.png) |
 | **PDF Studio** | ![PDF Studio Light](screenshots/light/pdf_studio.png) | ![PDF Studio Dark](screenshots/dark/pdf_studio.png) |
 | **Settings & Typography** | ![Settings Light](screenshots/light/settings.png) | ![Settings Dark](screenshots/dark/settings.png) |
 
-*Full visual catalog of all 38 screen targets available in [`docs/SCREEN_INVENTORY.md`](docs/SCREEN_INVENTORY.md).*
+*Full visual catalog of all 35 screens and 80 image assets available in [`docs/SCREEN_INVENTORY.md`](docs/SCREEN_INVENTORY.md).*
 
 ---
 
@@ -92,7 +94,7 @@ smart tool/
 │   ├── BatteryEstimationService.swift   # Slopes, non-linear saturation, and predictions
 │   └── ScreenshotAutomationService.swift# Full app automated Retina screenshot capture
 └── Tests/
-    └── SmartToolTests.swift             # 745+ automated regression and invariant checks
+    └── SmartToolTests.swift             # 854+ automated regression and invariant checks
 ```
 
 *For in-depth per-feature descriptions and access instructions, see [`docs/FEATURES.md`](docs/FEATURES.md).*

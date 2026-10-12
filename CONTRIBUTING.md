@@ -38,7 +38,7 @@ xcodebuild -scheme "smart tool" -destination "platform=macOS" build
 "$HOME/Library/Developer/Xcode/DerivedData/smart_tool-"*/Build/Products/Debug/"smart tool.app/Contents/MacOS/smart tool" --run-tests
 ```
 
-All 745+ automated regression and invariant checks must pass with zero failures.
+All 854+ automated regression and invariant checks must pass with zero failures.
 
 ---
 

@@ -17,7 +17,7 @@ This guide provides tested, reproducible instructions for building, running, and
 ## 2. Cloning the Repository
 
 ```bash
-git clone https://github.com/your-username/Borno-Pulse.git
+git clone https://github.com/kazinayeem/Borno-Pulse.git
 cd Borno-Pulse
 ```
 
@@ -64,7 +64,7 @@ The compiled application bundle will be located inside Xcode's DerivedData folde
 
 ## 5. Running Automated Invariant Tests
 
-Borno Pulse includes a comprehensive automated invariant test suite containing **745+ checks** covering hardware telemetry mathematical models, battery empirical decay calculations, PDF page transformations, socket parsing, and typography persistence.
+Borno Pulse includes a comprehensive automated invariant test suite containing **854+ checks** covering hardware telemetry mathematical models, battery empirical decay calculations, PDF page transformations, socket parsing, clamshell duration intervals, and typography persistence.
 
 Run the test suite directly via the built binary:
 
@@ -76,7 +76,7 @@ APP_BIN=$(find "$HOME/Library/Developer/Xcode/DerivedData" -name "smart tool" -t
 A clean build will output:
 ```
 --- INVARIANT TESTS COMPLETED ---
-Passed: 745+, Failed: 0
+Passed: 854+, Failed: 0
 ```
 
 ---

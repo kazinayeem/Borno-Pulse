@@ -135,6 +135,16 @@ This document provides a comprehensive inventory of all features implemented in 
 - **Capabilities**: Integrated system sanity check evaluating battery health, thermal throttling, swap usage, and disk space.
 - **Access**: Main Dashboard sidebar → **Diagnostics**.
 
+### Keep Running When Lid Is Closed / Clamshell Mode (`.clamshellMode`)
+- **Capabilities**:
+  - **Power Assertion Management**: Native IOKit power assertion (`kIOPMAssertionTypePreventUserIdleSystemSleep`) keeping background workloads running with the lid closed.
+  - **Preset Durations & Custom Interval**: 1 hour, 2 hours, 3 hours, Until Stopped, or custom duration (hours and minutes) with real-time countdown timer.
+  - **Hardware Readiness Audit Checklist**: Live verification of laptop hardware model, AC power connection (`IOPSGetProvidingPowerSourceType`), and external display connection (`CGGetOnlineDisplayList`).
+  - **Official Clamshell Mode Verification**: Identifies whether the setup satisfies official Apple clamshell requirements (external display + AC power + input device).
+  - **Workload Diagnostic Inspection**: Live status verification for Docker containers, local development servers (Vite, Next.js, Django, FastAPI), background processes, and macOS awake uptime.
+  - **Thermal Safety Guidelines**: Best practices for ventilation and heat dissipation during closed-lid operation.
+- **Access**: Main Dashboard sidebar → **Clamshell Mode**, Menu Bar Widget → **Actions** tab, or Quick Launcher (⌘K).
+
 ---
 
 ## 5. Global Utilities & Surfaces
@@ -155,9 +165,30 @@ This document provides a comprehensive inventory of all features implemented in 
 - **Capabilities**: Keyboard-first fuzzy search across all 25 modules and system shortcuts.
 - **Access**: Global hotkey **⌘K** or sidebar button.
 
-### Menu Bar Utility Popover
+### Menu Bar Utility Popover & Quick Actions Grid
 - **Capabilities**: Compact multi-category status popover featuring:
   - **Audio**: System volume slider, mute toggle, and input/output device switching.
   - **Battery**: Real-time wattage, estimated time remaining, battery health, and charging trajectory.
   - **Hardware**: Mini CPU, GPU, RAM, and thermal load bars.
-  - **Actions**: Fast cache cleaner trigger, process termination shortcuts, and quick navigation.
+  - **Quick Actions Grid (21 System Actions)**: Responsive grid with circular icon backgrounds, hover states, confirmation dialogs for destructive actions (Empty Trash), and capability indicators:
+    1. *Toggle Dark Mode*: Instant system appearance switch.
+    2. *Keep Awake*: Sleep prevention toggle with visual active badge.
+    3. *Clamshell Mode*: Direct launcher for Keep Running When Lid Is Closed.
+    4. *Start Screen Saver*: Instant screensaver activation via CoreGraphics.
+    5. *Clean Screen*: Blackout overlay for physical screen wiping.
+    6. *Hide All Windows*: Show desktop toggle.
+    7. *Toggle Dock Autohide*: Dock auto-hide state toggle.
+    8. *Hide Desktop Icons*: Non-destructive Finder desktop icon toggle.
+    9. *Lock Screen*: Immediate screen lock via SACLockScreenImmediate.
+    10. *Keyboard Cleaning Mode*: Modal input-lock overlay.
+    11. *Activity Monitor*: One-click launcher for macOS Activity Monitor.
+    12. *System Settings*: One-click launcher for macOS System Settings.
+    13. *Scan Cache*: Fast cache audit trigger.
+    14. *Empty Trash*: Destructive action with explicit confirmation alert.
+    15. *Refresh Metrics*: Immediate telemetry reload.
+    16. *Toggle Focus*: Focus filter toggle.
+    17. *Open Downloads*: Fast Finder navigation to `~/Downloads`.
+    18. *Port Manager*: Quick jump to local port auditor.
+    19. *Network Toolkit*: Quick jump to ping & DNS diagnostics.
+    20. *Open Terminal*: Quick launch Terminal at current user home.
+    21. *Hardware Notch*: Honest capability indicator explaining physical camera cutout behavior.

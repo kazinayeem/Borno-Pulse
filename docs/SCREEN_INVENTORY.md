@@ -34,6 +34,7 @@ All screenshots are captured programmatically from the compiled, running applica
 | 22 | **Cache Cleaner** | `.cleaner` | `CacheCleanerView.swift` | `screenshots/light/cleaner.png` | `screenshots/dark/cleaner.png` | Fully Implemented |
 | 23 | **Diagnostics** | `.diagnostics` | `DiagnosticsView.swift` | `screenshots/light/diagnostics.png` | `screenshots/dark/diagnostics.png` | Fully Implemented |
 | 24 | **Settings** | `.settings` | `SettingsView.swift` | `screenshots/light/settings.png` | `screenshots/dark/settings.png` | Fully Implemented |
+| 25 | **Clamshell Mode** | `.clamshellMode` | `ClamshellModeView.swift` | `screenshots/light/clamshell_mode.png` | `screenshots/dark/clamshell_mode.png` | Fully Implemented |
 
 ---
 
@@ -70,4 +71,4 @@ All screenshots are captured programmatically from the compiled, running applica
 - **Automation Engine**: `ScreenshotAutomationService.swift`
 - **Execution Script**: `scripts/capture-screenshots.sh`
 - **Resolution**: Native macOS Retina display caching (`bitmapImageRepForCachingDisplay`)
-- **Total Unique Screens Tracked**: 38 targets across Light & Dark appearances (76+ image assets).
+- **Total Unique Screens Tracked**: 35 screens (25 navigation sections + 9 settings tabs + 1 Quick Launcher) across Light & Dark appearances (70 images) + 10 Menu Bar Widget popover states = **80 total screenshot assets**.
