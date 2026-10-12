@@ -162,8 +162,7 @@ extension SmartToolTests {
                     host.frame = NSRect(origin: .zero, size: size)
                     window.contentView = host
                     window.displayIfNeeded()
-                    RunLoop.current.run(until: Date().addingTimeInterval(0.4))
-                    host.layoutSubtreeIfNeeded()
+                    if host.needsLayout { host.layoutSubtreeIfNeeded() }
                     if let rep = host.bitmapImageRepForCachingDisplay(in: host.bounds) {
                         host.cacheDisplay(in: host.bounds, to: rep)
                         try? rep.representation(using: .png, properties: [:])?

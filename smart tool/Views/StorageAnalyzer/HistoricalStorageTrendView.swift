@@ -98,7 +98,7 @@ public struct HistoricalStorageTrendView: View {
                     AxisMarks(position: .leading) { val in
                         AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5, dash: [2, 3]))
                             .foregroundStyle(AppTheme.chartGrid)
-                        AxisValueLabel {
+                        AxisValueLabel(anchor: .trailing) {
                             if let doubleVal = val.as(Double.self) {
                                 Text("\(Int(doubleVal)) GB")
                                     .font(.system(size: 9))

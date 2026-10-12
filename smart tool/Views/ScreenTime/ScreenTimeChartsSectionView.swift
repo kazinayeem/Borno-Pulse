@@ -87,7 +87,7 @@ public struct ScreenTimeChartsSectionView: View {
                     AxisMarks(position: .leading) { value in
                         AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5, dash: [2, 3]))
                             .foregroundStyle(AppTheme.chartGrid)
-                        AxisValueLabel {
+                        AxisValueLabel(anchor: .trailing) {
                             if let mins = value.as(Double.self) {
                                 Text("\(Int(mins))m")
                                     .font(AppTypography.monospaced(size: 9))
@@ -101,7 +101,7 @@ public struct ScreenTimeChartsSectionView: View {
                     AxisMarks(values: [0, 4, 8, 12, 16, 20].map { "\($0)h" }) { value in
                         AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5, dash: [2, 3]))
                             .foregroundStyle(AppTheme.chartGrid)
-                        AxisValueLabel {
+                        AxisValueLabel(anchor: .top) {
                             if let label = value.as(String.self) {
                                 Text(label)
                                     .font(AppTypography.caption)
@@ -166,7 +166,7 @@ public struct ScreenTimeChartsSectionView: View {
                     AxisMarks(position: .leading) { value in
                         AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5, dash: [2, 3]))
                             .foregroundStyle(AppTheme.chartGrid)
-                        AxisValueLabel {
+                        AxisValueLabel(anchor: .trailing) {
                             if let hrs = value.as(Double.self) {
                                 Text(String(format: "%.1fh", hrs))
                                     .font(AppTypography.monospaced(size: 9))
@@ -180,7 +180,7 @@ public struct ScreenTimeChartsSectionView: View {
                     AxisMarks(values: Array(milestoneKeys)) { value in
                         AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5, dash: [2, 3]))
                             .foregroundStyle(AppTheme.chartGrid)
-                        AxisValueLabel {
+                        AxisValueLabel(anchor: .top) {
                             if let dayKey = value.as(String.self),
                                let point = trend.first(where: { $0.dayKey == dayKey }) {
                                 Text(isWeek ? point.weekdayLabel : point.shortDateLabel)

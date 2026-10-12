@@ -72,7 +72,7 @@ public struct LiveMetricChart: View {
                 AxisMarks(position: .leading, values: [0, maxValue / 2, maxValue]) { value in
                     AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5, dash: [2, 3]))
                         .foregroundStyle(AppTheme.chartGrid)
-                    AxisValueLabel() {
+                    AxisValueLabel(anchor: .trailing) {
                         if let intVal = value.as(Double.self) {
                             Text("\(Int(intVal))\(unit)")
                                 .font(.system(size: 9, weight: .regular))

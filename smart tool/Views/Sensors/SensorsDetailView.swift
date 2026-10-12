@@ -128,7 +128,7 @@ public struct SensorsDetailView: View {
                 .chartXAxis {
                     AxisMarks(values: .automatic(desiredCount: 4)) { _ in
                         AxisGridLine()
-                        AxisValueLabel(format: .dateTime.hour().minute().second())
+                        AxisValueLabel(anchor: .top, format: .dateTime.hour().minute().second())
                     }
                 }
                 .frame(height: 180)

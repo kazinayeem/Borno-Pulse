@@ -122,7 +122,7 @@ public struct NetworkToolkitView: View {
             // Reachability Banner
             let isOnline = NetworkConnectivityService.shared.isInternetReachable
             HStack(spacing: 12) {
-                Image(systemName: isOnline ? "globe.americas.fill" : "globe.slash")
+                Image(systemName: isOnline ? "globe.americas.fill" : "network.slash")
                     .font(.system(size: 24))
                     .foregroundStyle(isOnline ? AppTheme.successGreen : AppTheme.dangerRed)
                 

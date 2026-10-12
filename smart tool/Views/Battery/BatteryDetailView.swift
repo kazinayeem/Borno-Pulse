@@ -593,7 +593,7 @@ public struct BatteryDetailView: View {
                         AxisMarks(position: .leading) { value in
                             AxisGridLine()
                             AxisTick()
-                            AxisValueLabel {
+                            AxisValueLabel(anchor: .trailing) {
                                 if let val = value.as(Double.self) {
                                     Text("\(Int(val)) W")
                                         .font(.caption2)
@@ -605,7 +605,7 @@ public struct BatteryDetailView: View {
                         AxisMarks(values: .automatic(desiredCount: 5)) { _ in
                             AxisGridLine()
                             AxisTick()
-                            AxisValueLabel(format: .dateTime.minute().second())
+                            AxisValueLabel(anchor: .top, format: .dateTime.minute().second())
                         }
                     }
                     .frame(height: 180)
