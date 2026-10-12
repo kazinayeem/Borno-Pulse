@@ -112,7 +112,7 @@ public final class PDFMergerSplitterService: ObservableObject {
     }
     
     public func executeSplit() {
-        guard !isProcessing, let doc = splitSourceDoc, let inURL = splitSourceURL, let outDir = outputDirectory else { return }
+        guard !isProcessing, splitSourceDoc != nil, let inURL = splitSourceURL, let outDir = outputDirectory else { return }
         isProcessing = true
         currentProgress = 0.0
         statusMessage = "Splitting PDF..."

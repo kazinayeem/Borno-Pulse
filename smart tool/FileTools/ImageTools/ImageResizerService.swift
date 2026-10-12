@@ -7,6 +7,7 @@ import AppKit
 import Combine
 import Foundation
 import ImageIO
+import UniformTypeIdentifiers
 
 @MainActor
 public final class ImageResizerService: ObservableObject {
@@ -229,7 +230,7 @@ public final class ImageResizerService: ObservableObject {
         let ext = inputURL.pathExtension
         let outputURL = outputDir.appendingPathComponent("\(baseName)_\(Int(targetSize.width))x\(Int(targetSize.height)).\(ext)")
         
-        let uti = (ext.lowercased() == "png") ? (kUTTypePNG as CFString) : (kUTTypeJPEG as CFString)
+        let uti = (ext.lowercased() == "png") ? (UTType.png.identifier as CFString) : (UTType.jpeg.identifier as CFString)
         guard let destination = CGImageDestinationCreateWithURL(outputURL as CFURL, uti, 1, nil) else {
             return .failure(NSError(domain: "ImageResizer", code: 4, userInfo: [NSLocalizedDescriptionKey: "Failed creating destination file."]))
         }

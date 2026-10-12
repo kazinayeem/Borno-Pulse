@@ -193,10 +193,8 @@ public final class PDFEditorService: ObservableObject {
         undoManager.levelsOfUndo = 200
         for name in [Notification.Name.NSUndoManagerDidUndoChange, .NSUndoManagerDidRedoChange, .NSUndoManagerDidCloseUndoGroup] {
             NotificationCenter.default.addObserver(forName: name, object: undoManager, queue: .main) { [weak self] _ in
-                if Thread.isMainThread {
+                MainActor.assumeIsolated {
                     self?.refreshUndoState()
-                } else {
-                    DispatchQueue.main.async { self?.refreshUndoState() }
                 }
             }
         }

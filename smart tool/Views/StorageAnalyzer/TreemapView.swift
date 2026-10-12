@@ -114,7 +114,7 @@ public struct TreemapView: View {
                 .onAppear {
                     service.recomputeTreemap(bounds: CGRect(origin: .zero, size: geo.size))
                 }
-                .onChange(of: geo.size) { newSize in
+                .onChange(of: geo.size) { _, newSize in
                     service.recomputeTreemap(bounds: CGRect(origin: .zero, size: newSize))
                 }
             }

@@ -287,7 +287,10 @@ public final class PortScannerService: ObservableObject {
         var pathBuffer = [CChar](repeating: 0, count: 4096)
         let len = proc_pidpath(pid, &pathBuffer, UInt32(pathBuffer.count))
         guard len > 0 else { return nil }
-        return String(cString: pathBuffer)
+        return pathBuffer.withUnsafeBufferPointer { ptr in
+            guard let base = ptr.baseAddress else { return nil }
+            return String(cString: base)
+        }
     }
     
     public nonisolated static func batchInspectProcesses(pids: [pid_t]) -> [pid_t: ProcessMetadata] {

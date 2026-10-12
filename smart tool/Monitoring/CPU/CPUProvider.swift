@@ -150,7 +150,10 @@ public final class CPUProvider: @unchecked Sendable {
         if size > 0 {
             var brand = [CChar](repeating: 0, count: size)
             if sysctlbyname("machdep.cpu.brand_string", &brand, &size, nil, 0) == 0 {
-                let str = String(cString: brand).trimmingCharacters(in: .whitespacesAndNewlines)
+                let str = brand.withUnsafeBufferPointer { ptr -> String in
+                    guard let base = ptr.baseAddress else { return "" }
+                    return String(cString: base)
+                }.trimmingCharacters(in: .whitespacesAndNewlines)
                 if !str.isEmpty { return str }
             }
         }
@@ -160,7 +163,10 @@ public final class CPUProvider: @unchecked Sendable {
         if size > 0 {
             var model = [CChar](repeating: 0, count: size)
             if sysctlbyname("hw.model", &model, &size, nil, 0) == 0 {
-                let str = String(cString: model).trimmingCharacters(in: .whitespacesAndNewlines)
+                let str = model.withUnsafeBufferPointer { ptr -> String in
+                    guard let base = ptr.baseAddress else { return "" }
+                    return String(cString: base)
+                }.trimmingCharacters(in: .whitespacesAndNewlines)
                 if !str.isEmpty { return str }
             }
         }

@@ -58,14 +58,20 @@ public final class NetworkConnectivityService: @unchecked Sendable {
             var ipBuffer = [CChar](repeating: 0, count: Int(NI_MAXHOST))
             if family == UInt8(AF_INET) {
                 if getnameinfo(addr, socklen_t(addr.pointee.sa_len), &ipBuffer, socklen_t(ipBuffer.count), nil, 0, NI_NUMERICHOST) == 0 {
-                    let ipStr = String(cString: ipBuffer)
+                    let ipStr = ipBuffer.withUnsafeBufferPointer { p -> String in
+                        guard let base = p.baseAddress else { return "" }
+                        return String(cString: base)
+                    }
                     var existing = results[name] ?? (name: name, ipv4: nil, ipv6: nil, isUp: isUp)
                     existing.ipv4 = ipStr
                     results[name] = existing
                 }
             } else if family == UInt8(AF_INET6) {
                 if getnameinfo(addr, socklen_t(addr.pointee.sa_len), &ipBuffer, socklen_t(ipBuffer.count), nil, 0, NI_NUMERICHOST) == 0 {
-                    let ipStr = String(cString: ipBuffer)
+                    let ipStr = ipBuffer.withUnsafeBufferPointer { p -> String in
+                        guard let base = p.baseAddress else { return "" }
+                        return String(cString: base)
+                    }
                     var existing = results[name] ?? (name: name, ipv4: nil, ipv6: nil, isUp: isUp)
                     existing.ipv6 = ipStr
                     results[name] = existing

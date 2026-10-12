@@ -57,7 +57,10 @@ public final class NetworkProvider: @unchecked Sendable {
                                 0,
                                 NI_NUMERICHOST
                             ) == 0 {
-                                let ip = String(cString: hostname)
+                                let ip = hostname.withUnsafeBufferPointer { ptr -> String in
+                                    guard let base = ptr.baseAddress else { return "" }
+                                    return String(cString: base)
+                                }
                                 let isWiFi = name.hasPrefix("en0") || name.contains("awdl")
                                 let displayName = name == "en0" ? "Wi-Fi / Primary" : (name.hasPrefix("en") ? "Ethernet (\(name))" : name)
                                 interfacesMap[name] = (displayName, ip, isUp, isWiFi)

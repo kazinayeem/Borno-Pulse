@@ -78,7 +78,10 @@ public final class DNSLookupService: Sendable {
         for ptr in sequence(first: first, next: { $0.pointee.ai_next }) {
             var buffer = [CChar](repeating: 0, count: Int(NI_MAXHOST))
             if getnameinfo(ptr.pointee.ai_addr, ptr.pointee.ai_addrlen, &buffer, socklen_t(buffer.count), nil, 0, NI_NUMERICHOST) == 0 {
-                let ipStr = String(cString: buffer)
+                let ipStr = buffer.withUnsafeBufferPointer { p -> String in
+                    guard let base = p.baseAddress else { return "" }
+                    return String(cString: base)
+                }
                 list.append(DNSRecordItem(type: type, name: host, value: ipStr))
             }
         }

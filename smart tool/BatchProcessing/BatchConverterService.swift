@@ -105,9 +105,6 @@ public final class BatchConverterService: ObservableObject {
                 let op = queue[i].operation
                 let targetFmt = queue[i].targetFormat.lowercased()
                 
-                let targetFilename = "\(source.deletingPathExtension().lastPathComponent)_converted.\(targetFmt)"
-                let targetPath = Self.collisionSafeURL(desiredURL: destFolder.appendingPathComponent(targetFilename))
-                
                 do {
                     switch op {
                     case .convertImage:

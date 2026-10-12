@@ -79,7 +79,7 @@ public final class TreemapLayoutEngine: Sendable {
         
         // Normalize areas to bounding box area
         let totalArea = Double(bounds.width * bounds.height)
-        var weights: [(item: LayoutItem, normalizedArea: Double)] = processedItems.map { item in
+        let weights: [(item: LayoutItem, normalizedArea: Double)] = processedItems.map { item in
             let area = (Double(item.size) / Double(totalSize)) * totalArea
             return (item, area)
         }

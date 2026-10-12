@@ -138,10 +138,11 @@ public enum SmartToolTests {
         assert(fullParts == 3, "25-page document split every 10 pages produces exactly 3 documents (10, 10, 5)")
         
         // 12. File Tools: Batch Renaming Collision Detection Test
-        var testURLs: [URL] = [
+        let testURLs: [URL] = [
             URL(fileURLWithPath: "/tmp/photo_a.png"),
             URL(fileURLWithPath: "/tmp/photo_b.png")
         ]
+        _ = testURLs
         var seenNames = Set<String>()
         var collisions = 0
         // Simulate naming conflict where both resolve to same new name
@@ -278,7 +279,7 @@ public enum SmartToolTests {
         assert(dailySummary.hourlyBuckets.count == 24, "Daily summary initializes exactly 24 hourly buckets (0..23)")
         
         // 27. Screen Time: Privacy Exclusion Filter Invariant
-        var sampleExclusions: Set<String> = ["com.apple.loginwindow", "com.secret.vault"]
+        let sampleExclusions: Set<String> = ["com.apple.loginwindow", "com.secret.vault"]
         let testAllowed = !sampleExclusions.contains("com.apple.dt.Xcode")
         let testBlocked = sampleExclusions.contains("com.secret.vault")
         assert(testAllowed && testBlocked, "Privacy exclusion set successfully filters blacklisted bundle IDs")
@@ -329,7 +330,7 @@ public enum SmartToolTests {
         // 33. Network Toolkit: Ping RTT Parser Math
         let samplePingOutput = "64 bytes from 1.1.1.1: icmp_seq=1 ttl=58 time=14.285 ms"
         let parsedRTT = PingService.parseRTT(from: samplePingOutput)
-        assert(parsedRTT != nil && abs((parsedRTT ?? 0) - 14.285) < 0.001, "Ping RTT parser accurately extracts round-trip milliseconds")
+        assert(parsedRTT > 0 && abs(parsedRTT - 14.285) < 0.001, "Ping RTT parser accurately extracts round-trip milliseconds")
         
         // 34. Network Toolkit: SSL Certificate Validity Days Calculation
         let now = Date()
@@ -640,7 +641,7 @@ public enum SmartToolTests {
         // 65. PDF Studio: Page Item Model & Invariant Reordering
         let mockURL = URL(fileURLWithPath: "/tmp/sample_doc.pdf")
         var page1 = PDFStudioPageItem(sourceURL: mockURL, sourceType: .pdfPage, originalPageIndex: 0, rotationAngle: 0)
-        var page2 = PDFStudioPageItem(sourceURL: mockURL, sourceType: .pdfPage, originalPageIndex: 1, rotationAngle: 90)
+        let page2 = PDFStudioPageItem(sourceURL: mockURL, sourceType: .pdfPage, originalPageIndex: 1, rotationAngle: 90)
         assert(page1.rotationAngle == 0 && page2.rotationAngle == 90, "Page rotation angle preserved per item")
         page1.rotationAngle = (page1.rotationAngle + 90) % 360
         assert(page1.rotationAngle == 90, "Page rotation delta operation computes modulo 360 correctly")

@@ -89,7 +89,7 @@ public enum StorageAnalyticsCategory: String, CaseIterable, Identifiable, Sendab
         
         // Priority 5: Extension-based categorization
         switch ext {
-        case "mov", "mp4", "m4v", "mkv", "avi", "webm", "wmv", "flv", "ts":
+        case "mov", "mp4", "m4v", "mkv", "avi", "webm", "wmv", "flv", "m2ts":
             return .videos
         case "mp3", "m4a", "wav", "flac", "aac", "aiff", "ogg", "alac", "wma":
             return .audio

@@ -124,12 +124,11 @@ public struct DiagnosticsView: View {
                 
                 Button {
                     isRunningTests = true
-                    DispatchQueue.global(qos: .userInitiated).async {
+                    Task {
+                        await Task.yield()
                         let res = SmartToolTests.runAllTests()
-                        DispatchQueue.main.async {
-                            testResults = res
-                            isRunningTests = false
-                        }
+                        testResults = res
+                        isRunningTests = false
                     }
                 } label: {
                     HStack(spacing: 6) {

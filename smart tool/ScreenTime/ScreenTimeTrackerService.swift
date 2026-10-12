@@ -175,9 +175,12 @@ public final class ScreenTimeTrackerService: ObservableObject {
             object: nil,
             queue: .main
         ) { [weak self] note in
-            guard let self = self, self.isTrackingEnabled, !self.isTrackingPaused else { return }
-            if let app = note.userInfo?[NSWorkspace.applicationUserInfoKey] as? NSRunningApplication {
-                self.handleApplicationActivated(app)
+            let app = note.userInfo?[NSWorkspace.applicationUserInfoKey] as? NSRunningApplication
+            MainActor.assumeIsolated {
+                guard let self = self, self.isTrackingEnabled, !self.isTrackingPaused else { return }
+                if let app {
+                    self.handleApplicationActivated(app)
+                }
             }
         }
         
@@ -186,8 +189,9 @@ public final class ScreenTimeTrackerService: ObservableObject {
             object: nil,
             queue: .main
         ) { [weak self] _ in
-            guard let self = self else { return }
-            self.isCurrentlyIdle = true
+            MainActor.assumeIsolated {
+                self?.isCurrentlyIdle = true
+            }
         }
         
         nc.addObserver(
@@ -195,8 +199,9 @@ public final class ScreenTimeTrackerService: ObservableObject {
             object: nil,
             queue: .main
         ) { [weak self] _ in
-            guard let self = self else { return }
-            self.isCurrentlyIdle = false
+            MainActor.assumeIsolated {
+                self?.isCurrentlyIdle = false
+            }
         }
         
         nc.addObserver(
@@ -204,8 +209,9 @@ public final class ScreenTimeTrackerService: ObservableObject {
             object: nil,
             queue: .main
         ) { [weak self] _ in
-            guard let self = self else { return }
-            self.isCurrentlyIdle = true
+            MainActor.assumeIsolated {
+                self?.isCurrentlyIdle = true
+            }
         }
         
         nc.addObserver(
@@ -213,8 +219,9 @@ public final class ScreenTimeTrackerService: ObservableObject {
             object: nil,
             queue: .main
         ) { [weak self] _ in
-            guard let self = self else { return }
-            self.isCurrentlyIdle = false
+            MainActor.assumeIsolated {
+                self?.isCurrentlyIdle = false
+            }
         }
     }
     
@@ -336,7 +343,7 @@ public final class ScreenTimeTrackerService: ObservableObject {
                         bundleIdentifier: bundleID,
                         appName: name
                     )
-                    await self?.handleWebsiteInspectionResult(result, elapsed: 5.0, dayKey: todayKey)
+                    self?.handleWebsiteInspectionResult(result, elapsed: 5.0, dayKey: todayKey)
                 }
             }
         }

@@ -275,7 +275,7 @@ public final class BatteryEstimationService: ObservableObject {
             }
             
             let pctDiff = last.percentage - first.percentage
-            var chargeRatePerHour = pctDiff / timeDiffHours
+            let chargeRatePerHour = pctDiff / timeDiffHours
             
             // Guard against negative or near-zero charging rate
             if chargeRatePerHour <= 0.5 {

@@ -59,8 +59,6 @@ public final class ProcessMonitorService: ObservableObject {
         var bsdInfo = proc_bsdinfo()
         var taskInfo = proc_taskinfo()
         
-        let now = Date()
-        
         for pid in pids.prefix(count) where pid > 0 {
             let bsdSize = proc_pidinfo(pid, PROC_PIDTBSDINFO, 0, &bsdInfo, Int32(MemoryLayout<proc_bsdinfo>.size))
             guard bsdSize == MemoryLayout<proc_bsdinfo>.size else { continue }
@@ -75,10 +73,6 @@ public final class ProcessMonitorService: ObservableObject {
             let taskSize = proc_pidinfo(pid, PROC_PIDTASKINFO, 0, &taskInfo, Int32(MemoryLayout<proc_taskinfo>.size))
             if taskSize == MemoryLayout<proc_taskinfo>.size {
                 resident = taskInfo.pti_resident_size
-                
-                // CPU calculation based on ticks
-                let userTime = taskInfo.pti_total_user
-                let sysTime = taskInfo.pti_total_system
                 
                 // Approximate CPU percentage for active tasks
                 if resident > 50 * 1024 * 1024 {

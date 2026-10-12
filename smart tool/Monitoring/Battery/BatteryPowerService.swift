@@ -148,7 +148,7 @@ public final class BatteryPowerService: ObservableObject {
     /// Calculates electrical power in Watts: Power (W) = Voltage (V) × Current (A)
     /// Converts millivolts and milliamps to Volts and Amps.
     /// Handles invalid or non-positive voltages by returning nil.
-    public static func calculateElectricalPower(voltageMilliVolts: Double?, amperageMilliAmps: Double?) -> Double? {
+    public nonisolated static func calculateElectricalPower(voltageMilliVolts: Double?, amperageMilliAmps: Double?) -> Double? {
         guard let mv = voltageMilliVolts, let ma = amperageMilliAmps else { return nil }
         guard mv > 0.0 else { return nil } // Physical battery voltage must be positive
 
@@ -158,7 +158,7 @@ public final class BatteryPowerService: ObservableObject {
     }
 
     /// Resolves power flow direction based on connection state and current sign convention
-    public static func resolvePowerFlow(
+    public nonisolated static func resolvePowerFlow(
         isPluggedIn: Bool,
         isCharging: Bool,
         amperageMilliAmps: Double?,
@@ -205,7 +205,7 @@ public final class BatteryPowerService: ObservableObject {
 
     /// Estimates average power change (W) when only battery capacity and percentage change over elapsed time are available.
     /// Capacity is in mAh, nominal voltage defaults to 11.4V.
-    public static func calculateEstimatedPowerFromEnergy(
+    public nonisolated static func calculateEstimatedPowerFromEnergy(
         capacityMilliampHours: Double,
         percentageDelta: Double,
         elapsedSeconds: TimeInterval,
@@ -220,7 +220,7 @@ public final class BatteryPowerService: ObservableObject {
     }
 
     /// Parses hardware dictionary from AppleSmartBattery service
-    public static func parseAppleSmartBatteryProperties(_ dict: [String: Any], isPluggedIn: Bool, isCharging: Bool) -> BatteryPowerTelemetry {
+    public nonisolated static func parseAppleSmartBatteryProperties(_ dict: [String: Any], isPluggedIn: Bool, isCharging: Bool) -> BatteryPowerTelemetry {
         var telemetry = BatteryPowerTelemetry(timestamp: Date())
 
         // 1. Voltage (mV)
