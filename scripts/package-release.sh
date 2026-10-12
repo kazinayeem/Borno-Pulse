@@ -32,10 +32,14 @@ xcodebuild -project "smart tool.xcodeproj" \
            build | grep -E "(BUILD SUCCEEDED|warning:|error:)" || true
 
 # 3. Locate compiled application bundle
-DERIVED_DATA_APP=$(find "$HOME/Library/Developer/Xcode/DerivedData" -name "smart tool.app" -type d -path "*/Build/Products/Release/smart tool.app" 2>/dev/null | head -n 1)
+DERIVED_DATA_APP=$(find "$HOME/Library/Developer/Xcode/DerivedData" -name "Borno Pulse.app" -type d -path "*/Build/Products/Release/Borno Pulse.app" 2>/dev/null | head -n 1)
 
 if [ -z "$DERIVED_DATA_APP" ] || [ ! -d "$DERIVED_DATA_APP" ]; then
-    echo "❌ Error: Could not find compiled smart tool.app in DerivedData."
+    DERIVED_DATA_APP=$(find "$HOME/Library/Developer/Xcode/DerivedData" -name "smart tool.app" -type d -path "*/Build/Products/Release/smart tool.app" 2>/dev/null | head -n 1)
+fi
+
+if [ -z "$DERIVED_DATA_APP" ] || [ ! -d "$DERIVED_DATA_APP" ]; then
+    echo "❌ Error: Could not find compiled Borno Pulse.app in DerivedData."
     exit 1
 fi
 

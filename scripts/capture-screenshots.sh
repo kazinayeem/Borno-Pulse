@@ -26,10 +26,10 @@ xcodebuild -project "$REPO_ROOT/smart tool.xcodeproj" \
 
 # 2. Locate built executable
 DERIVED_DATA_BUILD="$HOME/Library/Developer/Xcode/DerivedData"
-APP_BIN=$(find "$DERIVED_DATA_BUILD" -name "smart tool" -type f -perm +111 -path "*/smart tool.app/Contents/MacOS/*" 2>/dev/null | head -n 1)
+APP_BIN=$(find "$DERIVED_DATA_BUILD" \( -name "Borno Pulse" -o -name "smart tool" \) -type f -perm +111 -path "*/Contents/MacOS/*" 2>/dev/null | head -n 1)
 
 if [ -z "$APP_BIN" ] || [ ! -x "$APP_BIN" ]; then
-    echo "❌ Error: Could not locate built 'smart tool' executable."
+    echo "❌ Error: Could not locate built Borno Pulse executable."
     exit 1
 fi
 
@@ -37,7 +37,8 @@ echo "==> Running automated screenshot engine: $APP_BIN"
 mkdir -p "$OUTPUT_DIR/light" "$OUTPUT_DIR/dark" "$OUTPUT_DIR/widget"
 
 # Kill any existing instance to ensure clean single-process execution
-pkill -f "smart tool.app/Contents/MacOS/smart tool" || true
+pkill -f "Contents/MacOS/Borno Pulse" || true
+pkill -f "Contents/MacOS/smart tool" || true
 sleep 1
 
 # 3. Run screenshot automation

@@ -78,6 +78,7 @@ public struct MainDashboardView: View {
     @State private var selectedSection: NavigationSection? = .overview
     @State private var showingQuickLauncher: Bool = false
     @State private var showingOnboardingSheet: Bool = false
+    @State private var showingAboutDeveloperSheet: Bool = false
     @ObservedObject var settings = AppSettings.shared
     @ObservedObject var monitor = SystemMonitor.shared
     @Environment(\.openWindow) private var openWindow
@@ -103,6 +104,14 @@ public struct MainDashboardView: View {
                 .help("Quick Launcher (⌘K)")
                 .keyboardShortcut("k", modifiers: [.command])
             }
+            ToolbarItem(placement: .automatic) {
+                Button {
+                    showingAboutDeveloperSheet = true
+                } label: {
+                    Label("About Developer", systemImage: "person.crop.circle")
+                }
+                .help("About Borno Pulse & Developer Profile")
+            }
         }
         .sheet(isPresented: $showingQuickLauncher) {
             QuickLauncherView(
@@ -114,6 +123,9 @@ public struct MainDashboardView: View {
                     showingQuickLauncher = false
                 }
             )
+        }
+        .sheet(isPresented: $showingAboutDeveloperSheet) {
+            AboutDeveloperView()
         }
         .sheet(isPresented: $showingOnboardingSheet) {
             FirstLaunchPermissionsView {
@@ -127,6 +139,9 @@ public struct MainDashboardView: View {
         }
         .onReceive(NotificationCenter.default.publisher(for: Notification.Name("showOnboardingSetup"))) { _ in
             showingOnboardingSheet = true
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .showAboutDeveloper)) { _ in
+            showingAboutDeveloperSheet = true
         }
         .onReceive(NotificationCenter.default.publisher(for: .navigateToSection)) { notification in
             if let section = notification.object as? NavigationSection {
@@ -158,17 +173,27 @@ public struct MainDashboardView: View {
                         .foregroundStyle(AppTheme.electricBlue)
                     VStack(alignment: .leading, spacing: 2) {
                         Text("Borno Pulse")
-                            .font(.system(size: 14, weight: .bold))
+                            .font(AppTypography.font(size: 14, weight: .bold))
                             .foregroundStyle(AppTheme.textPrimary)
                         Text("Smart Mac Utilities & System Monitor")
-                            .font(.system(size: 10, weight: .medium))
+                            .font(AppTypography.font(size: 10, weight: .medium))
                             .foregroundStyle(AppTheme.textSecondary)
                     }
+                    Spacer()
+                    Button {
+                        showingAboutDeveloperSheet = true
+                    } label: {
+                        Image(systemName: "info.circle.fill")
+                            .font(.system(size: 14))
+                            .foregroundStyle(AppTheme.electricBlue)
+                    }
+                    .buttonStyle(.plain)
+                    .help("About Borno Pulse & Developer Profile")
                 }
                 .padding(.vertical, 4)
             }
             
-            Section("Hardware & Monitoring") {
+            Section(header: sidebarSectionHeader("Hardware & Monitoring")) {
                 sidebarItem(.overview)
                 sidebarItem(.cpu)
                 sidebarItem(.gpu)
@@ -179,14 +204,14 @@ public struct MainDashboardView: View {
                 sidebarItem(.battery)
             }
             
-            Section("Developer & Network") {
+            Section(header: sidebarSectionHeader("Developer & Network")) {
                 sidebarItem(.developerToolbox)
                 sidebarItem(.networkToolkit)
                 sidebarItem(.portManager)
                 sidebarItem(.clamshellMode)
             }
             
-            Section("Productivity & Files") {
+            Section(header: sidebarSectionHeader("Productivity & Files")) {
                 sidebarItem(.clipboard)
                 sidebarItem(.focusPomodoro)
                 sidebarItem(.batchConverter)
@@ -194,12 +219,12 @@ public struct MainDashboardView: View {
                 sidebarItem(.fileTools)
             }
             
-            Section("Privacy & Safety") {
+            Section(header: sidebarSectionHeader("Privacy & Safety")) {
                 sidebarItem(.privacySecurity)
                 sidebarItem(.localBackup)
             }
             
-            Section("System Utilities") {
+            Section(header: sidebarSectionHeader("System Utilities")) {
                 sidebarItem(.screenTime)
                 sidebarItem(.storageAnalytics)
                 sidebarItem(.processes)
@@ -214,18 +239,32 @@ public struct MainDashboardView: View {
             sidebarFooter
         }
     }
+
+    private func sidebarSectionHeader(_ title: String) -> some View {
+        Text(title)
+            .font(AppTypography.font(size: 10.5, weight: .bold))
+            .foregroundStyle(AppTheme.textSecondary)
+            .textCase(.uppercase)
+    }
     
+    @ViewBuilder
     private func sidebarItem(_ section: NavigationSection) -> some View {
-        // Colors are left to the native sidebar so the selected row gets its own
-        // high-contrast foreground on the accent highlight in both appearances.
+        let isSelected = selectedSection == section
         NavigationLink(value: section) {
-            Label {
-                Text(section.rawValue)
-                    .font(.system(size: 13, weight: selectedSection == section ? .semibold : .regular))
-            } icon: {
+            HStack(spacing: 9) {
                 Image(systemName: section.icon)
-                    .font(.system(size: 13))
+                    .font(.system(size: 13, weight: isSelected ? .semibold : .medium))
+                    .foregroundStyle(isSelected ? AppTheme.electricBlue : AppTheme.electricBlue.opacity(0.85))
+                    .frame(width: 18, alignment: .center)
+                
+                Text(section.rawValue)
+                    .font(AppTypography.font(size: 13, weight: isSelected ? .semibold : .regular))
+                    .foregroundStyle(isSelected ? AppTheme.textPrimary : AppTheme.textPrimary)
+                    .lineLimit(1)
+                
+                Spacer(minLength: 0)
             }
+            .contentShape(Rectangle())
         }
     }
     
@@ -337,7 +376,7 @@ public struct MainDashboardView: View {
         case .processes:
             ProcessMonitorView()
         case .cleaner:
-            CacheCleanerView()
+            SystemCleanerView()
         case .diagnostics:
             DiagnosticsView()
         case .settings:

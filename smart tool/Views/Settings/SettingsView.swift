@@ -983,7 +983,7 @@ public struct SettingsView: View {
             .smartCard()
 
             // 4. About & System Details
-            VStack(alignment: .leading, spacing: 10) {
+            VStack(alignment: .leading, spacing: 12) {
                 HStack(spacing: 12) {
                     Image(systemName: "gauge.with.dots.needle.bottom.100percent")
                         .font(.system(size: 28))
@@ -992,7 +992,7 @@ public struct SettingsView: View {
                         Text("Borno Pulse")
                             .font(AppTypography.font(size: 15, weight: .bold))
                             .foregroundStyle(AppTheme.textPrimary)
-                        Text("Smart Mac Utilities & System Monitor • Version 1.0.0 (Build 1)")
+                        Text("Smart Mac Utilities & System Monitor • Version 1.3.0")
                             .font(AppTypography.font(size: 11))
                             .foregroundStyle(AppTheme.textTertiary)
                     }
@@ -1001,6 +1001,44 @@ public struct SettingsView: View {
                 Text("Engineered with 100% native Swift 6, SwiftUI, Metal, and Darwin APIs. Built for Apple Silicon and Intel architecture Macs.")
                     .font(AppTypography.font(size: 12))
                     .foregroundStyle(AppTheme.textSecondary)
+
+                Divider()
+
+                // Founder & Developer Profile
+                HStack(spacing: 12) {
+                    ZStack {
+                        Circle()
+                            .fill(AppTheme.electricBlue.opacity(0.14))
+                            .frame(width: 44, height: 44)
+                        Image(systemName: "person.crop.circle.fill")
+                            .font(.system(size: 38))
+                            .foregroundStyle(AppTheme.electricBlue)
+                    }
+
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Mohammad Ali Nayeem")
+                            .font(AppTypography.font(size: 13.5, weight: .bold))
+                            .foregroundStyle(AppTheme.textPrimary)
+
+                        Text("Software Engineer • B.Sc in SWE, Daffodil International University")
+                            .font(AppTypography.font(size: 11))
+                            .foregroundStyle(AppTheme.textSecondary)
+
+                        Text("Founder of BornoSoft")
+                            .font(AppTypography.font(size: 11.5, weight: .semibold))
+                            .foregroundStyle(AppTheme.successGreen)
+                    }
+
+                    Spacer()
+
+                    Button("Website") {
+                        if let url = URL(string: "https://bornosoft.bd") {
+                            NSWorkspace.shared.open(url)
+                        }
+                    }
+                    .buttonStyle(.bordered)
+                    .controlSize(.small)
+                }
 
                 HStack(spacing: 12) {
                     Text("• Zero Network Telemetry")

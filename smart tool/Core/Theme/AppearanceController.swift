@@ -70,4 +70,5 @@ public final class AppearanceController {
 
 public extension Notification.Name {
     static let appAppearanceDidChange = Notification.Name("BornoAppAppearanceDidChange")
+    static let showAboutDeveloper = Notification.Name("BornoShowAboutDeveloper")
 }

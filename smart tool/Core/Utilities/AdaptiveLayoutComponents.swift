@@ -34,14 +34,15 @@ public struct AdaptivePageHeader<LeadingExtra: View, Trailing: View>: View {
     public var body: some View {
         ViewThatFits(in: .horizontal) {
             // Wide layout: Title on left, actions on right
-            HStack(alignment: .top, spacing: 16) {
+            HStack(alignment: .center, spacing: 16) {
                 titleSection
                 Spacer(minLength: 16)
                 trailing
+                    .fixedSize(horizontal: true, vertical: false)
             }
 
-            // Compact layout: Actions stacked below title
-            VStack(alignment: .leading, spacing: 12) {
+            // Compact layout: Actions cleanly stacked below title
+            VStack(alignment: .leading, spacing: 10) {
                 titleSection
                 trailing
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -50,21 +51,21 @@ public struct AdaptivePageHeader<LeadingExtra: View, Trailing: View>: View {
     }
 
     private var titleSection: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            HStack(spacing: 8) {
+        HStack(alignment: .center, spacing: 10) {
+            leadingExtra
+
+            VStack(alignment: .leading, spacing: 2) {
                 Text(title)
-                    .font(AppTypography.font(size: 20, weight: .bold))
+                    .font(AppTypography.font(size: 19, weight: .bold))
                     .foregroundStyle(AppTheme.textPrimary)
                     .lineLimit(1)
-                
-                leadingExtra
-            }
 
-            if let subtitle = subtitle {
-                Text(subtitle)
-                    .font(AppTypography.font(size: 12))
-                    .foregroundStyle(AppTheme.textSecondary)
-                    .fixedSize(horizontal: false, vertical: true)
+                if let subtitle = subtitle {
+                    Text(subtitle)
+                        .font(AppTypography.font(size: 12))
+                        .foregroundStyle(AppTheme.textSecondary)
+                        .lineLimit(2)
+                }
             }
         }
     }

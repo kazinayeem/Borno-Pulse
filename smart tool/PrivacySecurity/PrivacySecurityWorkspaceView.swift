@@ -49,22 +49,23 @@ public struct PrivacySecurityWorkspaceView: View {
                 icon: "shield.lefthalf.filled",
                 iconColor: AppTheme.matrixGreen
             ) {
-                // Tabs
+                // Segmented tab navigation
                 HStack(spacing: 4) {
                     ForEach(PrivacyTab.allCases) { tab in
                         Button {
                             activeTab = tab
                         } label: {
-                            HStack(spacing: 5) {
+                            HStack(spacing: 6) {
                                 Image(systemName: tab.icon)
                                     .font(.system(size: 11))
                                 Text(tab.rawValue)
-                                    .font(.system(size: 12, weight: activeTab == tab ? .semibold : .regular))
+                                    .font(AppTypography.font(size: 11.5, weight: activeTab == tab ? .semibold : .regular))
+                                    .lineLimit(1)
                             }
                             .padding(.horizontal, 10)
                             .padding(.vertical, 5)
                             .background(activeTab == tab ? AppTheme.selectionBackground : Color.clear)
-                            .foregroundStyle(AppTheme.selectableForeground(activeTab == tab))
+                            .foregroundStyle(activeTab == tab ? AppTheme.selectionForeground : AppTheme.textSecondary)
                             .contentShape(RoundedRectangle(cornerRadius: 6))
                             .clipShape(RoundedRectangle(cornerRadius: 6))
                         }
@@ -93,7 +94,8 @@ public struct PrivacySecurityWorkspaceView: View {
                         permissionAuditTabContent
                     }
                 }
-                .padding(18)
+                .padding(.horizontal, 20)
+                .padding(.vertical, 18)
             }
         }
         .background(AppTheme.graphiteCanvas)
@@ -111,20 +113,19 @@ public struct PrivacySecurityWorkspaceView: View {
                     .foregroundStyle(AppTheme.electricCyan)
                     .font(.system(size: 14))
                 
-                VStack(alignment: .leading, spacing: 2) {
+                VStack(alignment: .leading, spacing: 3) {
                     Text(selectedAlgorithm.rawValue)
-                        .font(.system(size: 12, weight: .bold))
+                        .font(AppTypography.font(size: 12, weight: .bold))
                         .foregroundStyle(AppTheme.textPrimary)
                     Text(selectedAlgorithm.securityAdvisory)
-                        .font(.system(size: 11))
+                        .font(AppTypography.font(size: 11))
                         .foregroundStyle(AppTheme.textSecondary)
                     Text("⚠️ Notice: A hash match proves data integrity (byte-level equality). It does not guarantee a file is free from malware.")
-                        .font(.system(size: 10))
+                        .font(AppTypography.font(size: 10))
                         .foregroundStyle(AppTheme.warningAmber)
                 }
             }
-            .padding(12)
-            .smartCard()
+            .smartCard(padding: 12)
             
             // Algorithm & Action Bar
             HStack(spacing: 12) {
@@ -192,11 +193,11 @@ public struct PrivacySecurityWorkspaceView: View {
                         .font(.system(size: 32))
                         .foregroundStyle(AppTheme.textTertiary)
                     Text("Select a file to stream and compute its cryptographic digest.")
-                        .font(.system(size: 12))
+                        .font(AppTypography.font(size: 12))
                         .foregroundStyle(AppTheme.textSecondary)
                 }
                 .frame(maxWidth: .infinity, minHeight: 180)
-                .smartCard()
+                .smartCard(padding: 18)
             } else {
                 VStack(spacing: 8) {
                     ForEach(hashResults) { res in
@@ -211,11 +212,11 @@ public struct PrivacySecurityWorkspaceView: View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
                 Text(res.filename)
-                    .font(.system(size: 12, weight: .bold))
+                    .font(AppTypography.font(size: 12, weight: .bold))
                     .foregroundStyle(AppTheme.textPrimary)
                 
                 Text("• \(Formatters.bytes(UInt64(res.fileSize)))")
-                    .font(.system(size: 11))
+                    .font(AppTypography.font(size: 11))
                     .foregroundStyle(AppTheme.textTertiary)
                 
                 Spacer()
@@ -225,7 +226,7 @@ public struct PrivacySecurityWorkspaceView: View {
                         Image(systemName: match ? "checkmark.circle.fill" : "xmark.octagon.fill")
                             .foregroundStyle(match ? AppTheme.successGreen : AppTheme.dangerRed)
                         Text(match ? "CHECKSUM MATCH" : "HASH MISMATCH")
-                            .font(.system(size: 9, weight: .bold))
+                            .font(AppTypography.font(size: 9, weight: .bold))
                             .foregroundStyle(match ? AppTheme.successGreen : AppTheme.dangerRed)
                     }
                     .padding(.horizontal, 6)
@@ -242,7 +243,7 @@ public struct PrivacySecurityWorkspaceView: View {
                         Image(systemName: "doc.on.doc")
                         Text("Copy")
                     }
-                    .font(.system(size: 10))
+                    .font(AppTypography.font(size: 10))
                 }
                 .buttonStyle(.bordered)
             }
@@ -257,8 +258,7 @@ public struct PrivacySecurityWorkspaceView: View {
                 .clipShape(RoundedRectangle(cornerRadius: 4))
                 .overlay(RoundedRectangle(cornerRadius: 4).stroke(AppTheme.cardBorder, lineWidth: 0.5))
         }
-        .padding(12)
-        .smartCard()
+        .smartCard(padding: 14)
     }
     
     // MARK: - 2. Metadata Inspector Tab
@@ -286,22 +286,22 @@ public struct PrivacySecurityWorkspaceView: View {
                         .font(.system(size: 32))
                         .foregroundStyle(AppTheme.textTertiary)
                     Text("Select an image, PDF, or document to inspect and safely scrub embedded metadata.")
-                        .font(.system(size: 12))
+                        .font(AppTypography.font(size: 12))
                         .foregroundStyle(AppTheme.textSecondary)
                 }
                 .frame(maxWidth: .infinity, minHeight: 220)
-                .smartCard()
+                .smartCard(padding: 18)
             } else {
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Extracted Metadata Attributes")
-                        .font(.system(size: 12, weight: .semibold))
+                        .font(AppTypography.font(size: 12, weight: .semibold))
                         .foregroundStyle(AppTheme.textSecondary)
                     
                     VStack(spacing: 4) {
                         ForEach(metadataAttributes, id: \.key) { attr in
                             HStack {
                                 Text(attr.key)
-                                    .font(.system(size: 11, weight: .medium))
+                                    .font(AppTypography.font(size: 11, weight: .medium))
                                     .foregroundStyle(AppTheme.textSecondary)
                                     .frame(width: 180, alignment: .leading)
                                 
@@ -318,8 +318,7 @@ public struct PrivacySecurityWorkspaceView: View {
                         }
                     }
                 }
-                .padding(14)
-                .smartCard()
+                .smartCard(padding: 14)
             }
         }
     }
@@ -327,47 +326,93 @@ public struct PrivacySecurityWorkspaceView: View {
     // MARK: - 3. Permission Audit Tab
     private var permissionAuditTabContent: some View {
         VStack(alignment: .leading, spacing: 14) {
-            Text("macOS System Permissions & Sandbox Audit")
-                .font(.system(size: 13, weight: .bold))
-                .foregroundStyle(AppTheme.textPrimary)
-            
-            VStack(spacing: 8) {
-                ForEach(auditItems) { item in
-                    HStack(alignment: .top, spacing: 12) {
-                        Image(systemName: item.isGranted ? "checkmark.circle.fill" : "info.circle.fill")
-                            .font(.system(size: 16))
-                            .foregroundStyle(item.isGranted ? AppTheme.successGreen : AppTheme.warningAmber)
-                            .frame(width: 20)
-                        
-                        VStack(alignment: .leading, spacing: 3) {
-                            HStack {
-                                Text(item.name)
-                                    .font(.system(size: 12, weight: .bold))
-                                    .foregroundStyle(AppTheme.textPrimary)
-                                
-                                Text("• \(item.statusText)")
-                                    .font(.system(size: 11))
-                                    .foregroundStyle(item.isGranted ? AppTheme.successGreen : AppTheme.warningAmber)
-                            }
-                            
-                            Text(item.featureImpact)
-                                .font(.system(size: 11))
-                                .foregroundStyle(AppTheme.textSecondary)
-                        }
-                        
-                        Spacer()
-                        
-                        if let sysURL = item.systemSettingsURL, let u = URL(string: sysURL) {
-                            Button("System Settings...") {
-                                NSWorkspace.shared.open(u)
-                            }
-                            .buttonStyle(.bordered)
-                            .controlSize(.small)
-                        }
-                    }
-                    .padding(12)
-                    .smartCard()
+            HStack {
+                Text("macOS System Permissions & Sandbox Audit")
+                    .font(AppTypography.font(size: 13, weight: .bold))
+                    .foregroundStyle(AppTheme.textPrimary)
+                Spacer()
+                Button {
+                    auditItems = PermissionAuditService.shared.performAudit()
+                } label: {
+                    Label("Re-scan Permissions", systemImage: "arrow.clockwise")
+                        .font(AppTypography.font(size: 11))
                 }
+                .buttonStyle(.borderless)
+                .foregroundStyle(AppTheme.electricBlue)
+            }
+            
+            VStack(spacing: 10) {
+                ForEach(auditItems) { item in
+                    permissionAuditCard(item)
+                }
+            }
+        }
+    }
+
+    private func permissionAuditCard(_ item: PermissionAuditItem) -> some View {
+        ViewThatFits(in: .horizontal) {
+            // Wide card layout: Button on the right
+            HStack(alignment: .center, spacing: 14) {
+                permissionCardLeading(item)
+                
+                Spacer(minLength: 16)
+                
+                if let sysURL = item.systemSettingsURL, let u = URL(string: sysURL) {
+                    Button("System Settings…") {
+                        NSWorkspace.shared.open(u)
+                    }
+                    .buttonStyle(.bordered)
+                    .controlSize(.small)
+                    .fixedSize(horizontal: true, vertical: false)
+                }
+            }
+            
+            // Compact card layout: Button moves to bottom-right
+            VStack(alignment: .leading, spacing: 10) {
+                permissionCardLeading(item)
+                
+                if let sysURL = item.systemSettingsURL, let u = URL(string: sysURL) {
+                    HStack {
+                        Spacer()
+                        Button("System Settings…") {
+                            NSWorkspace.shared.open(u)
+                        }
+                        .buttonStyle(.bordered)
+                        .controlSize(.small)
+                    }
+                }
+            }
+        }
+        .smartCard(padding: 14)
+    }
+
+    private func permissionCardLeading(_ item: PermissionAuditItem) -> some View {
+        HStack(alignment: .top, spacing: 12) {
+            Image(systemName: item.isGranted ? "checkmark.circle.fill" : "info.circle.fill")
+                .font(.system(size: 18))
+                .foregroundStyle(item.isGranted ? AppTheme.successGreen : AppTheme.warningAmber)
+                .frame(width: 22, height: 22, alignment: .center)
+            
+            VStack(alignment: .leading, spacing: 4) {
+                HStack(spacing: 8) {
+                    Text(item.name)
+                        .font(AppTypography.font(size: 13, weight: .bold))
+                        .foregroundStyle(AppTheme.textPrimary)
+                    
+                    Text(item.statusText)
+                        .font(AppTypography.font(size: 10.5, weight: .semibold))
+                        .foregroundStyle(item.isGranted ? AppTheme.successGreen : AppTheme.warningAmber)
+                        .padding(.horizontal, 7)
+                        .padding(.vertical, 2)
+                        .background((item.isGranted ? AppTheme.successGreen : AppTheme.warningAmber).opacity(0.12))
+                        .clipShape(Capsule())
+                }
+                
+                Text(item.featureImpact)
+                    .font(AppTypography.font(size: 11.5))
+                    .foregroundStyle(AppTheme.textSecondary)
+                    .lineSpacing(2)
+                    .fixedSize(horizontal: false, vertical: true)
             }
         }
     }

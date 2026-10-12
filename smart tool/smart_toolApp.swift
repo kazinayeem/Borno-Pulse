@@ -18,6 +18,11 @@ struct smart_toolApp: App {
         .windowStyle(.titleBar)
         .windowToolbarStyle(.unified)
         .commands {
+            CommandGroup(replacing: .appInfo) {
+                Button("About Borno Pulse") {
+                    NotificationCenter.default.post(name: .showAboutDeveloper, object: nil)
+                }
+            }
             CommandGroup(replacing: .newItem) {}
             CommandGroup(replacing: .appSettings) {
                 Button("Settings…") {

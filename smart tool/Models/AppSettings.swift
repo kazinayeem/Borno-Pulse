@@ -337,7 +337,7 @@ public enum TemperatureUnit: String, CaseIterable, Identifiable, Codable {
 public final class AppSettings: ObservableObject {
     public static let shared = AppSettings()
 
-    @AppStorage("hasCompletedOnboarding") public var hasCompletedOnboarding: Bool = false
+    @AppStorage("hasCompletedOnboarding") public var hasCompletedOnboarding: Bool = true
     @AppStorage("launchAtLogin") public var launchAtLogin: Bool = false
     /// Legacy single-mode key — kept so migration can read the old value.
     @AppStorage("menuBarDisplay") public var menuBarDisplay: MenuBarMetricDisplay = .cpuPercentage
