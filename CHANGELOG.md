@@ -6,14 +6,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ## [1.3.0] - 2026-10-12
 
 ### Added
+- **Advanced System Cleaner & Node.js Project Cleanup**: Production-grade system cleaner with accurate disk usage reporting, multi-tier safety presets (Quick, Developer, Custom), deep recursive `node_modules` scanner with lockfile (`npm`, `pnpm`, `yarn`, `bun`) and monorepo detection, and safe deletion preserving project source code, parent folders, and package manifests.
 - **Keep Running When Lid Is Closed (Clamshell Mode)**: Dedicated clamshell management system (`ClamshellManager`) utilizing native IOKit power assertions (`kIOPMAssertionTypePreventUserIdleSystemSleep`) to maintain background operations (Docker, local dev servers, scripts) with the lid closed.
 - **Hardware Readiness Audit Checklist**: Live verification of Mac laptop model, AC power connection (`IOPSGetProvidingPowerSourceType`), external display topology (`CGGetOnlineDisplayList`), and Apple official clamshell compliance.
 - **Workload Verification Diagnostics**: Real-time diagnostic panel monitoring Docker container status, active listening server sockets (Vite, Next.js, Django, FastAPI), background processes, and macOS awake uptime.
 - **Duration Presets & Countdown**: Configurable timers (1h, 2h, 3h, Until Stopped, or Custom hours & minutes) with real-time remaining countdown and visual status pill.
 - **Quick Actions 21-Action Grid**: Responsive grid in the Menu Bar Widget with circular icons, hover interactions, destructive action confirmations (Empty Trash), and system action launchers.
-- **Clamshell Mode Invariant Tests**: Expanded test suite to **854+ tests** validating duration calculations, hardware readiness checklists, and power assertion lifecycles.
+- **Responsive Multi-Row Settings Tabs**: Custom native `FlowLayout` in Settings preventing category tab clipping and overflow on narrow windows.
+- **Founder & Developer Profile**: Developer card in About dialog and Settings with circular profile photo, credentials, BornoSoft links, and GitHub avatar integration.
+- **Clamshell & Cleaner Invariant Tests**: Expanded test suite to **900+ tests** validating lifecycle, node cleanup safety, and power assertion handling.
 
 ### Fixed
+- **Window Close & Dock Lifecycle**: Fixed issue where closing the main window hid the app from the Dock. The red close button now orders out the window without destroying it, `applicationShouldHandleReopen` restores the main window instantly, and the app remains visible in the Dock.
+- **Quit Teardown**: Implemented clean resource teardown in `applicationWillTerminate` releasing IOKit sleep assertions, stopping background controllers, and tearing down status bar items.
 - **CoreFoundation Autorelease Pool Crash**: Resolved `EXC_BAD_ACCESS` in `objc_release` caused by unretained `IOPSGetPowerSourceDescription` dictionary bridging by transitioning to direct `IOPSGetProvidingPowerSourceType` string evaluation.
 - **Timer Execution Efficiency**: Eliminated redundant nested `Task { @MainActor }` calls within main runloop telemetry timers.
 - **Fixed-Buffer Safety**: Added safe UTF-8 prefix bounds checks to Darwin `proc_bsdinfo.pbi_comm` string parsing.

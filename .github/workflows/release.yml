@@ -1,0 +1,79 @@
+name: Release Borno Pulse
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release version (e.g., 1.3.0)'
+        required: false
+        default: '1.3.0'
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-release:
+    name: Build, Test & Package macOS Release
+    runs-on: macos-14
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Select Xcode
+        run: |
+          sudo xcode-select -s /Applications/Xcode_15.4.app/Contents/Developer || sudo xcode-select -s /Applications/Xcode.app/Contents/Developer
+          xcodebuild -version
+
+      - name: Compile Release Binary
+        run: |
+          xcodebuild -project "smart tool.xcodeproj" \
+                     -scheme "smart tool" \
+                     -destination "generic/platform=macOS" \
+                     -configuration Release \
+                     build
+
+      - name: Run Invariant & Quality Assurance Tests
+        run: |
+          APP_BIN=$(find "$HOME/Library/Developer/Xcode/DerivedData" -name "Borno Pulse" -type f -path "*/Release/Borno Pulse.app/Contents/MacOS/Borno Pulse" | head -n 1)
+          if [ -z "$APP_BIN" ]; then
+            APP_BIN=$(find "$HOME/Library/Developer/Xcode/DerivedData" -name "smart tool" -type f -path "*/Release/smart tool.app/Contents/MacOS/smart tool" | head -n 1)
+          fi
+          echo "Executing test runner at: $APP_BIN"
+          "$APP_BIN" --run-tests
+
+      - name: Package Release DMG & ZIP
+        run: |
+          chmod +x scripts/package-release.sh
+          ./scripts/package-release.sh
+
+      - name: Upload Build Artifacts (CI Inspection)
+        uses: actions/upload-artifact@v4
+        with:
+          name: borno-pulse-release-artifacts
+          path: |
+            dist/*.dmg
+            dist/*.zip
+            dist/checksums-sha256.txt
+          retention-days: 14
+
+      - name: Publish GitHub Release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            dist/Borno-Pulse-macOS.dmg
+            dist/Borno-Pulse-v*.dmg
+            dist/Borno-Pulse-macOS.zip
+            dist/checksums-sha256.txt
+          body_path: CHANGELOG.md
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

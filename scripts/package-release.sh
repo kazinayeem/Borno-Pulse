@@ -76,7 +76,8 @@ rm -rf "$STAGING_DIR"
 
 # 6. Create ZIP distribution
 echo "🗜️  Creating ZIP distribution..."
-ditto -c -k --keepParent "$TARGET_APP" "$DIST_DIR/$ZIP_NAME"
+ditto -c -k --norsrc --keepParent "$TARGET_APP" "$DIST_DIR/$ZIP_NAME"
+
 
 # 7. Checksums
 echo "🔐 Generating SHA-256 Checksums..."
