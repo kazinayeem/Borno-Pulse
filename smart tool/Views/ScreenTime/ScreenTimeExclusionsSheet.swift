@@ -19,7 +19,7 @@ public struct ScreenTimeExclusionsSheet: View {
             // Sheet Header
             HStack {
                 HStack(spacing: 8) {
-                    Image(systemName: "hand.raised.shield.fill")
+                    Image(systemName: "shield.lefthalf.filled")
                         .font(.system(size: 16))
                         .foregroundStyle(AppTheme.matrixGreen)
                     

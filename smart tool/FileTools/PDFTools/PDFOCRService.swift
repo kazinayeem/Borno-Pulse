@@ -42,8 +42,13 @@ public final class PDFOCRService: ObservableObject {
     @Published public var forceOCROnTextPages: Bool = false
 
     private var task: Task<Void, Never>?
+    private var hasLoadedSupportedLanguages = false
 
-    public init() {
+    public init() {}
+
+    public func loadSupportedLanguagesIfNeeded() {
+        guard !hasLoadedSupportedLanguages else { return }
+        hasLoadedSupportedLanguages = true
         let request = VNRecognizeTextRequest()
         request.recognitionLevel = .accurate
         if let languages = try? request.supportedRecognitionLanguages(), !languages.isEmpty {
@@ -51,7 +56,10 @@ public final class PDFOCRService: ObservableObject {
         }
     }
 
-    public var languageChoices: [String] { [Self.automaticLanguage] + supportedLanguages }
+    public var languageChoices: [String] {
+        loadSupportedLanguagesIfNeeded()
+        return [Self.automaticLanguage] + supportedLanguages
+    }
 
     // MARK: - Vision
 

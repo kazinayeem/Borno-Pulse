@@ -85,7 +85,7 @@ public struct ScreenTimeDashboardView: View {
                     Button {
                         showingExclusionsSheet = true
                     } label: {
-                        Label("Excluded Applications", systemImage: "hand.raised.shield")
+                        Label("Excluded Applications", systemImage: "shield.lefthalf.filled")
                     }
                 } label: {
                     Label("More", systemImage: "ellipsis.circle")
@@ -180,7 +180,7 @@ public struct ScreenTimeDashboardView: View {
         Button {
             showingExclusionsSheet = true
         } label: {
-            Image(systemName: "hand.raised.shield")
+            Image(systemName: "shield.lefthalf.filled")
                 .font(.system(size: 13))
         }
         .buttonStyle(.bordered)

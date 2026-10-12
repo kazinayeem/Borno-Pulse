@@ -18,7 +18,7 @@ public struct PrivacySecurityWorkspaceView: View {
             switch self {
             case .hashing: return "number.square.fill"
             case .metadata: return "info.circle.fill"
-            case .permissions: return "hand.raised.shield.fill"
+            case .permissions: return "shield.lefthalf.filled"
             }
         }
     }
@@ -156,7 +156,7 @@ public struct PrivacySecurityWorkspaceView: View {
             
             // Expected Hash Comparator Input
             HStack(spacing: 8) {
-                Image(systemName: "checkmark.magnifyingglass")
+                Image(systemName: "magnifyingglass")
                     .foregroundStyle(AppTheme.textTertiary)
                 
                 TextField("Paste expected checksum to compare (optional)...", text: $manualExpectedHash)

@@ -77,7 +77,7 @@ public struct ClipboardManagerView: View {
     // MARK: - Opt-In Banner
     private var optInBanner: some View {
         HStack(spacing: 12) {
-            Image(systemName: "hand.raised.shield.fill")
+            Image(systemName: "lock.shield.fill")
                 .font(.system(size: 20))
                 .foregroundStyle(AppTheme.electricCyan)
             
