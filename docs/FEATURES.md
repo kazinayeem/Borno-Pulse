@@ -1,6 +1,8 @@
 # Borno Pulse — Feature Catalog & Module Documentation
 
-This document provides a comprehensive inventory of all features implemented in **Borno Pulse**, detailing their capabilities, access paths, permissions, and operational constraints.
+This document provides a comprehensive inventory of all features implemented in **[Borno Pulse](https://github.com/kazinayeem/Borno-Pulse)**, detailing their capabilities, access paths, permissions, and operational constraints.
+
+Repository: [https://github.com/kazinayeem/Borno-Pulse](https://github.com/kazinayeem/Borno-Pulse)
 
 ---
 

@@ -1,6 +1,8 @@
 # Privacy & Security Architecture
 
-Borno Pulse is engineered from the ground up to respect user privacy and adhere to a strict **offline-first** design philosophy.
+**[Borno Pulse](https://github.com/kazinayeem/Borno-Pulse)** is engineered from the ground up to respect user privacy and adhere to a strict **offline-first** design philosophy.
+
+Repository: [https://github.com/kazinayeem/Borno-Pulse](https://github.com/kazinayeem/Borno-Pulse)
 
 ---
 

@@ -1,8 +1,10 @@
 # Borno Pulse — Screen Inventory & Audit Status
 
-This document catalogs every user interface surface, navigation section, settings tab, utility sheet, and menu bar widget view in **Borno Pulse**.
+This document catalogs every user interface surface, navigation section, settings tab, utility sheet, and menu bar widget view in **[Borno Pulse](https://github.com/kazinayeem/Borno-Pulse)**.
 
 All screenshots are captured programmatically from the compiled, running application using native AppKit display caching across both **Light Mode** and **Dark Mode**.
+
+Repository: [https://github.com/kazinayeem/Borno-Pulse](https://github.com/kazinayeem/Borno-Pulse)
 
 ---
 

@@ -61,7 +61,7 @@ Inspect the resulting PNG files in `screenshots/light/`, `screenshots/dark/`, an
    ```bash
    git push origin feature/your-feature-name
    ```
-3. Open a Pull Request against the `main` branch.
+3. Open a Pull Request at [https://github.com/kazinayeem/Borno-Pulse/pulls](https://github.com/kazinayeem/Borno-Pulse/pulls) against the `main` branch.
 4. Fill out the PR description with:
    - Summary of changes
    - Motivation and context

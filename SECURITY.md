@@ -19,7 +19,7 @@ The Borno Pulse team takes security and user privacy seriously. As a local-first
 If you discover a security vulnerability in Borno Pulse:
 
 1. **Do not open a public issue.**
-2. Send a detailed report via security advisory on GitHub or email the maintainers through [BornoSoft](https://bornosoft.bd).
+2. Send a detailed report via [GitHub Security Advisory](https://github.com/kazinayeem/Borno-Pulse/security/advisories) or email the maintainers through [BornoSoft](https://bornosoft.bd).
 3. Include reproduction steps, sample payload (if applicable), and affected macOS versions.
 4. We will acknowledge receipt within 48 hours and work with you on a coordinated disclosure timeline.
 
