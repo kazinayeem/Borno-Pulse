@@ -282,6 +282,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // 6. Dismiss any full-screen cleaning overlays
         ScreenCleanOverlayService.shared.dismissActiveOverlay()
         // 7. Diagnostics log
-        DiagnosticLogger.shared.info("Borno Pulse application cleanly terminated")
+        AppLog.lifecycle.info("Borno Pulse application cleanly terminated")
     }
 }

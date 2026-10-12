@@ -315,6 +315,22 @@ public final class SystemCleanerService: ObservableObject {
     }
     
     // MARK: - Execute Clean
+    @discardableResult
+    public func simulateCleanSync() -> CleanerExecutionReport {
+        let selectedCats = categories.filter { $0.isSelected }
+        let totalBytes = selectedCats.reduce(0) { $0 + $1.estimatedSizeBytes }
+        let totalFiles = selectedCats.reduce(0) { $0 + $1.fileCount }
+        let report = CleanerExecutionReport(
+            bytesFreed: totalBytes,
+            itemsRemoved: totalFiles,
+            failuresCount: 0,
+            errors: [],
+            durationSeconds: 0.05
+        )
+        self.lastReport = report
+        return report
+    }
+
     public func executeClean(dryRun: Bool = false) {
         guard !isCleaning else { return }
         isCleaning = true

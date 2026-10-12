@@ -169,31 +169,47 @@ public final class NodeModulesScannerService: ObservableObject {
                 let hasPackageJson = fileManager.fileExists(atPath: projectURL.appendingPathComponent("package.json").path)
                 let isGit = fileManager.fileExists(atPath: projectURL.appendingPathComponent(".git").path)
                 
-                // Lockfile detection
+                // Lockfile and monorepo detection across project and parent workspace roots
                 var lockfile: String? = nil
                 var pkgMgr: NodePackageManager = .npm
-                
-                if fileManager.fileExists(atPath: projectURL.appendingPathComponent("pnpm-lock.yaml").path) {
-                    lockfile = "pnpm-lock.yaml"
-                    pkgMgr = .pnpm
-                } else if fileManager.fileExists(atPath: projectURL.appendingPathComponent("yarn.lock").path) {
-                    lockfile = "yarn.lock"
-                    pkgMgr = .yarn
-                } else if fileManager.fileExists(atPath: projectURL.appendingPathComponent("bun.lockb").path) {
-                    lockfile = "bun.lockb"
-                    pkgMgr = .bun
-                } else if fileManager.fileExists(atPath: projectURL.appendingPathComponent("bun.lock").path) {
-                    lockfile = "bun.lock"
-                    pkgMgr = .bun
-                } else if fileManager.fileExists(atPath: projectURL.appendingPathComponent("package-lock.json").path) {
-                    lockfile = "package-lock.json"
-                    pkgMgr = .npm
+                var isMonorepo = false
+
+                let candidateDirs = [
+                    projectURL,
+                    projectURL.deletingLastPathComponent(),
+                    projectURL.deletingLastPathComponent().deletingLastPathComponent()
+                ]
+
+                for candidate in candidateDirs {
+                    if lockfile == nil {
+                        if fileManager.fileExists(atPath: candidate.appendingPathComponent("pnpm-lock.yaml").path) {
+                            lockfile = "pnpm-lock.yaml"
+                            pkgMgr = .pnpm
+                        } else if fileManager.fileExists(atPath: candidate.appendingPathComponent("yarn.lock").path) {
+                            lockfile = "yarn.lock"
+                            pkgMgr = .yarn
+                        } else if fileManager.fileExists(atPath: candidate.appendingPathComponent("bun.lockb").path) {
+                            lockfile = "bun.lockb"
+                            pkgMgr = .bun
+                        } else if fileManager.fileExists(atPath: candidate.appendingPathComponent("bun.lock").path) {
+                            lockfile = "bun.lock"
+                            pkgMgr = .bun
+                        } else if fileManager.fileExists(atPath: candidate.appendingPathComponent("package-lock.json").path) {
+                            lockfile = "package-lock.json"
+                            pkgMgr = .npm
+                        }
+                    }
+
+                    if !isMonorepo {
+                        if fileManager.fileExists(atPath: candidate.appendingPathComponent("pnpm-workspace.yaml").path)
+                            || fileManager.fileExists(atPath: candidate.appendingPathComponent("lerna.json").path)
+                            || fileManager.fileExists(atPath: candidate.appendingPathComponent("nx.json").path)
+                            || fileManager.fileExists(atPath: candidate.appendingPathComponent("turbo.json").path)
+                            || hasWorkspacesField(packageJsonURL: candidate.appendingPathComponent("package.json")) {
+                            isMonorepo = true
+                        }
+                    }
                 }
-                
-                // Monorepo detection
-                let isMonorepo = fileManager.fileExists(atPath: projectURL.appendingPathComponent("pnpm-workspace.yaml").path)
-                    || fileManager.fileExists(atPath: projectURL.appendingPathComponent("lerna.json").path)
-                    || hasWorkspacesField(packageJsonURL: projectURL.appendingPathComponent("package.json"))
                 
                 // Measure size
                 let (size, count, modDate) = calculateDirectoryMetrics(url: fileURL)
@@ -361,6 +377,24 @@ public final class NodeModulesScannerService: ObservableObject {
                     itemsToDelete.contains(where: { $0.nodeModulesPath == p.nodeModulesPath })
                 })
             }
+        }
+    }
+
+    /// Synchronous safe deletion helper used by tests and targeted individual deletions
+    public nonisolated static func safeDeleteNodeModulesDirectory(path: String) -> Bool {
+        guard path.hasSuffix("node_modules"), path.count > 15 else {
+            return false
+        }
+        guard !path.hasPrefix("/System"), !path.hasPrefix("/Library"), !path.hasPrefix("/usr") else {
+            return false
+        }
+        do {
+            if FileManager.default.fileExists(atPath: path) {
+                try FileManager.default.removeItem(atPath: path)
+            }
+            return true
+        } catch {
+            return false
         }
     }
 }

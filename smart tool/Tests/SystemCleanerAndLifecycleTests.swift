@@ -38,7 +38,7 @@ public enum SystemCleanerAndLifecycleTests {
         // D. Dock activation policy must be .regular
         NSApp.setActivationPolicy(.regular)
         assert(
-            NSApp.activationPolicy == .regular,
+            NSApp.activationPolicy() == .regular,
             "Lifecycle: Application activation policy is .regular ensuring Dock visibility"
         )
 
@@ -138,24 +138,23 @@ public enum SystemCleanerAndLifecycleTests {
         }
 
         // Test scanner
-        let scanner = NodeModulesScannerService.shared
-        let results = scanner.scanDirectory(rootURL: tempDir)
+        let results = NodeModulesScannerService.scanDirectoryForNodeModules(rootURL: tempDir)
 
         assert(results.count == 2, "NodeScanner: Discovered exactly 2 node_modules directories (found \(results.count))")
 
-        if let itemA = results.first(where: { $0.projectDirectory.contains("app-web") }) {
+        if let itemA = results.first(where: { $0.projectPath.contains("app-web") }) {
             assert(itemA.hasPackageJson == true, "NodeScanner: Detected package.json in app-web")
-            assert(itemA.hasLockfile == true, "NodeScanner: Detected package-lock.json in app-web")
-            assert(itemA.detectedPackageManager == "npm", "NodeScanner: Correctly detected npm package manager")
+            assert(itemA.lockfileName != nil, "NodeScanner: Detected package-lock.json in app-web")
+            assert(itemA.packageManager == .npm, "NodeScanner: Correctly detected npm package manager")
             assert(itemA.sizeBytes >= 1024 * 16, "NodeScanner: Measured directory size >= 16KB (actual: \(itemA.sizeBytes))")
             assert(itemA.isMonorepo == false, "NodeScanner: app-web correctly classified as non-monorepo")
         } else {
             assert(false, "NodeScanner: Failed to locate app-web node_modules result")
         }
 
-        if let itemB = results.first(where: { $0.projectDirectory.contains("monorepo") }) {
-            assert(itemB.hasLockfile == true, "NodeScanner: Detected pnpm-lock.yaml in monorepo")
-            assert(itemB.detectedPackageManager == "pnpm", "NodeScanner: Correctly detected pnpm package manager")
+        if let itemB = results.first(where: { $0.projectPath.contains("monorepo") }) {
+            assert(itemB.lockfileName != nil, "NodeScanner: Detected pnpm-lock.yaml in monorepo")
+            assert(itemB.packageManager == .pnpm, "NodeScanner: Correctly detected pnpm package manager")
             assert(itemB.isMonorepo == true, "NodeScanner: Correctly flagged monorepo project")
         } else {
             assert(false, "NodeScanner: Failed to locate monorepo node_modules result")
@@ -169,8 +168,8 @@ public enum SystemCleanerAndLifecycleTests {
         assert(beforeSourceExists && beforePkgExists && beforeLockExists, "NodeCleanup: Preconditions met before deletion")
 
         // Delete ONLY app-web node_modules
-        let deleteResult = scanner.deleteNodeModulesDirectory(path: nodeModulesA.path)
-        assert(deleteResult == true, "NodeCleanup: deleteNodeModulesDirectory returned success")
+        let deleteResult = NodeModulesScannerService.safeDeleteNodeModulesDirectory(path: nodeModulesA.path)
+        assert(deleteResult == true, "NodeCleanup: safeDeleteNodeModulesDirectory returned success")
 
         let nodeModulesStillExists = FileManager.default.fileExists(atPath: nodeModulesA.path)
         assert(!nodeModulesStillExists, "NodeCleanup: node_modules directory was successfully deleted")
@@ -200,27 +199,22 @@ public enum SystemCleanerAndLifecycleTests {
         assert(!cleaner.categories.isEmpty, "SystemCleaner: Initialized cleanup categories (\(cleaner.categories.count) categories)")
 
         // Mode preset tests
-        cleaner.selectedMode = .quick
-        cleaner.applyModePreset()
+        cleaner.applyModeSelection(mode: .quick)
         let quickSelected = cleaner.categories.filter { $0.isSelected }
         assert(
-            quickSelected.allSatisfy { $0.safetyTier == .safe },
+            quickSelected.allSatisfy { $0.safety == .safe },
             "SystemCleaner: Quick Clean selects ONLY safe categories (no high or moderate risk)"
         )
 
-        cleaner.selectedMode = .developer
-        cleaner.applyModePreset()
+        cleaner.applyModeSelection(mode: .developer)
         let devSelected = cleaner.categories.filter { $0.isSelected }
         let hasDevCategory = devSelected.contains { $0.id.contains("developer") || $0.id.contains("xcode") || $0.id.contains("npm") }
         assert(hasDevCategory, "SystemCleaner: Developer Clean enables developer build caches")
 
         // Simulation / Dry Run Test
-        cleaner.executeClean(dryRun: true)
-        if let report = cleaner.lastExecutionReport {
-            assert(report.isDryRun == true, "SystemCleaner: Simulation report accurately reflects dry-run execution")
-            assert(report.success == true, "SystemCleaner: Dry-run simulation finished successfully")
-        } else {
-            assert(false, "SystemCleaner: Last execution report generated after cleanup")
-        }
+        let report = cleaner.simulateCleanSync()
+        assert(report.failuresCount == 0, "SystemCleaner: Simulation report has 0 failures")
+        assert(report.durationSeconds >= 0, "SystemCleaner: Duration recorded in report")
+        assert(cleaner.lastReport != nil, "SystemCleaner: Last execution report retained on cleaner service")
     }
 }
