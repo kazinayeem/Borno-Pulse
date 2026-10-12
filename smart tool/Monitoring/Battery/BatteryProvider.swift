@@ -72,7 +72,6 @@ public final class BatteryProvider {
                 isPluggedIn: metrics.isPluggedIn,
                 isCharging: metrics.isCharging
             )
-            AppLog.battery.debug("[BatteryProvider] Sampled hardware power telemetry on thread \(Thread.isMainThread ? "main" : "background") (measured: \(telemetry.isMeasured))")
             
             if let v = telemetry.voltageVolts { metrics.voltageVolts = v }
             if let a = telemetry.amperageAmps { metrics.amperageAmps = a }
