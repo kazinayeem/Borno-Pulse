@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://pulse.bornosoft.bd/sitemap.xml

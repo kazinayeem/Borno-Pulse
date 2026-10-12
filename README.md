@@ -21,7 +21,12 @@
   <a href="https://github.com/kazinayeem/Borno-Pulse/releases">
     <img src="https://img.shields.io/badge/All_Releases-GitHub-333333?style=for-the-badge&logo=github&logoColor=white" alt="GitHub Releases">
   </a>
+  &nbsp;
+  <a href="website/">
+    <img src="https://img.shields.io/badge/🌐_Website-Bilingual_(EN_%7C_বাংলা)-2ea44f?style=for-the-badge&logo=safari&logoColor=white" alt="Bilingual Website">
+  </a>
 </p>
+
 
 ---
 
@@ -40,6 +45,22 @@ Engineered with an **offline-first philosophy**, Borno Pulse contacts no remote 
 - 📋 **Privacy-Preserving Clipboard**: Local clipboard history with automated credential & API key masking.
 - ⚡️ **Menu Bar Utility Widget & Quick Actions**: Compact 4-category menu bar popover (Audio Mixer, Battery Telemetry, Hardware Load, 21-Action Icon Grid) with customizable status item metric tokens.
 - 🎨 **Typography & Appearance Engine**: Live Light/Dark/System theme switching, font family selection (SF Pro, New York, SF Mono, Menlo, Helvetica Neue), and font scaling presets.
+
+---
+
+## 1.1 বাংলা পরিচিতি ও সারসংক্ষেপ (Bengali Overview)
+
+**Borno Pulse** হলো ম্যাকওএসের জন্য একটি সম্পূর্ণ নেটিভ, প্রিমিয়াম এবং ১০০% অফলাইন সুপার-ইউটিলিটি স্যুট। এটি আধুনিক **Swift 6 Strict Concurrency** এবং **SwiftUI** আর্কিটেকচারে তৈরি।
+
+### মূল বৈশিষ্ঠ্যসমূহ:
+- 📊 **হার্ডওয়্যার টেলিমেট্রি**: প্রতি সিপিইউ কোরের লাইভ লোড, মেটাল জিপিইউ ব্যবহার, ম্যাক ভার্চুয়াল মেমোরির চাপ এবং স্টোরেজ পর্যবেক্ষণ।
+- 🔋 **ব্যাটারি ওয়াটেজ ও অবক্ষয় সমীকরণ**: প্রতি ঘণ্টার ব্যাটারি ক্ষয়ের হার ($\%/hr$) এবং লাইভ চার্জিং/ডিসচার্জিং ওয়াটেজ।
+- 💻 **ক্ল্যামশেল মোড (ঢাকনা বন্ধে সচল)**: ম্যাকবুকের ঢাকনা বন্ধ অবস্থাতেও ডকার ও লোকাল সার্ভার সচল রাখার জন্য নেটিভ আইওকিট স্লিপ অ্যাসার্শন।
+- 🧹 **অ্যাডভান্সড সিস্টেম ও নোড ক্লিনার**: সোর্স কোড ও প্যাকেজ অক্ষত রেখে অপ্রয়োজনীয় `node_modules` ও ক্যাশ নিরাপদে মুছে গিগাবাইট জায়গা খালি করার ব্যবস্থা।
+- 🌐 **পোর্ট অডিটর ও ডেভেলপার টুলবক্স**: লোকাল পোর্ট (*:3000, 8080) অডিট, ডেভ সার্ভার শনাক্তকরণ, ডকার পোর্ট ম্যাপিং ও অফলাইন JSON/JWT ইনস্পেক্টর।
+- 📄 **অফলাইন পিডিএফ স্টুডিও**: ১২টি লোকাল পিডিএফ টুল (মার্জ, স্প্লিট, পেজ রিঅর্ডার, লসলেস কম্প্রেস ও অ্যাপল নিউরাল ইঞ্জিন ওসিআর)।
+- ⚡️ **মেনু বার উইজেট ও ২১টি কুইক অ্যাকশন**: স্ট্যাটাস বারে লাইভ টোকেন এবং ৪-ক্যাটাগরি পপওভার উইজেট।
+- 🔒 **১০০% প্রাইভেসি-ফার্স্ট**: কোনো ক্লাউড ট্র্যাকার নেই, কোনো ডাটাবেস নেই এবং কোনো ব্যক্তিগত তথ্য ডিভাইস থেকে বাইরে যায় না।
 
 ---
 
