@@ -85,7 +85,7 @@ public struct MenuBarPopoverView: View {
             Divider().opacity(0.12)
 
             // 3. Category Content Area (Natural scrolling when needed)
-            ScrollView(.vertical, showsIndicators: true) {
+            ScrollView(.vertical, showsIndicators: false) {
                 VStack(spacing: 12) {
                     switch selectedCategory {
                     case .audio:
@@ -100,14 +100,14 @@ public struct MenuBarPopoverView: View {
                 }
                 .padding(12)
             }
-            .frame(maxHeight: 340)
+            .frame(maxHeight: 360)
 
             Divider().opacity(0.15)
 
             // 4. Bottom Actions Toolbar
             bottomActionToolbar
         }
-        .frame(width: 330)
+        .frame(width: 360)
         .background(AppTheme.elevatedCardBackground)
         .onAppear {
             audioService.refreshAll()
@@ -171,7 +171,7 @@ public struct MenuBarPopoverView: View {
 
     // MARK: - 2. Category Navigation Bar
     private var categoryNavigationBar: some View {
-        HStack(spacing: 6) {
+        HStack(spacing: 4) {
             ForEach(MenuBarCategory.allCases) { category in
                 let isSelected = selectedCategory == category
                 Button {
@@ -179,18 +179,21 @@ public struct MenuBarPopoverView: View {
                         selectedCategory = category
                     }
                 } label: {
-                    HStack(spacing: 4) {
+                    HStack(spacing: 5) {
                         Image(systemName: category.icon)
                             .font(.system(size: 11, weight: isSelected ? .bold : .medium))
+                            .frame(width: 14, height: 14, alignment: .center)
                         Text(category.rawValue)
                             .font(.system(size: 11, weight: isSelected ? .semibold : .medium))
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.85)
                     }
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 5)
+                    .padding(.horizontal, 6)
+                    .padding(.vertical, 6)
                     .frame(maxWidth: .infinity)
                     .background(
                         isSelected
-                            ? AppTheme.electricBlue.opacity(0.14)
+                            ? AppTheme.electricBlue.opacity(0.18)
                             : Color.clear
                     )
                     .foregroundStyle(
@@ -199,12 +202,19 @@ public struct MenuBarPopoverView: View {
                             : AppTheme.textSecondary
                     )
                     .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 6, style: .continuous)
+                            .stroke(isSelected ? AppTheme.electricBlue.opacity(0.3) : Color.clear, lineWidth: 0.8)
+                    )
                 }
                 .buttonStyle(.plain)
                 .help(category.tooltip)
                 .accessibilityLabel(category.rawValue)
             }
         }
+        .padding(3)
+        .background(AppTheme.cardBackgroundSecondary)
+        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
     }
 
     // MARK: - 3A. Volume Mixer Section

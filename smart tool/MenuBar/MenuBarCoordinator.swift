@@ -131,8 +131,17 @@ public final class MenuBarCoordinator: NSObject {
         let separator = "  |  "
         let compositeText = tokens.joined(separator: separator)
 
-        // Update button title with a leading space for visual padding.
-        button.title = compositeText.isEmpty ? "" : " " + compositeText
+        // Update button title with a leading space for visual padding and monospaced digits to prevent jitter
+        if compositeText.isEmpty {
+            button.attributedTitle = NSAttributedString(string: "")
+            button.title = ""
+        } else {
+            let font = NSFont.monospacedDigitSystemFont(ofSize: 11.0, weight: .medium)
+            button.attributedTitle = NSAttributedString(
+                string: " " + compositeText,
+                attributes: [.font: font]
+            )
+        }
 
         // Update icon: use overrideSymbol when set (e.g. for battery-status), otherwise the user's chosen symbol.
         let symbolName = overrideSymbol ?? customSym
