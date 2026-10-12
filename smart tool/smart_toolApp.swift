@@ -67,6 +67,23 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             exit(results.failed == 0 ? 0 : 1)
         }
 
+        if CommandLine.arguments.contains("--capture-all-screenshots") {
+            let outputDir: URL
+            if let idx = CommandLine.arguments.firstIndex(of: "--output-dir"), idx + 1 < CommandLine.arguments.count {
+                outputDir = URL(fileURLWithPath: CommandLine.arguments[idx + 1])
+            } else if let idx = CommandLine.arguments.firstIndex(of: "--capture-all-screenshots"), idx + 1 < CommandLine.arguments.count, !CommandLine.arguments[idx + 1].hasPrefix("-") {
+                outputDir = URL(fileURLWithPath: CommandLine.arguments[idx + 1])
+            } else {
+                outputDir = URL(fileURLWithPath: FileManager.default.currentDirectoryPath).appendingPathComponent("screenshots")
+            }
+
+            Task { @MainActor in
+                await ScreenshotAutomationService.run(outputDir: outputDir)
+                exit(0)
+            }
+            return
+        }
+
         if CommandLine.arguments.contains("--capture-settings-screenshots") {
             DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
                 MainWindowRouter.shared.showMainWindow(section: .settings)

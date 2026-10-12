@@ -44,7 +44,7 @@ public struct MenuBarPopoverView: View {
     @ObservedObject var powerService = BatteryPowerService.shared
     @ObservedObject var settings = AppSettings.shared
 
-    @State private var selectedCategory: MenuBarCategory = .audio
+    @State private var selectedCategory: MenuBarCategory
     @State private var hasAvailableUpdate: Bool = false
     @State private var updateDismissed: Bool = false
 
@@ -54,11 +54,13 @@ public struct MenuBarPopoverView: View {
     public var onQuit: () -> Void
 
     public init(
+        initialCategory: MenuBarCategory = .audio,
         onOpenDashboard: @escaping () -> Void = {},
         onOpenSettings: @escaping () -> Void = {},
         onQuickCleanup: @escaping () -> Void = {},
         onQuit: @escaping () -> Void = {}
     ) {
+        self._selectedCategory = State(initialValue: initialCategory)
         self.onOpenDashboard = onOpenDashboard
         self.onOpenSettings = onOpenSettings
         self.onQuickCleanup = onQuickCleanup
