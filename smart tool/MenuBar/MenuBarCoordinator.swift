@@ -136,7 +136,9 @@ public final class MenuBarCoordinator: NSObject {
             button.attributedTitle = NSAttributedString(string: "")
             button.title = ""
         } else {
-            let font = NSFont.monospacedDigitSystemFont(ofSize: 11.0, weight: .medium)
+            let scale = min(max(settings.fontScale, 0.85), 1.20)
+            let fontSize = 10.5 * scale
+            let font = NSFont.monospacedDigitSystemFont(ofSize: fontSize, weight: .medium)
             button.attributedTitle = NSAttributedString(
                 string: " " + compositeText,
                 attributes: [.font: font]

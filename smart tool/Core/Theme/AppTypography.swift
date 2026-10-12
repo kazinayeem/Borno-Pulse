@@ -55,6 +55,39 @@ public enum AppFontFamily: String, CaseIterable, Identifiable, Codable, Sendable
     }
 }
 
+// MARK: - Font Size Presets
+public enum AppFontSizePreset: String, CaseIterable, Identifiable, Codable, Sendable {
+    case small = "Small"
+    case normal = "Normal"
+    case large = "Large"
+
+    public var id: String { rawValue }
+
+    public var scale: Double {
+        switch self {
+        case .small: return 0.90
+        case .normal: return 1.00
+        case .large: return 1.15
+        }
+    }
+
+    public var title: String {
+        switch self {
+        case .small: return "Small"
+        case .normal: return "Normal"
+        case .large: return "Large"
+        }
+    }
+
+    public var description: String {
+        switch self {
+        case .small: return "Compact interface and menu bar metrics"
+        case .normal: return "Balanced default size"
+        case .large: return "Improved readability"
+        }
+    }
+}
+
 // MARK: - Base Weight Options
 public enum AppFontWeight: String, CaseIterable, Identifiable, Codable, Sendable {
     case regular = "Regular"

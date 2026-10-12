@@ -595,11 +595,36 @@ public struct SettingsView: View {
                         .foregroundStyle(AppTheme.textTertiary)
                 }
 
+                // 3 Primary Presets: Small, Normal, Large
                 HStack(spacing: 8) {
-                    fontScalePresetButton(title: "85% (Compact)", scale: 0.85)
-                    fontScalePresetButton(title: "100% (Default)", scale: 1.0)
-                    fontScalePresetButton(title: "110% (Comfortable)", scale: 1.10)
-                    fontScalePresetButton(title: "120% (Large)", scale: 1.20)
+                    ForEach(AppFontSizePreset.allCases) { preset in
+                        let isSelected = settings.currentFontSizePreset == preset
+                        Button {
+                            withAnimation(.easeInOut(duration: 0.15)) {
+                                settings.applyFontSizePreset(preset)
+                            }
+                        } label: {
+                            VStack(spacing: 2) {
+                                Text(preset.title)
+                                    .font(AppTypography.font(size: 11, weight: isSelected ? .bold : .medium))
+                                Text(preset.description)
+                                    .font(AppTypography.font(size: 9))
+                                    .foregroundStyle(isSelected ? AppTheme.electricBlue : AppTheme.textTertiary)
+                                    .lineLimit(1)
+                            }
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 6)
+                            .padding(.horizontal, 4)
+                            .background(isSelected ? AppTheme.electricBlue.opacity(0.15) : AppTheme.cardBackgroundSecondary)
+                            .foregroundStyle(isSelected ? AppTheme.electricBlue : AppTheme.textSecondary)
+                            .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 6, style: .continuous)
+                                    .stroke(isSelected ? AppTheme.electricBlue : AppTheme.cardBorder, lineWidth: 1)
+                            )
+                        }
+                        .buttonStyle(.plain)
+                    }
                 }
 
                 Divider().opacity(0.2)

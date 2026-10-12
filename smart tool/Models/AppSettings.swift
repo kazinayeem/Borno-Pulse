@@ -353,6 +353,18 @@ public final class AppSettings: ObservableObject {
     @AppStorage("baseFontWeight") public var baseFontWeight: AppFontWeight = .regular
     @AppStorage("monospacedFontFamily") public var monospacedFontFamily: AppMonospacedFontFamily = .systemMonospaced
 
+    public var currentFontSizePreset: AppFontSizePreset? {
+        if abs(fontScale - AppFontSizePreset.small.scale) < 0.03 { return .small }
+        if abs(fontScale - AppFontSizePreset.normal.scale) < 0.03 { return .normal }
+        if abs(fontScale - AppFontSizePreset.large.scale) < 0.03 { return .large }
+        return nil
+    }
+
+    public func applyFontSizePreset(_ preset: AppFontSizePreset) {
+        fontScale = preset.scale
+        objectWillChange.send()
+    }
+
     // Menu Bar Icon Customization
     @AppStorage("menuBarIconSymbol") public var menuBarIconSymbol: MenuBarIconSymbol = .gauge
 

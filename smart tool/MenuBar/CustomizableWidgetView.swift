@@ -74,14 +74,14 @@ public struct CustomizableWidgetView: View {
                 .frame(width: 7, height: 7)
             
             Text("System Monitor")
-                .font(.system(size: 11, weight: .bold))
+                .font(AppTypography.font(size: 11, weight: .bold))
                 .foregroundStyle(AppTheme.textPrimary)
             
             Spacer()
             
             // Last Updated Timestamp
             Text("Updated \(monitor.snapshot.timestamp.formatted(date: .omitted, time: .standard))")
-                .font(.system(size: 9))
+                .font(AppTypography.font(size: 9))
                 .foregroundStyle(AppTheme.textTertiary)
             
             Button {
@@ -104,10 +104,10 @@ public struct CustomizableWidgetView: View {
                 .font(.system(size: 20))
                 .foregroundStyle(AppTheme.textTertiary)
             Text("No Metrics Enabled")
-                .font(.system(size: 12, weight: .semibold))
+                .font(AppTypography.font(size: 12, weight: .semibold))
                 .foregroundStyle(AppTheme.textSecondary)
             Text("Open Settings > Menu Bar & Widget to select visible metrics.")
-                .font(.system(size: 10))
+                .font(AppTypography.font(size: 10))
                 .foregroundStyle(AppTheme.textTertiary)
                 .multilineTextAlignment(.center)
         }
@@ -136,7 +136,7 @@ public struct CustomizableWidgetView: View {
                         
                         if preferences.showLabels {
                             Text(item.title)
-                                .font(.system(size: 10, weight: .medium))
+                                .font(AppTypography.font(size: 10, weight: .medium))
                                 .foregroundStyle(AppTheme.textSecondary)
                                 .lineLimit(1)
                         }
@@ -144,7 +144,7 @@ public struct CustomizableWidgetView: View {
                         Spacer()
                         
                         Text(item.formattedValue)
-                            .font(.system(size: 10, weight: .bold, design: .monospaced))
+                            .font(AppTypography.monospaced(size: 10, weight: .bold))
                             .foregroundStyle(item.isAvailable ? AppTheme.textPrimary : AppTheme.textTertiary)
                     }
                     .padding(.horizontal, 8)
@@ -187,19 +187,19 @@ public struct CustomizableWidgetView: View {
                             
                             if preferences.showLabels {
                                 Text(item.title)
-                                    .font(.system(size: 11, weight: .medium))
+                                    .font(AppTypography.font(size: 11, weight: .medium))
                                     .foregroundStyle(AppTheme.textPrimary)
                             }
                             
                             Spacer()
                             
                             Text(item.formattedValue)
-                                .font(.system(size: 11, weight: .bold, design: .monospaced))
+                                .font(AppTypography.monospaced(size: 11, weight: .bold))
                                 .foregroundStyle(item.isAvailable ? AppTheme.textPrimary : AppTheme.textTertiary)
                             
                             if let sec = item.secondaryValue, !sec.isEmpty {
                                 Text(sec)
-                                    .font(.system(size: 9))
+                                    .font(AppTypography.font(size: 9))
                                     .foregroundStyle(AppTheme.textTertiary)
                             }
                         }
@@ -258,11 +258,11 @@ public struct CustomizableWidgetView: View {
                         
                         VStack(alignment: .leading, spacing: 2) {
                             Text(item.title)
-                                .font(.system(size: 11, weight: .semibold))
+                                .font(AppTypography.font(size: 11, weight: .semibold))
                                 .foregroundStyle(AppTheme.textPrimary)
                             if let sec = item.secondaryValue {
                                 Text(sec)
-                                    .font(.system(size: 9))
+                                    .font(AppTypography.font(size: 9))
                                     .foregroundStyle(AppTheme.textSecondary)
                                     .lineLimit(1)
                             }
@@ -278,12 +278,12 @@ public struct CustomizableWidgetView: View {
                         
                         VStack(alignment: .trailing, spacing: 2) {
                             Text(item.formattedValue)
-                                .font(.system(size: 12, weight: .bold, design: .monospaced))
+                                .font(AppTypography.monospaced(size: 12, weight: .bold))
                                 .foregroundStyle(item.isAvailable ? AppTheme.textPrimary : AppTheme.textTertiary)
                             
                             if !item.isAvailable {
                                 Text("N/A")
-                                    .font(.system(size: 8, weight: .bold))
+                                    .font(AppTypography.font(size: 8, weight: .bold))
                                     .foregroundStyle(AppTheme.warningAmber)
                             }
                         }
@@ -342,7 +342,7 @@ public struct CustomizableWidgetView: View {
                         Image(systemName: action.icon)
                             .font(.system(size: 11))
                         Text(action.title)
-                            .font(.system(size: 9, weight: .medium))
+                            .font(AppTypography.font(size: 9, weight: .medium))
                             .lineLimit(1)
                     }
                     .frame(maxWidth: .infinity)

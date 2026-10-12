@@ -122,7 +122,7 @@ public struct MenuBarPopoverView: View {
                 .foregroundStyle(AppTheme.electricBlue)
 
             Text("Borno Pulse")
-                .font(.system(size: 12, weight: .bold))
+                .font(AppTypography.font(size: 12, weight: .bold))
                 .foregroundStyle(AppTheme.textPrimary)
 
             Spacer()
@@ -151,7 +151,7 @@ public struct MenuBarPopoverView: View {
                 .foregroundStyle(AppTheme.electricBlue)
                 .font(.system(size: 11))
             Text("Update Available")
-                .font(.system(size: 11, weight: .medium))
+                .font(AppTypography.font(size: 11, weight: .medium))
                 .foregroundStyle(AppTheme.textPrimary)
             Spacer()
             Button {
@@ -184,7 +184,7 @@ public struct MenuBarPopoverView: View {
                             .font(.system(size: 11, weight: isSelected ? .bold : .medium))
                             .frame(width: 14, height: 14, alignment: .center)
                         Text(category.rawValue)
-                            .font(.system(size: 11, weight: isSelected ? .semibold : .medium))
+                            .font(AppTypography.font(size: 11, weight: isSelected ? .semibold : .medium))
                             .lineLimit(1)
                             .minimumScaleFactor(0.85)
                     }
@@ -280,13 +280,13 @@ public struct MenuBarPopoverView: View {
                     compactSectionHeader(title: "Application Audio", icon: "app.connected.to.app.below.fill", color: AppTheme.electricCyan)
                     Spacer()
                     Text("\(audioService.runningAudioApps.count) Active")
-                        .font(.system(size: 10, weight: .semibold))
+                        .font(AppTypography.font(size: 10, weight: .semibold))
                         .foregroundStyle(AppTheme.textTertiary)
                 }
 
                 if audioService.runningAudioApps.isEmpty {
                     Text("No media applications currently active.")
-                        .font(.system(size: 11))
+                        .font(AppTypography.font(size: 11))
                         .foregroundStyle(AppTheme.textTertiary)
                         .padding(.vertical, 4)
                 } else {
@@ -304,7 +304,7 @@ public struct MenuBarPopoverView: View {
                         .foregroundStyle(AppTheme.textTertiary)
                         .padding(.top, 1)
                     Text("macOS routes application audio to the default output device. Dedicated per-app volume sliders operate via supported scripting or system sound routing.")
-                        .font(.system(size: 9))
+                        .font(AppTypography.font(size: 9))
                         .foregroundStyle(AppTheme.textTertiary)
                 }
                 .padding(.top, 4)
@@ -334,13 +334,13 @@ public struct MenuBarPopoverView: View {
             // Name
             VStack(alignment: .leading, spacing: 1) {
                 Text(app.name)
-                    .font(.system(size: 11, weight: .semibold))
+                    .font(AppTypography.font(size: 11, weight: .semibold))
                     .foregroundStyle(AppTheme.textPrimary)
                     .lineLimit(1)
                     .truncationMode(.tail)
                     .help(app.name)
                 Text(app.routingDescription)
-                    .font(.system(size: 9))
+                    .font(AppTypography.font(size: 9))
                     .foregroundStyle(AppTheme.textTertiary)
                     .lineLimit(1)
             }
@@ -348,7 +348,7 @@ public struct MenuBarPopoverView: View {
 
             // Status Badge
             Text(app.isScriptable ? "Scriptable" : "System Route")
-                .font(.system(size: 9, weight: .medium))
+                .font(AppTypography.font(size: 9, weight: .medium))
                 .padding(.horizontal, 5)
                 .padding(.vertical, 2)
                 .background(AppTheme.electricBlue.opacity(0.1))
@@ -395,17 +395,17 @@ public struct MenuBarPopoverView: View {
                             .foregroundStyle(statusColor)
 
                         Text("Battery Level")
-                            .font(.system(size: 12, weight: .semibold))
+                            .font(AppTypography.font(size: 12, weight: .semibold))
                             .foregroundStyle(AppTheme.textSecondary)
 
                         Spacer()
 
                         Text("\(b.percentage)%")
-                            .font(.system(size: 14, weight: .bold, design: .rounded))
+                            .font(AppTypography.font(size: 14, weight: .bold, design: .rounded))
                             .foregroundStyle(AppTheme.textPrimary)
 
                         Text(batteryStateBadgeText(b))
-                            .font(.system(size: 9, weight: .bold))
+                            .font(AppTypography.font(size: 9, weight: .bold))
                             .padding(.horizontal, 6)
                             .padding(.vertical, 2)
                             .background(statusColor.opacity(0.12))
@@ -419,17 +419,17 @@ public struct MenuBarPopoverView: View {
                             .font(.system(size: 10))
                             .foregroundStyle(AppTheme.textTertiary)
                         Text(b.formattedTimeRemaining)
-                            .font(.system(size: 11, weight: .medium))
+                            .font(AppTypography.font(size: 11, weight: .medium))
                             .foregroundStyle(AppTheme.textSecondary)
                         Spacer()
                         if let health = b.healthPercentage {
                             Text("Health: \(health)%")
-                                .font(.system(size: 10, weight: .medium))
+                                .font(AppTypography.font(size: 10, weight: .medium))
                                 .foregroundStyle(AppTheme.textTertiary)
                         }
                         if let cycles = b.cycleCount {
                             Text("• \(cycles) cycles")
-                                .font(.system(size: 10, weight: .medium))
+                                .font(AppTypography.font(size: 10, weight: .medium))
                                 .foregroundStyle(AppTheme.textTertiary)
                         }
                     }
@@ -441,24 +441,24 @@ public struct MenuBarPopoverView: View {
                         // Battery Power Row
                         HStack {
                             Text(b.isCharging ? "Charging Power:" : "Discharging Power:")
-                                .font(.system(size: 11))
+                                .font(AppTypography.font(size: 11))
                                 .foregroundStyle(AppTheme.textSecondary)
                             Spacer()
                             if let chargeWatts = b.chargingWatts {
                                 Text(String(format: "%.1f W", chargeWatts))
-                                    .font(.system(size: 11, weight: .bold, design: .monospaced))
+                                    .font(AppTypography.monospaced(size: 11, weight: .bold))
                                     .foregroundStyle(chargeWatts > 0.05 ? AppTheme.successGreen : AppTheme.textSecondary)
                             } else if let dischargeWatts = b.dischargingWatts {
                                 Text(String(format: "%.1f W", dischargeWatts))
-                                    .font(.system(size: 11, weight: .bold, design: .monospaced))
+                                    .font(AppTypography.monospaced(size: 11, weight: .bold))
                                     .foregroundStyle(AppTheme.electricCyan)
                             } else if b.isPluggedIn {
                                 Text("0.0 W (Holding)")
-                                    .font(.system(size: 11, weight: .medium, design: .monospaced))
+                                    .font(AppTypography.monospaced(size: 11, weight: .medium))
                                     .foregroundStyle(AppTheme.textTertiary)
                             } else {
                                 Text("Unavailable on this Mac")
-                                    .font(.system(size: 10, weight: .medium))
+                                    .font(AppTypography.font(size: 10, weight: .medium))
                                     .foregroundStyle(AppTheme.textTertiary)
                             }
                         }
@@ -467,11 +467,11 @@ public struct MenuBarPopoverView: View {
                         if let sysW = b.systemPowerWatts {
                             HStack {
                                 Text("System Load:")
-                                    .font(.system(size: 11))
+                                    .font(AppTypography.font(size: 11))
                                     .foregroundStyle(AppTheme.textSecondary)
                                 Spacer()
                                 Text(String(format: "%.1f W", sysW))
-                                    .font(.system(size: 11, weight: .semibold, design: .monospaced))
+                                    .font(AppTypography.monospaced(size: 11, weight: .semibold))
                                     .foregroundStyle(AppTheme.purpleAccent)
                             }
                         }
@@ -480,16 +480,16 @@ public struct MenuBarPopoverView: View {
                         if let rated = b.adapterRatedWatts {
                             HStack {
                                 Text("Power Adapter:")
-                                    .font(.system(size: 11))
+                                    .font(AppTypography.font(size: 11))
                                     .foregroundStyle(AppTheme.textSecondary)
                                 Spacer()
                                 if let inWatts = b.adapterInputWatts {
                                     Text(String(format: "%.1f W / %d W", inWatts, rated))
-                                        .font(.system(size: 11, weight: .semibold, design: .monospaced))
+                                        .font(AppTypography.monospaced(size: 11, weight: .semibold))
                                         .foregroundStyle(AppTheme.textPrimary)
                                 } else {
                                     Text("\(rated) W Rated")
-                                        .font(.system(size: 11, weight: .semibold, design: .monospaced))
+                                        .font(AppTypography.monospaced(size: 11, weight: .semibold))
                                         .foregroundStyle(AppTheme.textPrimary)
                                 }
                             }
@@ -501,7 +501,7 @@ public struct MenuBarPopoverView: View {
                     if samples.count >= 2 {
                         VStack(alignment: .leading, spacing: 3) {
                             Text("Recent Power Trend (W)")
-                                .font(.system(size: 9, weight: .semibold))
+                                .font(AppTypography.font(size: 9, weight: .semibold))
                                 .foregroundStyle(AppTheme.textTertiary)
 
                             Chart(samples) { item in
@@ -547,10 +547,10 @@ public struct MenuBarPopoverView: View {
                 .frame(width: 20)
             VStack(alignment: .leading, spacing: 2) {
                 Text("Continuous AC Power")
-                    .font(.system(size: 11, weight: .semibold))
+                    .font(AppTypography.font(size: 11, weight: .semibold))
                     .foregroundStyle(AppTheme.textPrimary)
                 Text("Desktop Mac without battery constraints")
-                    .font(.system(size: 9))
+                    .font(AppTypography.font(size: 9))
                     .foregroundStyle(AppTheme.textTertiary)
             }
             Spacer()
@@ -622,10 +622,10 @@ public struct MenuBarPopoverView: View {
                         .clipShape(Circle())
                     VStack(alignment: .leading, spacing: 1) {
                         Text("Scan & Clean Cache")
-                            .font(.system(size: 11, weight: .semibold))
+                            .font(AppTypography.font(size: 11, weight: .semibold))
                             .foregroundStyle(AppTheme.textPrimary)
                         Text("Free up disk space safely")
-                            .font(.system(size: 9))
+                            .font(AppTypography.font(size: 9))
                             .foregroundStyle(AppTheme.textTertiary)
                     }
                     Spacer()
@@ -653,10 +653,10 @@ public struct MenuBarPopoverView: View {
                         .clipShape(Circle())
                     VStack(alignment: .leading, spacing: 1) {
                         Text("macOS Sound Settings")
-                            .font(.system(size: 11, weight: .semibold))
+                            .font(AppTypography.font(size: 11, weight: .semibold))
                             .foregroundStyle(AppTheme.textPrimary)
                         Text("Configure external routing & spatial audio")
-                            .font(.system(size: 9))
+                            .font(AppTypography.font(size: 9))
                             .foregroundStyle(AppTheme.textTertiary)
                     }
                     Spacer()
@@ -684,10 +684,10 @@ public struct MenuBarPopoverView: View {
                         .clipShape(Circle())
                     VStack(alignment: .leading, spacing: 1) {
                         Text("Activity Monitor")
-                            .font(.system(size: 11, weight: .semibold))
+                            .font(AppTypography.font(size: 11, weight: .semibold))
                             .foregroundStyle(AppTheme.textPrimary)
                         Text("Inspect running system processes")
-                            .font(.system(size: 9))
+                            .font(AppTypography.font(size: 9))
                             .foregroundStyle(AppTheme.textTertiary)
                     }
                     Spacer()
@@ -711,7 +711,7 @@ public struct MenuBarPopoverView: View {
                 .font(.system(size: 11))
                 .foregroundStyle(color)
             Text(title)
-                .font(.system(size: 11, weight: .semibold))
+                .font(AppTypography.font(size: 11, weight: .semibold))
                 .foregroundStyle(AppTheme.textPrimary)
         }
     }
@@ -741,7 +741,7 @@ public struct MenuBarPopoverView: View {
                     .font(.system(size: 11))
                     .foregroundStyle(AppTheme.textSecondary)
                 Text(devices.first(where: { $0.id == selectedID })?.name ?? "Select Device")
-                    .font(.system(size: 11, weight: .medium))
+                    .font(AppTypography.font(size: 11, weight: .medium))
                     .foregroundStyle(AppTheme.textPrimary)
                     .lineLimit(1)
                 Spacer()
@@ -787,7 +787,7 @@ public struct MenuBarPopoverView: View {
             .tint(sliderColor)
 
             Text("\(Int(value.wrappedValue * 100))%")
-                .font(.system(size: 10, weight: .bold, design: .monospaced))
+                .font(AppTypography.monospaced(size: 10, weight: .bold))
                 .foregroundStyle(AppTheme.textSecondary)
                 .frame(width: 32, alignment: .trailing)
         }
@@ -808,11 +808,11 @@ public struct MenuBarPopoverView: View {
                     .foregroundStyle(color)
                     .frame(width: 18)
                 Text(title)
-                    .font(.system(size: 11, weight: .medium))
+                    .font(AppTypography.font(size: 11, weight: .medium))
                     .foregroundStyle(AppTheme.textSecondary)
                 Spacer()
                 Text(value)
-                    .font(.system(size: 11, weight: .bold, design: .monospaced))
+                    .font(AppTypography.monospaced(size: 11, weight: .bold))
                     .foregroundStyle(AppTheme.textPrimary)
             }
 
@@ -851,7 +851,7 @@ public struct MenuBarPopoverView: View {
                 onOpenDashboard()
             } label: {
                 Label("Dashboard", systemImage: "macwindow")
-                    .font(.system(size: 11, weight: .medium))
+                    .font(AppTypography.font(size: 11, weight: .medium))
             }
             .buttonStyle(.borderedProminent)
             .tint(AppTheme.accentFill)
@@ -861,7 +861,7 @@ public struct MenuBarPopoverView: View {
                 onQuickCleanup()
             } label: {
                 Label("Clean", systemImage: "sparkles")
-                    .font(.system(size: 11, weight: .medium))
+                    .font(AppTypography.font(size: 11, weight: .medium))
             }
             .buttonStyle(.bordered)
             .controlSize(.small)

@@ -74,6 +74,24 @@ extension SmartToolTests {
         assert(settings.appFontFamily == .sfPro, "Settings: Reset restores SF Pro")
         assert(settings.fontScale == 1.0, "Settings: Reset restores 100% scale")
         assert(settings.baseFontWeight == .regular, "Settings: Reset restores Regular weight")
+        assert(settings.currentFontSizePreset == .normal, "Settings: Reset restores Normal font size preset")
+
+        // 5B. Font Size Preset Invariants
+        settings.applyFontSizePreset(.small)
+        assert(settings.fontScale == 0.90, "Settings: Small preset applies 0.90 scale")
+        assert(settings.currentFontSizePreset == .small, "Settings: Detected current preset is Small")
+
+        settings.applyFontSizePreset(.large)
+        assert(settings.fontScale == 1.15, "Settings: Large preset applies 1.15 scale")
+        assert(settings.currentFontSizePreset == .large, "Settings: Detected current preset is Large")
+
+        settings.applyFontSizePreset(.normal)
+        assert(settings.fontScale == 1.0, "Settings: Normal preset applies 1.0 scale")
+        assert(settings.currentFontSizePreset == .normal, "Settings: Detected current preset is Normal")
+
+        // Check font availability detection
+        assert(AppFontFamily.sfPro.isAvailableOnSystem, "AppFontFamily: SF Pro is available")
+        assert(AppFontFamily.allCases.count >= 5, "AppFontFamily: at least 5 families provided")
 
         // 6. Menu Bar Metrics Reset Invariants
         settings.setMenuBarMetrics([.cpuTemperature, .gpuTemperature])
