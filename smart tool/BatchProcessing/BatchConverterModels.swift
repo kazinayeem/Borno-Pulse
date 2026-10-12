@@ -29,6 +29,56 @@ public enum BatchOperationKind: String, CaseIterable, Identifiable, Codable, Sen
         case .mergePDFs: return "doc.on.doc.fill"
         }
     }
+
+    public var isImageSourceOperation: Bool {
+        switch self {
+        case .convertImage, .compressImage, .resizeImage, .imagesToPDF:
+            return true
+        case .pdfToImages, .compressPDF, .mergePDFs:
+            return false
+        }
+    }
+
+    public var isPDFSourceOperation: Bool {
+        switch self {
+        case .pdfToImages, .compressPDF, .mergePDFs:
+            return true
+        default:
+            return false
+        }
+    }
+
+    public var availableTargetFormats: [String] {
+        switch self {
+        case .convertImage:
+            return ["jpg", "png", "heic", "tiff", "bmp", "pdf"]
+        case .compressImage:
+            return ["jpg", "png", "heic"]
+        case .resizeImage:
+            return ["jpg", "png", "heic"]
+        case .pdfToImages:
+            return ["jpg", "png"]
+        case .imagesToPDF:
+            return ["pdf"]
+        case .compressPDF, .mergePDFs:
+            return ["pdf"]
+        }
+    }
+
+    public var supportsQuality: Bool {
+        switch self {
+        case .compressImage, .compressPDF:
+            return true
+        case .convertImage:
+            return true
+        default:
+            return false
+        }
+    }
+
+    public var supportsResize: Bool {
+        return self == .resizeImage
+    }
 }
 
 public enum BatchItemStatus: String, Codable, Sendable {
@@ -43,7 +93,7 @@ public struct BatchQueueItem: Identifiable, Sendable {
     public let sourceURL: URL
     public let sourceSize: Int64
     public var operation: BatchOperationKind
-    public var targetFormat: String // "jpg", "png", "webp", "pdf"
+    public var targetFormat: String // "jpg", "png", "heic", "tiff", "bmp", "pdf"
     public var destinationURL: URL?
     public var status: BatchItemStatus
     public var progress: Double
@@ -52,6 +102,18 @@ public struct BatchQueueItem: Identifiable, Sendable {
     
     public var sourceFilename: String {
         sourceURL.lastPathComponent
+    }
+
+    public var fileExtension: String {
+        sourceURL.pathExtension.lowercased()
+    }
+
+    public var isPDF: Bool {
+        fileExtension == "pdf"
+    }
+
+    public var isImage: Bool {
+        ["jpg", "jpeg", "png", "heic", "tiff", "tif", "bmp", "gif", "webp"].contains(fileExtension)
     }
     
     public var sizeSavingsPercentage: Double {

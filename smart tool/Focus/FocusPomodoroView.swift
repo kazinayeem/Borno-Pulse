@@ -9,6 +9,7 @@ import SwiftUI
 public struct FocusPomodoroView: View {
     @ObservedObject var focus = FocusTimerService.shared
     @ObservedObject var screenTime = ScreenTimeTrackerService.shared
+    @State private var showCustomPopover: Bool = false
     
     public init() {}
     
@@ -112,7 +113,8 @@ public struct FocusPomodoroView: View {
                         .font(.system(size: 14))
                 }
                 .buttonStyle(.bordered)
-                .help("Reset Timer")
+                .help("Reset Timer to Selected Duration")
+                .accessibilityLabel("Reset Timer")
                 
                 // Play / Pause
                 Button {
@@ -131,6 +133,7 @@ public struct FocusPomodoroView: View {
                 }
                 .buttonStyle(.borderedProminent)
                 .tint(focus.currentMode == .focus ? AppTheme.successFill : AppTheme.infoFill)
+                .accessibilityLabel(focus.isRunning ? "Pause Focus" : "Start Focus")
                 
                 // Skip
                 Button {
@@ -140,16 +143,13 @@ public struct FocusPomodoroView: View {
                         .font(.system(size: 14))
                 }
                 .buttonStyle(.bordered)
-                .help("Skip to next cycle")
+                .help("Skip to next cycle without completing")
+                .accessibilityLabel("Skip to next cycle")
             }
             
-            // Presets
-            if !focus.isRunning && focus.currentMode == .focus {
-                HStack(spacing: 8) {
-                    presetButton(minutes: 25)
-                    presetButton(minutes: 45)
-                    presetButton(minutes: 50)
-                }
+            // Duration Configuration & Presets
+            if focus.currentMode == .focus {
+                durationConfigurationSection
             }
         }
         .padding(20)
@@ -157,12 +157,103 @@ public struct FocusPomodoroView: View {
         .smartCard()
     }
     
+    // MARK: - Duration Configuration Section
+    private var durationConfigurationSection: some View {
+        VStack(spacing: 8) {
+            HStack(spacing: 6) {
+                Image(systemName: "clock")
+                    .font(.system(size: 10))
+                    .foregroundStyle(AppTheme.textTertiary)
+                
+                Text("Focus Duration:")
+                    .font(.system(size: 11, weight: .medium))
+                    .foregroundStyle(AppTheme.textSecondary)
+                
+                Text(focus.formattedCurrentFocusDuration)
+                    .font(.system(size: 11, weight: .bold))
+                    .foregroundStyle(AppTheme.matrixGreen)
+                
+                if focus.isRunning {
+                    Text("(Locked during session)")
+                        .font(.system(size: 10))
+                        .foregroundStyle(AppTheme.textTertiary)
+                }
+            }
+            
+            HStack(spacing: 6) {
+                presetButton(title: "1m", seconds: 60)
+                presetButton(title: "2m", seconds: 120)
+                presetButton(title: "15m", seconds: 15 * 60)
+                presetButton(title: "25m", seconds: 25 * 60)
+                presetButton(title: "45m", seconds: 45 * 60)
+                presetButton(title: "50m", seconds: 50 * 60)
+                
+                customButton
+            }
+            .disabled(focus.isRunning)
+            .opacity(focus.isRunning ? 0.6 : 1.0)
+            
+            if focus.isRunning {
+                Text("Pause or reset the session to select a different duration")
+                    .font(.system(size: 10))
+                    .foregroundStyle(AppTheme.textTertiary)
+            }
+        }
+        .padding(.top, 4)
+    }
+    
+    private func presetButton(title: String, seconds: TimeInterval) -> some View {
+        let isSelected = abs(focus.focusDurationSeconds - seconds) < 0.5
+        return Button {
+            focus.setFocusDuration(seconds: seconds)
+        } label: {
+            Text(title)
+                .fontWeight(isSelected ? .bold : .regular)
+        }
+        .buttonStyle(.bordered)
+        .tint(isSelected ? AppTheme.matrixGreen : Color.secondary)
+        .controlSize(.small)
+        .accessibilityAddTraits(isSelected ? .isSelected : [])
+    }
+    
+    private var customButton: some View {
+        let isCustomSelected = ![60, 120, 15 * 60, 25 * 60, 45 * 60, 50 * 60].contains(Int(round(focus.focusDurationSeconds)))
+        return Button {
+            showCustomPopover = true
+        } label: {
+            HStack(spacing: 4) {
+                Image(systemName: "slider.horizontal.3")
+                    .font(.system(size: 10))
+                Text(isCustomSelected ? "Custom (\(FocusTimerService.formatDuration(seconds: focus.focusDurationSeconds)))" : "Custom…")
+            }
+            .fontWeight(isCustomSelected ? .bold : .regular)
+        }
+        .buttonStyle(.bordered)
+        .tint(isCustomSelected ? AppTheme.matrixGreen : Color.secondary)
+        .controlSize(.small)
+        .popover(isPresented: $showCustomPopover) {
+            CustomDurationView(focus: focus, isPresented: $showCustomPopover)
+        }
+    }
+    
     // MARK: - History Table Card
     private var historyTableCard: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text("Completed Focus Sessions (\(focus.sessionHistory.count))")
-                .font(.system(size: 13, weight: .semibold))
-                .foregroundStyle(AppTheme.textPrimary)
+            HStack {
+                Text("Completed Focus Sessions (\(focus.sessionHistory.count))")
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundStyle(AppTheme.textPrimary)
+                
+                Spacer()
+                
+                if !focus.sessionHistory.isEmpty {
+                    Button("Clear History") {
+                        focus.clearAllHistory()
+                    }
+                    .buttonStyle(.bordered)
+                    .controlSize(.mini)
+                }
+            }
             
             if focus.sessionHistory.isEmpty {
                 Text("No sessions completed yet. Start your first focus block to build your streak.")
@@ -221,23 +312,14 @@ public struct FocusPomodoroView: View {
     // MARK: - Helpers
     private var formattedCountdown: String {
         let total = Int(focus.remainingSeconds)
-        let mins = total / 60
+        let hours = total / 3600
+        let mins = (total % 3600) / 60
         let secs = total % 60
-        return String(format: "%02d:%02d", mins, secs)
-    }
-    
-    private func presetButton(minutes: Int) -> some View {
-        let isSelected = focus.focusMinutes == minutes
-        return Button {
-            focus.setFocusDuration(minutes: minutes)
-        } label: {
-            Text("\(minutes)m")
-                .fontWeight(isSelected ? .bold : .regular)
+        if hours > 0 {
+            return String(format: "%02d:%02d:%02d", hours, mins, secs)
+        } else {
+            return String(format: "%02d:%02d", mins, secs)
         }
-        .buttonStyle(.bordered)
-        .tint(isSelected ? AppTheme.successGreen : Color.secondary)
-        .controlSize(.small)
-        .accessibilityAddTraits(isSelected ? .isSelected : [])
     }
     
     private func metricCard(title: String, value: String, icon: String, tint: Color) -> some View {
@@ -257,5 +339,134 @@ public struct FocusPomodoroView: View {
         .padding(10)
         .frame(maxWidth: .infinity, alignment: .leading)
         .smartCard()
+    }
+}
+
+// MARK: - Custom Duration Popover View
+struct CustomDurationView: View {
+    @ObservedObject var focus: FocusTimerService
+    @Binding var isPresented: Bool
+    
+    @State private var hours: Int = 0
+    @State private var minutes: Int = 25
+    @State private var seconds: Int = 0
+    @State private var errorMessage: String? = nil
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            HStack {
+                Image(systemName: "timer")
+                    .foregroundStyle(AppTheme.matrixGreen)
+                Text("Custom Focus Duration")
+                    .font(.system(size: 13, weight: .bold))
+                    .foregroundStyle(AppTheme.textPrimary)
+                Spacer()
+                Button {
+                    isPresented = false
+                } label: {
+                    Image(systemName: "xmark.circle.fill")
+                        .foregroundStyle(AppTheme.textTertiary)
+                }
+                .buttonStyle(.plain)
+            }
+            
+            Text("Set any duration between 10 seconds and 12 hours.")
+                .font(.system(size: 11))
+                .foregroundStyle(AppTheme.textSecondary)
+            
+            HStack(spacing: 12) {
+                timeField(title: "Hours", value: $hours, max: 12)
+                timeField(title: "Minutes", value: $minutes, max: 59)
+                timeField(title: "Seconds", value: $seconds, max: 59)
+            }
+            .padding(10)
+            .background(AppTheme.insetBackground)
+            .clipShape(RoundedRectangle(cornerRadius: 8))
+            .overlay(RoundedRectangle(cornerRadius: 8).stroke(AppTheme.cardBorder, lineWidth: 0.5))
+            
+            // Quick preset chips
+            HStack(spacing: 6) {
+                Text("Quick:")
+                    .font(.system(size: 10, weight: .medium))
+                    .foregroundStyle(AppTheme.textTertiary)
+                quickChip(title: "1m", h: 0, m: 1, s: 0)
+                quickChip(title: "2m", h: 0, m: 2, s: 0)
+                quickChip(title: "10m", h: 0, m: 10, s: 0)
+                quickChip(title: "30m", h: 0, m: 30, s: 0)
+                quickChip(title: "90m", h: 1, m: 30, s: 0)
+            }
+            
+            if let err = errorMessage {
+                HStack(spacing: 4) {
+                    Image(systemName: "exclamationmark.circle.fill")
+                        .foregroundStyle(AppTheme.dangerRed)
+                    Text(err)
+                        .font(.system(size: 10, weight: .medium))
+                        .foregroundStyle(AppTheme.dangerRed)
+                }
+            }
+            
+            HStack {
+                Button("Cancel") {
+                    isPresented = false
+                }
+                .buttonStyle(.bordered)
+                .controlSize(.small)
+                
+                Spacer()
+                
+                Button("Apply Duration") {
+                    let result = focus.applyCustomDuration(hours: hours, minutes: minutes, seconds: seconds)
+                    switch result {
+                    case .success:
+                        isPresented = false
+                    case .failure(let err):
+                        errorMessage = err.localizedDescription
+                    }
+                }
+                .buttonStyle(.borderedProminent)
+                .tint(AppTheme.successFill)
+                .controlSize(.small)
+            }
+        }
+        .padding(16)
+        .frame(width: 320)
+        .background(AppTheme.cardBackground)
+        .onAppear {
+            let total = Int(round(focus.focusDurationSeconds))
+            hours = total / 3600
+            minutes = (total % 3600) / 60
+            seconds = total % 60
+        }
+    }
+    
+    private func timeField(title: String, value: Binding<Int>, max: Int) -> some View {
+        VStack(spacing: 4) {
+            Text(title)
+                .font(.system(size: 10, weight: .semibold))
+                .foregroundStyle(AppTheme.textSecondary)
+            
+            HStack(spacing: 2) {
+                TextField("", value: value, formatter: NumberFormatter())
+                    .textFieldStyle(.roundedBorder)
+                    .multilineTextAlignment(.center)
+                    .frame(width: 44)
+                
+                Stepper("", value: value, in: 0...max)
+                    .labelsHidden()
+            }
+        }
+        .frame(maxWidth: .infinity)
+    }
+    
+    private func quickChip(title: String, h: Int, m: Int, s: Int) -> some View {
+        Button(title) {
+            hours = h
+            minutes = m
+            seconds = s
+            errorMessage = nil
+        }
+        .buttonStyle(.bordered)
+        .controlSize(.mini)
     }
 }
