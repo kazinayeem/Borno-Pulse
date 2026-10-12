@@ -50,6 +50,9 @@ public final class MenuBarCoordinator: NSObject {
                 },
                 onQuit: {
                     NSApplication.shared.terminate(nil)
+                },
+                onCategoryChange: { [weak self] _, newHeight in
+                    self?.updatePopoverSize(height: newHeight)
                 }
             )
         )
@@ -90,8 +93,25 @@ public final class MenuBarCoordinator: NSObject {
         } else {
             // Re-resolved on every show so System mode tracks macOS appearance changes.
             pop.appearance = AppearanceController.shared.resolvedAppearance
+            let initialHeight = MenuBarPopoverView.preferredContentHeight(
+                for: .audio,
+                hasUpdate: false,
+                runningAudioAppsCount: AudioDeviceService.shared.runningAudioApps.count,
+                hasBattery: SystemMonitor.shared.snapshot.battery.hasBattery,
+                activeMetricsCount: MenuBarWidgetPreferences.shared.activeOrderedMetrics.count,
+                layoutStyle: MenuBarWidgetPreferences.shared.layoutStyle
+            )
+            pop.contentSize = NSSize(width: 360, height: initialHeight)
             pop.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
             pop.contentViewController?.view.window?.makeKey()
+        }
+    }
+
+    public func updatePopoverSize(height: CGFloat) {
+        guard let pop = popover else { return }
+        let targetSize = NSSize(width: 360, height: height)
+        if pop.contentSize != targetSize {
+            pop.contentSize = targetSize
         }
     }
     
@@ -167,13 +187,15 @@ private struct MenuBarPopoverWrapper: View {
     let onOpenSettings: () -> Void
     let onQuickCleanup: () -> Void
     let onQuit: () -> Void
+    let onCategoryChange: (MenuBarCategory, CGFloat) -> Void
 
     var body: some View {
         MenuBarPopoverView(
             onOpenDashboard: onOpenDashboard,
             onOpenSettings: onOpenSettings,
             onQuickCleanup: onQuickCleanup,
-            onQuit: onQuit
+            onQuit: onQuit,
+            onCategoryChange: onCategoryChange
         )
     }
 }

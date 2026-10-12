@@ -179,16 +179,25 @@ public enum ScreenshotAutomationService {
             }
             qlWindow.orderOut(nil)
 
-            // --- Capture Menu Bar Widget Tabs ---
-            let wWindow = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 360, height: 500), styleMask: [.borderless], backing: .buffered, defer: false)
+            // --- Capture Menu Bar Widget Tabs with Content-Based Adaptive Sizing ---
+            let wWindow = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 360, height: 400), styleMask: [.borderless], backing: .buffered, defer: false)
             wWindow.isReleasedWhenClosed = false
             wWindow.appearance = NSAppearance(named: appearanceName)
 
             for cat in MenuBarCategory.allCases {
                 let catName = cat.rawValue.lowercased()
+                let totalH = MenuBarPopoverView.preferredContentHeight(
+                    for: cat,
+                    hasUpdate: false,
+                    runningAudioAppsCount: AudioDeviceService.shared.runningAudioApps.count,
+                    hasBattery: SystemMonitor.shared.snapshot.battery.hasBattery,
+                    activeMetricsCount: MenuBarWidgetPreferences.shared.activeOrderedMetrics.count,
+                    layoutStyle: MenuBarWidgetPreferences.shared.layoutStyle
+                )
                 let widgetHost = NSHostingView(rootView: MenuBarPopoverView(initialCategory: cat))
                 widgetHost.appearance = NSAppearance(named: appearanceName)
-                widgetHost.frame = NSRect(x: 0, y: 0, width: 360, height: 500)
+                widgetHost.frame = NSRect(x: 0, y: 0, width: 360, height: totalH)
+                wWindow.setContentSize(NSSize(width: 360, height: totalH))
                 wWindow.contentView = widgetHost
                 wWindow.makeKeyAndOrderFront(nil)
                 await runloopSleep(0.35)

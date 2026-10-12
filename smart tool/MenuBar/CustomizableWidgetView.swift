@@ -54,8 +54,10 @@ public struct CustomizableWidgetView: View {
                 quickActionsFooter
             }
         }
-        .padding(preferences.compactSpacing ? 10 : 12)
-        .background(AppTheme.cardBackground)
+        .padding(preferences.compactSpacing ? 7 : 8.5)
+        .background(AppTheme.cardBackgroundSecondary)
+        .clipShape(RoundedRectangle(cornerRadius: 7, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: 7, style: .continuous).stroke(AppTheme.cardBorder, lineWidth: 0.5))
         .alert("Run Cache Cleanup?", isPresented: $showCleanerConfirmation) {
             Button("Cancel", role: .cancel) {}
             Button("Scan & Clean", role: .destructive) {
@@ -219,8 +221,8 @@ public struct CustomizableWidgetView: View {
                             .frame(height: 3)
                         }
                     }
-                    .padding(.horizontal, 9)
-                    .padding(.vertical, 6)
+                    .padding(.horizontal, 8.5)
+                    .padding(.vertical, 4.5)
                     .background(hoveredMetricId == id ? AppTheme.electricBlue.opacity(0.10) : AppTheme.cardBackgroundSecondary)
                     .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
                     .overlay(
@@ -288,8 +290,8 @@ public struct CustomizableWidgetView: View {
                             }
                         }
                     }
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 7)
+                    .padding(.horizontal, 9)
+                    .padding(.vertical, 5)
                     .background(hoveredMetricId == id ? AppTheme.electricBlue.opacity(0.12) : AppTheme.cardBackgroundSecondary)
                     .clipShape(RoundedRectangle(cornerRadius: 7, style: .continuous))
                     .overlay(
