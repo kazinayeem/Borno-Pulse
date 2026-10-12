@@ -194,11 +194,9 @@ public final class ClamshellManager: ObservableObject {
         refreshHardwareTelemetry()
         setupNotificationObservers()
 
-        // Periodic telemetry refresh every 5 seconds
+        // Periodic telemetry refresh every 5 seconds (runs on main runloop directly)
         telemetryTimer = Timer.scheduledTimer(withTimeInterval: 5.0, repeats: true) { [weak self] _ in
-            Task { @MainActor [weak self] in
-                self?.refreshHardwareTelemetry()
-            }
+            self?.refreshHardwareTelemetry()
         }
     }
 
@@ -212,28 +210,33 @@ public final class ClamshellManager: ObservableObject {
     public func refreshHardwareTelemetry() {
         // 1. Hardware Model
         var size: Int = 0
-        sysctlbyname("hw.model", nil, &size, nil, 0)
-        var modelChars = [CChar](repeating: 0, count: size)
-        sysctlbyname("hw.model", &modelChars, &size, nil, 0)
-        let modelString = String(cString: modelChars)
-        self.hardwareModel = modelString.isEmpty ? "Mac" : modelString
+        if sysctlbyname("hw.model", nil, &size, nil, 0) == 0, size > 0 {
+            var modelChars = [CChar](repeating: 0, count: size)
+            if sysctlbyname("hw.model", &modelChars, &size, nil, 0) == 0 {
+                self.hardwareModel = String(cString: modelChars)
+            }
+        }
+        if self.hardwareModel.isEmpty {
+            self.hardwareModel = "Mac"
+        }
 
         // 2. Display Topology Inspection
         var displayCount: UInt32 = 0
-        CGGetOnlineDisplayList(0, nil, &displayCount)
-        var displays = [CGDirectDisplayID](repeating: 0, count: Int(displayCount))
-        CGGetOnlineDisplayList(displayCount, &displays, &displayCount)
-
         var hasBuiltin = false
         var externalDisplays: [String] = []
 
-        for d in displays {
-            if CGDisplayIsBuiltin(d) != 0 {
-                hasBuiltin = true
-            } else {
-                let w = CGDisplayPixelsWide(d)
-                let h = CGDisplayPixelsHigh(d)
-                externalDisplays.append("External Display (\(w)×\(h))")
+        if CGGetOnlineDisplayList(0, nil, &displayCount) == .success, displayCount > 0 {
+            var displays = [CGDirectDisplayID](repeating: 0, count: Int(displayCount))
+            if CGGetOnlineDisplayList(displayCount, &displays, &displayCount) == .success {
+                for d in displays.prefix(Int(displayCount)) {
+                    if CGDisplayIsBuiltin(d) != 0 {
+                        hasBuiltin = true
+                    } else {
+                        let w = CGDisplayPixelsWide(d)
+                        let h = CGDisplayPixelsHigh(d)
+                        externalDisplays.append("External Display (\(w)×\(h))")
+                    }
+                }
             }
         }
 
@@ -242,17 +245,12 @@ public final class ClamshellManager: ObservableObject {
         self.externalDisplayNames = externalDisplays
 
         // 3. Power Source Inspection (AC Power vs Battery)
+        // Uses Apple's direct IOPSGetProvidingPowerSourceType API to avoid fragile
+        // CFDictionary bridging and autoreleasepool dangling pointer bugs.
         var acConnected = false
-        if let snapshot = IOPSCopyPowerSourcesInfo()?.takeRetainedValue(),
-           let sources = IOPSCopyPowerSourcesList(snapshot)?.takeRetainedValue() as? [CFTypeRef] {
-            for s in sources {
-                if let desc = IOPSGetPowerSourceDescription(snapshot, s)?.takeUnretainedValue() as? [String: Any] {
-                    if let state = desc[kIOPSPowerSourceStateKey] as? String, state == kIOPSACPowerValue {
-                        acConnected = true
-                        break
-                    }
-                }
-            }
+        if let info = IOPSCopyPowerSourcesInfo()?.takeRetainedValue() {
+            let pType = String(IOPSGetProvidingPowerSourceType(info).takeUnretainedValue())
+            acConnected = (pType == kIOPSACPowerValue)
         }
         self.isACPowerConnected = acConnected
 
@@ -406,13 +404,11 @@ public final class ClamshellManager: ObservableObject {
             countdownTimer?.invalidate()
             if let initialSeconds = seconds, initialSeconds > 0 {
                 countdownTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
-                    Task { @MainActor [weak self] in
-                        guard let self = self else { return }
-                        if let rem = self.remainingSeconds, rem > 1 {
-                            self.remainingSeconds = rem - 1
-                        } else {
-                            self.stop()
-                        }
+                    guard let self = self else { return }
+                    if let rem = self.remainingSeconds, rem > 1 {
+                        self.remainingSeconds = rem - 1
+                    } else {
+                        self.stop()
                     }
                 }
             }
@@ -486,10 +482,10 @@ public final class ClamshellManager: ObservableObject {
                 var bsdInfo = proc_bsdinfo()
                 let bsdBytes = proc_pidinfo(pid, PROC_PIDTBSDINFO, 0, &bsdInfo, Int32(MemoryLayout<proc_bsdinfo>.size))
                 if bsdBytes == MemoryLayout<proc_bsdinfo>.size {
-                    let name = withUnsafePointer(to: &bsdInfo.pbi_comm) {
-                        $0.withMemoryRebound(to: CChar.self, capacity: Int(MAXCOMLEN)) {
-                            String(cString: $0)
-                        }
+                    // Bounds-checked conversion preventing buffer overrun beyond 16-byte fixed buffer
+                    let name = withUnsafeBytes(of: bsdInfo.pbi_comm) { rawBuffer -> String in
+                        let nullTerminated = rawBuffer.prefix(while: { $0 != 0 })
+                        return String(decoding: nullTerminated, as: UTF8.self)
                     }
 
                     if targetProcesses.contains(where: { name.lowercased().contains($0.lowercased()) }) {
