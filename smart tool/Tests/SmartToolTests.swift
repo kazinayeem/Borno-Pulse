@@ -1374,6 +1374,24 @@ public enum SmartToolTests {
         // 5. Workload Diagnostic Invariants
         assert(manager.workloadReport.isMacAwake == true, "Workload report reflects macOS awake state")
         assert(!manager.workloadReport.systemUptimeFormatted.isEmpty, "System uptime formatted string is non-empty")
+
+        // 6. Clamshell Status States & Battery Telemetry
+        assert(ClamshellStatusState.allCases.count == 6, "ClamshellStatusState defines 6 distinct states")
+        assert(ClamshellStatusState.displayOffAwakeActive.rawValue == "Display-Off Awake active", "Display-Off Awake state label accurate")
+        assert(ClamshellStatusState.lidClosedSupported.rawValue == "Lid-closed operation supported", "Lid-closed supported state label accurate")
+        assert(ClamshellStatusState.lidClosedUnavailable.rawValue == "Lid-closed operation unavailable", "Lid-closed unavailable state label accurate")
+        assert(ClamshellStatusState.batteryLow.rawValue == "Battery low (< 20%)", "Battery low state label accurate")
+        assert(ClamshellStatusState.sessionExpired.rawValue == "Session expired", "Session expired state label accurate")
+        assert(ClamshellStatusState.stopped.rawValue == "Session stopped", "Session stopped state label accurate")
+
+        assert(manager.batteryLevel >= 0 && manager.batteryLevel <= 100, "Battery level within valid 0-100% bounds (\(manager.batteryLevel)%)")
+        assert(manager.statusState == .stopped || manager.statusState == .lidClosedUnavailable || manager.statusState == .lidClosedSupported, "StatusState accurately reflects inactive environment")
+
+        // 7. Onboarding & First-Launch Preferences
+        let initialOnboarding = AppSettings.shared.hasCompletedOnboarding
+        AppSettings.shared.hasCompletedOnboarding = true
+        assert(AppSettings.shared.hasCompletedOnboarding == true, "hasCompletedOnboarding successfully toggled to true")
+        AppSettings.shared.hasCompletedOnboarding = initialOnboarding
     }
 }
 

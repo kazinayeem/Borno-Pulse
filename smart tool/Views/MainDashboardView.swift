@@ -77,6 +77,7 @@ public enum NavigationSection: String, CaseIterable, Identifiable, Sendable {
 public struct MainDashboardView: View {
     @State private var selectedSection: NavigationSection? = .overview
     @State private var showingQuickLauncher: Bool = false
+    @State private var showingOnboardingSheet: Bool = false
     @ObservedObject var settings = AppSettings.shared
     @ObservedObject var monitor = SystemMonitor.shared
     @Environment(\.openWindow) private var openWindow
@@ -113,6 +114,19 @@ public struct MainDashboardView: View {
                     showingQuickLauncher = false
                 }
             )
+        }
+        .sheet(isPresented: $showingOnboardingSheet) {
+            FirstLaunchPermissionsView {
+                showingOnboardingSheet = false
+            }
+        }
+        .onAppear {
+            if !settings.hasCompletedOnboarding && !CommandLine.arguments.contains("--capture-all-screenshots") && !CommandLine.arguments.contains("--run-tests") {
+                showingOnboardingSheet = true
+            }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: Notification.Name("showOnboardingSetup"))) { _ in
+            showingOnboardingSheet = true
         }
         .onReceive(NotificationCenter.default.publisher(for: .navigateToSection)) { notification in
             if let section = notification.object as? NavigationSection {

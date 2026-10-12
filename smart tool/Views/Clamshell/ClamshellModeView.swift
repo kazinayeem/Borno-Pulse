@@ -114,100 +114,181 @@ public struct ClamshellModeView: View {
 
     // MARK: - 1. Status Overview Hero Card
     private var statusHeroBanner: some View {
-        HStack(spacing: 16) {
-            // Animated Status Pulse Icon
-            ZStack {
-                Circle()
-                    .fill((manager.isActive ? AppTheme.warningAmber : AppTheme.textTertiary).opacity(0.12))
-                    .frame(width: 56, height: 56)
+        VStack(alignment: .leading, spacing: 14) {
+            HStack(spacing: 16) {
+                // Animated Status Pulse Icon
+                ZStack {
+                    Circle()
+                        .fill((manager.statusState.isPositive ? AppTheme.warningAmber : (manager.isBatteryLow ? AppTheme.dangerRed : AppTheme.textTertiary)).opacity(0.12))
+                        .frame(width: 56, height: 56)
 
-                Circle()
-                    .stroke((manager.isActive ? AppTheme.warningAmber : AppTheme.cardBorder), lineWidth: 1.5)
-                    .frame(width: 56, height: 56)
+                    Circle()
+                        .stroke((manager.statusState.isPositive ? AppTheme.warningAmber : (manager.isBatteryLow ? AppTheme.dangerRed : AppTheme.cardBorder)), lineWidth: 1.5)
+                        .frame(width: 56, height: 56)
 
-                Image(systemName: manager.isActive ? "bolt.shield.fill" : "laptopcomputer.slash")
-                    .font(.system(size: 24, weight: .semibold))
-                    .foregroundStyle(manager.isActive ? AppTheme.warningAmber : AppTheme.textSecondary)
-            }
-
-            // Info Column
-            VStack(alignment: .leading, spacing: 4) {
-                HStack(spacing: 8) {
-                    Text(manager.isActive ? "Lid-Closed Operation Active" : "Lid-Closed Operation Inactive")
-                        .font(.system(size: 16, weight: .bold))
-                        .foregroundStyle(AppTheme.textPrimary)
-
-                    // Mode Badge
-                    Text(manager.isActive ? manager.activeMode.rawValue : (manager.isOfficialClamshellSupported ? "Clamshell Ready" : "Display-Off Awake Alternative"))
-                        .font(.system(size: 11, weight: .semibold))
-                        .padding(.horizontal, 7)
-                        .padding(.vertical, 2.5)
-                        .background(
-                            (manager.isActive
-                                ? AppTheme.warningAmber
-                                : (manager.isOfficialClamshellSupported ? AppTheme.successGreen : AppTheme.electricBlue)
-                            ).opacity(0.15)
-                        )
-                        .foregroundStyle(
-                            manager.isActive
-                                ? AppTheme.warningAmber
-                                : (manager.isOfficialClamshellSupported ? AppTheme.successGreen : AppTheme.electricBlue)
-                        )
-                        .clipShape(Capsule())
+                    Image(systemName: manager.isActive ? (manager.isOfficialClamshellSupported ? "bolt.shield.fill" : "display.trianglebadge.exclamationmark") : (manager.isBatteryLow ? "battery.25" : "laptopcomputer.slash"))
+                        .font(.system(size: 24, weight: .semibold))
+                        .foregroundStyle(manager.statusState.isPositive ? AppTheme.warningAmber : (manager.isBatteryLow ? AppTheme.dangerRed : AppTheme.textSecondary))
                 }
 
-                if manager.isActive {
-                    HStack(spacing: 12) {
-                        HStack(spacing: 5) {
-                            Image(systemName: "clock.arrow.circlepath")
-                                .font(.system(size: 12))
+                // Info Column
+                VStack(alignment: .leading, spacing: 4) {
+                    HStack(spacing: 8) {
+                        Text(manager.statusState.rawValue)
+                            .font(.system(size: 16, weight: .bold))
+                            .foregroundStyle(AppTheme.textPrimary)
+
+                        // Mode Badge
+                        Text(manager.isActive ? manager.activeMode.rawValue : (manager.isOfficialClamshellSupported ? "Clamshell Ready" : "Battery Mode"))
+                            .font(.system(size: 11, weight: .semibold))
+                            .padding(.horizontal, 7)
+                            .padding(.vertical, 2.5)
+                            .background(
+                                (manager.isActive
+                                    ? AppTheme.warningAmber
+                                    : (manager.isOfficialClamshellSupported ? AppTheme.successGreen : AppTheme.electricBlue)
+                                ).opacity(0.15)
+                            )
+                            .foregroundStyle(
+                                manager.isActive
+                                    ? AppTheme.warningAmber
+                                    : (manager.isOfficialClamshellSupported ? AppTheme.successGreen : AppTheme.electricBlue)
+                            )
+                            .clipShape(Capsule())
+                    }
+
+                    if manager.isActive {
+                        HStack(spacing: 12) {
+                            HStack(spacing: 5) {
+                                Image(systemName: "clock.arrow.circlepath")
+                                    .font(.system(size: 12))
+                                    .foregroundStyle(AppTheme.textSecondary)
+                                Text("Remaining: \(manager.formattedRemainingTime)")
+                                    .font(AppTypography.monospaced(size: 12, weight: .bold))
+                                    .foregroundStyle(AppTheme.textPrimary)
+                            }
+
+                            if let started = manager.startedAt {
+                                Text("Started: \(DateFormatter.localizedString(from: started, dateStyle: .none, timeStyle: .medium))")
+                                    .font(.system(size: 11))
+                                    .foregroundStyle(AppTheme.textTertiary)
+                            }
+                        }
+                    } else {
+                        Text(manager.isOfficialClamshellSupported
+                            ? "AC power and external display detected. Supported clamshell mode will keep your Mac running when lid is closed."
+                            : "On battery power without external monitor: macOS firmware forces sleep on lid close. Use Display-Off Awake with lid open/ajar."
+                        )
+                        .font(.system(size: 12))
+                        .foregroundStyle(AppTheme.textSecondary)
+                        .lineLimit(2)
+                    }
+                }
+
+                Spacer()
+
+                // Action Buttons
+                HStack(spacing: 8) {
+                    if manager.isActive && !manager.isOfficialClamshellSupported {
+                        Button {
+                            manager.triggerDisplaySleep()
+                        } label: {
+                            HStack(spacing: 5) {
+                                Image(systemName: "display")
+                                    .font(.system(size: 11))
+                                Text("Sleep Display")
+                                    .font(.system(size: 12, weight: .medium))
+                            }
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 8)
+                            .background(AppTheme.cardBackgroundSecondary)
+                            .clipShape(RoundedRectangle(cornerRadius: 8))
+                            .overlay(RoundedRectangle(cornerRadius: 8).stroke(AppTheme.cardBorder, lineWidth: 0.5))
+                        }
+                        .buttonStyle(.plain)
+                        .help("Turns off display immediately while keeping Mac and background workloads awake")
+                    }
+
+                    Button {
+                        if manager.isActive {
+                            manager.stop()
+                        } else {
+                            manager.startSession()
+                        }
+                    } label: {
+                        HStack(spacing: 7) {
+                            Image(systemName: manager.isActive ? "stop.fill" : "play.fill")
+                                .font(.system(size: 12, weight: .bold))
+                            Text(manager.isActive ? "Stop Session" : "Start Session")
+                                .font(.system(size: 13, weight: .semibold))
+                        }
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 9)
+                        .background(manager.isActive ? AppTheme.dangerRed : AppTheme.electricBlue)
+                        .foregroundStyle(Color.white)
+                        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+                        .shadow(color: (manager.isActive ? AppTheme.dangerRed : AppTheme.electricBlue).opacity(0.3), radius: 4, y: 2)
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+
+            // Battery Impact Telemetry Strip (When on battery or active)
+            if !manager.isACPowerConnected || manager.batteryLevel < 100 {
+                Divider().opacity(0.15)
+
+                HStack(spacing: 16) {
+                    HStack(spacing: 6) {
+                        Image(systemName: manager.isACPowerConnected ? "battery.100.bolt" : (manager.isBatteryLow ? "battery.25" : "battery.75"))
+                            .foregroundStyle(manager.isBatteryLow ? AppTheme.dangerRed : (manager.isACPowerConnected ? AppTheme.successGreen : AppTheme.warningAmber))
+                        Text("Battery: \(manager.batteryLevel)%")
+                            .font(AppTypography.font(size: 12, weight: .semibold))
+                            .foregroundStyle(AppTheme.textPrimary)
+                    }
+
+                    if let watts = manager.batteryPowerWatts {
+                        HStack(spacing: 4) {
+                            Text("Draw:")
                                 .foregroundStyle(AppTheme.textSecondary)
-                            Text("Remaining: \(manager.formattedRemainingTime)")
-                                .font(AppTypography.monospaced(size: 12, weight: .bold))
+                            Text(String(format: "%.1f W", watts))
+                                .font(AppTypography.monospaced(size: 12, weight: .semibold))
                                 .foregroundStyle(AppTheme.textPrimary)
                         }
-
-                        if let started = manager.startedAt {
-                            Text("Started: \(DateFormatter.localizedString(from: started, dateStyle: .none, timeStyle: .medium))")
-                                .font(.system(size: 11))
-                                .foregroundStyle(AppTheme.textTertiary)
-                        }
+                        .font(AppTypography.font(size: 11))
                     }
-                } else {
-                    Text(manager.isOfficialClamshellSupported
-                        ? "AC power and external display detected. Supported clamshell mode will keep your Mac running when lid is closed."
-                        : "No external display or running on battery. macOS hardware forces sleep on lid close. Use Display-Off Awake with lid open/ajar."
-                    )
-                    .font(.system(size: 12))
-                    .foregroundStyle(AppTheme.textSecondary)
-                    .lineLimit(2)
-                }
-            }
 
-            Spacer()
+                    if let drain = manager.estimatedBatteryDrainPerHour {
+                        HStack(spacing: 4) {
+                            Text("Impact:")
+                                .foregroundStyle(AppTheme.textSecondary)
+                            Text(String(format: "~%.0f%% / hr (approx.)", drain))
+                                .font(AppTypography.monospaced(size: 12, weight: .semibold))
+                                .foregroundStyle(AppTheme.warningAmber)
+                        }
+                        .font(AppTypography.font(size: 11))
+                    }
 
-            // Main Action Button (Start / Stop)
-            Button {
-                if manager.isActive {
-                    manager.stop()
-                } else {
-                    manager.startSession()
+                    if let runtime = manager.approximateBatteryRuntime {
+                        HStack(spacing: 4) {
+                            Text("Est. Runtime:")
+                                .foregroundStyle(AppTheme.textSecondary)
+                            Text("~\(runtime) (approx.)")
+                                .font(AppTypography.monospaced(size: 12, weight: .semibold))
+                                .foregroundStyle(AppTheme.textPrimary)
+                        }
+                        .font(AppTypography.font(size: 11))
+                    }
+
+                    Spacer()
+
+                    if manager.isBatteryLow {
+                        Text("⚠️ Low Battery Alert")
+                            .font(AppTypography.font(size: 11, weight: .bold))
+                            .foregroundStyle(AppTheme.dangerRed)
+                    }
                 }
-            } label: {
-                HStack(spacing: 7) {
-                    Image(systemName: manager.isActive ? "stop.fill" : "play.fill")
-                        .font(.system(size: 12, weight: .bold))
-                    Text(manager.isActive ? "Stop Session" : "Start Session")
-                        .font(.system(size: 13, weight: .semibold))
-                }
-                .padding(.horizontal, 16)
-                .padding(.vertical, 9)
-                .background(manager.isActive ? AppTheme.dangerRed : AppTheme.electricBlue)
-                .foregroundStyle(Color.white)
-                .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
-                .shadow(color: (manager.isActive ? AppTheme.dangerRed : AppTheme.electricBlue).opacity(0.3), radius: 4, y: 2)
+                .padding(.horizontal, 4)
             }
-            .buttonStyle(.plain)
         }
         .padding(16)
         .background(AppTheme.cardBackground)

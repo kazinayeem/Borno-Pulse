@@ -209,22 +209,22 @@ public struct QuickActionsGridView: View {
 
                 // Status Badge
                 Text(clamshellManager.isActive
-                     ? "Active (\(clamshellManager.formattedRemainingTime))"
-                     : (clamshellManager.isOfficialClamshellSupported ? "Clamshell Ready" : "Display-Off Awake")
+                     ? (clamshellManager.isOfficialClamshellSupported ? "Clamshell (\(clamshellManager.formattedRemainingTime))" : "Display-Off (\(clamshellManager.formattedRemainingTime))")
+                     : clamshellManager.statusState.rawValue
                 )
-                .font(AppTypography.font(size: 9, weight: .bold))
+                .font(AppTypography.font(size: 8.5, weight: .bold))
                 .padding(.horizontal, 5)
                 .padding(.vertical, 2)
                 .background(
                     (clamshellManager.isActive
                      ? AppTheme.warningAmber
-                     : (clamshellManager.isOfficialClamshellSupported ? AppTheme.successGreen : AppTheme.electricBlue)
+                     : (clamshellManager.isBatteryLow ? AppTheme.dangerRed : (clamshellManager.isOfficialClamshellSupported ? AppTheme.successGreen : AppTheme.electricBlue))
                     ).opacity(0.15)
                 )
                 .foregroundStyle(
                     clamshellManager.isActive
                      ? AppTheme.warningAmber
-                     : (clamshellManager.isOfficialClamshellSupported ? AppTheme.successGreen : AppTheme.electricBlue)
+                     : (clamshellManager.isBatteryLow ? AppTheme.dangerRed : (clamshellManager.isOfficialClamshellSupported ? AppTheme.successGreen : AppTheme.electricBlue))
                 )
                 .clipShape(Capsule())
 
@@ -238,6 +238,50 @@ public struct QuickActionsGridView: View {
                 }
                 .buttonStyle(.plain)
                 .help("Open Clamshell Mode details & diagnostics")
+            }
+
+            // Battery telemetry & runtime impact strip
+            if !clamshellManager.isACPowerConnected || clamshellManager.batteryLevel < 100 {
+                HStack(spacing: 8) {
+                    HStack(spacing: 3.5) {
+                        Image(systemName: clamshellManager.isACPowerConnected ? "battery.100.bolt" : "battery.75")
+                            .font(.system(size: 9))
+                            .foregroundStyle(clamshellManager.isBatteryLow ? AppTheme.dangerRed : AppTheme.warningAmber)
+                        Text("Bat: \(clamshellManager.batteryLevel)%")
+                            .font(AppTypography.font(size: 9, weight: .semibold))
+                            .foregroundStyle(AppTheme.textPrimary)
+                    }
+
+                    if let watts = clamshellManager.batteryPowerWatts {
+                        Text(String(format: "• %.1fW", watts))
+                            .font(AppTypography.monospaced(size: 8.5, weight: .medium))
+                            .foregroundStyle(AppTheme.textSecondary)
+                    }
+
+                    if let drain = clamshellManager.estimatedBatteryDrainPerHour {
+                        Text(String(format: "• -%.0f%%/h", drain))
+                            .font(AppTypography.monospaced(size: 8.5, weight: .semibold))
+                            .foregroundStyle(AppTheme.warningAmber)
+                    }
+
+                    Spacer()
+
+                    if clamshellManager.isActive && !clamshellManager.isOfficialClamshellSupported {
+                        Button {
+                            clamshellManager.triggerDisplaySleep()
+                        } label: {
+                            Text("Dim Screen")
+                                .font(AppTypography.font(size: 8.5, weight: .semibold))
+                                .padding(.horizontal, 4)
+                                .padding(.vertical, 1.5)
+                                .background(AppTheme.cardBackground)
+                                .clipShape(RoundedRectangle(cornerRadius: 3))
+                        }
+                        .buttonStyle(.plain)
+                        .help("Puts display to sleep while keeping background workloads running")
+                    }
+                }
+                .padding(.horizontal, 2)
             }
 
             // Duration selector & Start/Stop controls
@@ -290,7 +334,7 @@ public struct QuickActionsGridView: View {
 
             // Warning footnote when unsupported
             if !clamshellManager.isOfficialClamshellSupported {
-                Text("⚠️ On battery / no external monitor: macOS hardware forces sleep on lid close. Display-Off Awake alternative keeps workloads running safely with lid open/ajar.")
+                Text("⚠️ On battery: macOS hardware puts Mac to sleep on lid close. Display-Off Awake mode keeps background workloads running safely with lid open/ajar.")
                     .font(AppTypography.font(size: 8.5, weight: .regular))
                     .foregroundStyle(AppTheme.textTertiary)
                     .lineLimit(2)

@@ -63,6 +63,25 @@ public enum ClamshellDuration: Hashable, Identifiable, Codable, Sendable {
     }
 }
 
+// MARK: - Clamshell Status State
+public enum ClamshellStatusState: String, CaseIterable, Identifiable, Codable, Sendable {
+    case displayOffAwakeActive = "Display-Off Awake active"
+    case lidClosedSupported = "Lid-closed operation supported"
+    case lidClosedUnavailable = "Lid-closed operation unavailable"
+    case batteryLow = "Battery low (< 20%)"
+    case sessionExpired = "Session expired"
+    case stopped = "Session stopped"
+
+    public var id: String { rawValue }
+
+    public var isPositive: Bool {
+        switch self {
+        case .displayOffAwakeActive, .lidClosedSupported: return true
+        default: return false
+        }
+    }
+}
+
 // MARK: - Clamshell Operating Mode
 public enum ClamshellOperatingMode: String, CaseIterable, Identifiable, Codable, Sendable {
     /// Official Apple Clamshell Mode (AC Power + External Display connected).
@@ -175,6 +194,15 @@ public final class ClamshellManager: ObservableObject {
     @Published public private(set) var isOfficialClamshellSupported: Bool = false
     @Published public private(set) var readinessItems: [ClamshellReadinessItem] = []
 
+    // Battery Telemetry & State
+    @Published public private(set) var statusState: ClamshellStatusState = .stopped
+    @Published public private(set) var batteryLevel: Int = 100
+    @Published public private(set) var isBatteryLow: Bool = false
+    @Published public private(set) var batteryPowerWatts: Double? = nil
+    @Published public private(set) var estimatedBatteryDrainPerHour: Double? = nil
+    @Published public private(set) var approximateBatteryRuntime: String? = nil
+    @Published public private(set) var wasSessionExpired: Bool = false
+
     // Sleep & Wake Tracking
     @Published public private(set) var lastSleepEvent: Date? = nil
     @Published public private(set) var lastWakeEvent: Date? = nil
@@ -245,14 +273,52 @@ public final class ClamshellManager: ObservableObject {
         self.externalDisplayNames = externalDisplays
 
         // 3. Power Source Inspection (AC Power vs Battery)
-        // Uses Apple's direct IOPSGetProvidingPowerSourceType API to avoid fragile
-        // CFDictionary bridging and autoreleasepool dangling pointer bugs.
         var acConnected = false
+        var currentBatteryPercent = 100
+        var dischargingTimeToEmpty: Int? = nil
+        var isCurrentlyDischarging = false
+
         if let info = IOPSCopyPowerSourcesInfo()?.takeRetainedValue() {
             let pType = String(IOPSGetProvidingPowerSourceType(info).takeUnretainedValue())
             acConnected = (pType == kIOPSACPowerValue)
+
+            if let list = IOPSCopyPowerSourcesList(info)?.takeRetainedValue() as? [CFTypeRef] {
+                for s in list {
+                    if let desc = IOPSGetPowerSourceDescription(info, s)?.takeUnretainedValue() as? [String: Any] {
+                        if let cap = desc[kIOPSCurrentCapacityKey] as? Int {
+                            currentBatteryPercent = cap
+                        }
+                        if let isCharging = desc[kIOPSIsChargingKey] as? Bool {
+                            isCurrentlyDischarging = !isCharging
+                        }
+                        if let timeToEmpty = desc[kIOPSTimeToEmptyKey] as? Int, timeToEmpty > 0 {
+                            dischargingTimeToEmpty = timeToEmpty
+                        }
+                    }
+                }
+            }
         }
         self.isACPowerConnected = acConnected
+        self.batteryLevel = currentBatteryPercent
+        self.isBatteryLow = (currentBatteryPercent <= 20)
+
+        if let timeToEmpty = dischargingTimeToEmpty, isCurrentlyDischarging {
+            let h = timeToEmpty / 60
+            let m = timeToEmpty % 60
+            self.approximateBatteryRuntime = "\(h)h \(m)m"
+        } else {
+            self.approximateBatteryRuntime = nil
+        }
+
+        // Real-time discharge power draw (W)
+        if let watts = BatteryPowerService.shared.latestTelemetry?.dischargingWatts, watts > 0, !acConnected {
+            self.batteryPowerWatts = watts
+            let drainPerHour = min(100.0, max(1.0, (watts / 60.0) * 100.0))
+            self.estimatedBatteryDrainPerHour = drainPerHour
+        } else {
+            self.batteryPowerWatts = nil
+            self.estimatedBatteryDrainPerHour = nil
+        }
 
         // 4. Official Apple Clamshell Mode Capability Rule:
         // On Apple Silicon & Intel MacBooks, macOS kernel enforces hardware lid-sleep unless:
@@ -298,6 +364,29 @@ public final class ClamshellManager: ObservableObject {
         ))
 
         self.readinessItems = items
+
+        // 6. Update status state
+        updateStatusState()
+    }
+
+    private func updateStatusState() {
+        if isActive {
+            if isOfficialClamshellSupported {
+                self.statusState = .lidClosedSupported
+            } else {
+                self.statusState = .displayOffAwakeActive
+            }
+        } else if isBatteryLow && !isACPowerConnected {
+            self.statusState = .batteryLow
+        } else if wasSessionExpired {
+            self.statusState = .sessionExpired
+        } else if isOfficialClamshellSupported {
+            self.statusState = .lidClosedSupported
+        } else if isMacBook && !isACPowerConnected {
+            self.statusState = .lidClosedUnavailable
+        } else {
+            self.statusState = .stopped
+        }
     }
 
     // MARK: - Notifications Setup
@@ -371,8 +460,6 @@ public final class ClamshellManager: ObservableObject {
         self.activeMode = targetMode
 
         // Acquire native system power assertion
-        // We use kIOPMAssertionTypePreventUserIdleSystemSleep which prevents idle system sleep
-        // while honoring Apple's security and thermal boundaries.
         let assertionReason = (targetMode == .supportedClamshell)
             ? "Borno Pulse: Official Clamshell Mode Session" as CFString
             : "Borno Pulse: Display-Off Background Awake Session" as CFString
@@ -389,6 +476,7 @@ public final class ClamshellManager: ObservableObject {
             self.startedAt = Date()
             self.wasSleepInterrupted = false
             self.sleepInterruptionMessage = nil
+            self.wasSessionExpired = false
 
             // Calculate duration seconds
             let seconds: Int?
@@ -404,14 +492,26 @@ public final class ClamshellManager: ObservableObject {
             countdownTimer?.invalidate()
             if let initialSeconds = seconds, initialSeconds > 0 {
                 countdownTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
-                    guard let self = self else { return }
-                    if let rem = self.remainingSeconds, rem > 1 {
-                        self.remainingSeconds = rem - 1
-                    } else {
-                        self.stop()
+                    Task { @MainActor [weak self] in
+                        guard let self = self else { return }
+                        // Safety check: Auto-stop if battery drops to <= 20% on battery
+                        if !self.isACPowerConnected && self.batteryLevel <= 20 {
+                            self.isBatteryLow = true
+                            self.stop()
+                            return
+                        }
+
+                        if let rem = self.remainingSeconds, rem > 1 {
+                            self.remainingSeconds = rem - 1
+                        } else {
+                            self.wasSessionExpired = true
+                            self.stop()
+                        }
                     }
                 }
             }
+
+            updateStatusState()
 
             // Immediately run workload diagnostic verification
             Task {
@@ -435,6 +535,15 @@ public final class ClamshellManager: ObservableObject {
         }
 
         isActive = false
+        refreshHardwareTelemetry()
+    }
+
+    /// Triggers display sleep immediately without putting the Mac system to sleep.
+    public func triggerDisplaySleep() {
+        let task = Process()
+        task.executableURL = URL(fileURLWithPath: "/usr/bin/pmset")
+        task.arguments = ["displaysleepnow"]
+        try? task.run()
     }
 
     public func toggle() {

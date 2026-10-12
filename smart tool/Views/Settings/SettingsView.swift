@@ -1330,6 +1330,26 @@ public struct SettingsView: View {
                     .buttonStyle(.bordered)
                     .controlSize(.small)
                 }
+
+                Divider().opacity(0.15)
+
+                HStack {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("First-Launch Setup & Permissions Guide")
+                            .font(AppTypography.font(size: 12, weight: .medium))
+                            .foregroundStyle(AppTheme.textPrimary)
+                        Text("Review storage access, background service toggles, and accessibility privileges.")
+                            .font(AppTypography.font(size: 11))
+                            .foregroundStyle(AppTheme.textSecondary)
+                    }
+                    Spacer()
+
+                    Button("Open Setup Guide…") {
+                        NotificationCenter.default.post(name: Notification.Name("showOnboardingSetup"), object: nil)
+                    }
+                    .buttonStyle(.bordered)
+                    .controlSize(.small)
+                }
             }
             .smartCard()
 
