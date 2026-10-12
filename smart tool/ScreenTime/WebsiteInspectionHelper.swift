@@ -65,40 +65,54 @@ public final class WebsiteInspectionHelper: Sendable {
             return .notABrowser
         }
         
-        return await withCheckedContinuation { continuation in
-            DispatchQueue.global(qos: .userInitiated).async {
-                var errorDict: NSDictionary?
-                guard let script = NSAppleScript(source: source) else {
-                    continuation.resume(returning: .executionError("Could not compile AppleScript"))
-                    return
-                }
-                
-                let outputDescriptor = script.executeAndReturnError(&errorDict)
-                
-                if let error = errorDict {
-                    let errNum = error[NSAppleScript.errorNumber] as? Int ?? 0
-                    if errNum == -1743 {
-                        continuation.resume(returning: .permissionDenied)
-                    } else {
-                        let errMsg = error[NSAppleScript.errorMessage] as? String ?? "AppleScript error \(errNum)"
-                        continuation.resume(returning: .executionError(errMsg))
-                    }
-                    return
-                }
-                
-                guard let rawURLString = outputDescriptor.stringValue,
-                      !rawURLString.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
-                    continuation.resume(returning: .windowUnavailable)
-                    return
-                }
-                
-                if let url = URL(string: rawURLString), let host = url.host(), !host.isEmpty {
-                    let cleanedHost = host.replacingOccurrences(of: "^www\\.", with: "", options: .regularExpression)
-                    continuation.resume(returning: .success(domain: cleanedHost))
+        return await Task.detached(priority: .userInitiated) {
+            let (rawURLString, errString, exitCode) = Self.runOsaScript(source: source)
+            
+            if exitCode != 0 {
+                if let err = errString, err.contains("-1743") || err.contains("Not authorized") {
+                    return .permissionDenied
                 } else {
-                    continuation.resume(returning: .windowUnavailable)
+                    return .executionError(errString ?? "Process exit code \(exitCode)")
                 }
             }
+            
+            guard !rawURLString.isEmpty else {
+                return .windowUnavailable
+            }
+            
+            if let url = URL(string: rawURLString), let host = url.host(), !host.isEmpty {
+                let cleanedHost = host.replacingOccurrences(of: "^www\\.", with: "", options: .regularExpression)
+                return .success(domain: cleanedHost)
+            } else {
+                return .windowUnavailable
+            }
+        }.value
+    }
+    
+    /// Executes AppleScript in an isolated subprocess, preventing libdispatch thread-queue assertions.
+    public static func runOsaScript(source: String) -> (output: String, error: String?, exitCode: Int32) {
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: "/usr/bin/osascript")
+        process.arguments = ["-e", source]
+        
+        let stdoutPipe = Pipe()
+        let stderrPipe = Pipe()
+        process.standardOutput = stdoutPipe
+        process.standardError = stderrPipe
+        
+        do {
+            try process.run()
+            process.waitUntilExit()
+            
+            let stdoutData = stdoutPipe.fileHandleForReading.readDataToEndOfFile()
+            let stderrData = stderrPipe.fileHandleForReading.readDataToEndOfFile()
+            
+            let output = String(data: stdoutData, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+            let errString = String(data: stderrData, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines)
+            
+            return (output: output, error: errString?.isEmpty == true ? nil : errString, exitCode: process.terminationStatus)
+        } catch {
+            return (output: "", error: error.localizedDescription, exitCode: -1)
         }
     }
 }

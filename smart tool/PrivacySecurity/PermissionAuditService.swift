@@ -38,10 +38,8 @@ public final class PermissionAuditService: Sendable {
         ))
         
         // 3. AppleScript Automation
-        let script = NSAppleScript(source: "tell application \"Finder\" to return name")
-        var errDict: NSDictionary?
-        _ = script?.executeAndReturnError(&errDict)
-        let autoGranted = (errDict == nil)
+        let (_, _, exitCode) = WebsiteInspectionHelper.runOsaScript(source: "tell application \"Finder\" to return name")
+        let autoGranted = (exitCode == 0)
         items.append(PermissionAuditItem(
             name: "Automation / Apple Events",
             featureImpact: "Enables extension-free active browser domain inspection (Safari & Chromium) for Screen Time.",
