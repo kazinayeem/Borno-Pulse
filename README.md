@@ -254,10 +254,29 @@ This project is licensed under the **MIT License**. See the [`LICENSE`](LICENSE)
 
 ---
 
-## 11. Support & Attribution
+## 11. Developer & Founder Profile
+
+<p align="center">
+  <img src="https://avatars.githubusercontent.com/u/85398213?v=4" width="110" height="110" style="border-radius: 50%; border: 3px solid #007AFF;" alt="Mohammad Ali Nayeem"><br>
+  <strong>Mohammad Ali Nayeem</strong><br>
+  <em>Software Engineer</em><br>
+  <em>B.Sc in SWE, Daffodil International University</em><br>
+  <strong>Founder of <a href="https://bornosoft.bd">BornoSoft</a></strong>
+</p>
+
+<p align="center">
+  <a href="https://github.com/kazinayeem"><img src="https://img.shields.io/badge/GitHub-@kazinayeem-181717?style=flat-square&logo=github&logoColor=white" alt="GitHub"></a>
+  &nbsp;
+  <a href="https://bornosoft.bd"><img src="https://img.shields.io/badge/Website-bornosoft.bd-007AFF?style=flat-square&logo=safari&logoColor=white" alt="Website"></a>
+</p>
+
+---
+
+## 12. Support & Attribution
 
 - **BornoSoft**: [https://bornosoft.bd](https://bornosoft.bd)
 - **Repository**: [https://github.com/kazinayeem/Borno-Pulse](https://github.com/kazinayeem/Borno-Pulse)
 - **Issue Tracker**: [https://github.com/kazinayeem/Borno-Pulse/issues](https://github.com/kazinayeem/Borno-Pulse/issues)
 - **Pull Requests**: [https://github.com/kazinayeem/Borno-Pulse/pulls](https://github.com/kazinayeem/Borno-Pulse/pulls)
 - **Discussions**: [https://github.com/kazinayeem/Borno-Pulse/discussions](https://github.com/kazinayeem/Borno-Pulse/discussions)
+

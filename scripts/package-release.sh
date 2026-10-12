@@ -49,6 +49,12 @@ echo "✅ Located build at: $DERIVED_DATA_APP"
 TARGET_APP="$DIST_DIR/${APP_NAME}.app"
 cp -R "$DERIVED_DATA_APP" "$TARGET_APP"
 
+# Copy developer avatar to app bundle resources
+mkdir -p "$TARGET_APP/Contents/Resources"
+if [ -f "$PROJECT_DIR/smart tool/developer_avatar.png" ]; then
+    cp "$PROJECT_DIR/smart tool/developer_avatar.png" "$TARGET_APP/Contents/Resources/developer_avatar.png"
+fi
+
 # Re-sign with ad-hoc signature to reflect bundle rename
 codesign --force --deep --sign - "$TARGET_APP" 2>/dev/null || true
 

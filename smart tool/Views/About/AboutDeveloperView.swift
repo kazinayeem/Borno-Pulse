@@ -129,9 +129,30 @@ public struct AboutDeveloperView: View {
 // MARK: - Reusable Developer Avatar View
 public struct DeveloperAvatarView: View {
     public let size: CGFloat
+    private static let avatarRemoteURL = URL(string: "https://avatars.githubusercontent.com/u/85398213?v=4")
 
     public init(size: CGFloat = 48) {
         self.size = size
+    }
+
+    private var localAvatarImage: NSImage? {
+        if let img = NSImage(named: "DeveloperAvatar") {
+            return img
+        }
+        if let resourceUrl = Bundle.main.url(forResource: "developer_avatar", withExtension: "png"),
+           let img = NSImage(contentsOf: resourceUrl) {
+            return img
+        }
+        if let resourceUrl = Bundle.main.url(forResource: "avatar", withExtension: "png"),
+           let img = NSImage(contentsOf: resourceUrl) {
+            return img
+        }
+        let localPath = "/Users/mohammadalinayeem/Project & Code/ios/smart tool/smart tool/developer_avatar.png"
+        if FileManager.default.fileExists(atPath: localPath),
+           let img = NSImage(contentsOfFile: localPath) {
+            return img
+        }
+        return nil
     }
 
     public var body: some View {
@@ -140,19 +161,45 @@ public struct DeveloperAvatarView: View {
                 .fill(AppTheme.electricBlue.opacity(0.12))
                 .frame(width: size, height: size)
 
-            if let img = NSImage(named: "DeveloperAvatar") ?? NSImage(contentsOfFile: "/Users/mohammadalinayeem/Project & Code/ios/smart tool/smart tool/developer_avatar.png") {
+            if let img = localAvatarImage {
                 Image(nsImage: img)
                     .resizable()
                     .aspectRatio(contentMode: .fill)
                     .frame(width: size, height: size)
                     .clipShape(Circle())
-                    .overlay(Circle().stroke(AppTheme.electricBlue.opacity(0.6), lineWidth: 1.5))
-                    .shadow(color: AppTheme.electricBlue.opacity(0.2), radius: 3, x: 0, y: 1)
+                    .overlay(Circle().stroke(AppTheme.electricBlue.opacity(0.65), lineWidth: 1.5))
+                    .shadow(color: AppTheme.electricBlue.opacity(0.25), radius: 4, x: 0, y: 1)
+            } else if let url = Self.avatarRemoteURL {
+                AsyncImage(url: url) { phase in
+                    switch phase {
+                    case .success(let image):
+                        image
+                            .resizable()
+                            .aspectRatio(contentMode: .fill)
+                            .frame(width: size, height: size)
+                            .clipShape(Circle())
+                            .overlay(Circle().stroke(AppTheme.electricBlue.opacity(0.65), lineWidth: 1.5))
+                            .shadow(color: AppTheme.electricBlue.opacity(0.25), radius: 4, x: 0, y: 1)
+                    case .failure:
+                        fallbackSymbol
+                    case .empty:
+                        ProgressView()
+                            .controlSize(.small)
+                            .frame(width: size, height: size)
+                    @unknown default:
+                        fallbackSymbol
+                    }
+                }
             } else {
-                Image(systemName: "person.crop.circle.fill")
-                    .font(.system(size: size * 0.82))
-                    .foregroundStyle(AppTheme.electricBlue)
+                fallbackSymbol
             }
         }
     }
+
+    private var fallbackSymbol: some View {
+        Image(systemName: "person.crop.circle.fill")
+            .font(.system(size: size * 0.82))
+            .foregroundStyle(AppTheme.electricBlue)
+    }
 }
+
