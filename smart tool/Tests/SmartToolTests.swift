@@ -1254,6 +1254,9 @@ public enum SmartToolTests {
         // 131. Port Manager: listening sockets, dev servers, redaction, conflicts, safety
         runPortManagerTests(assert)
 
+        // 132. Batch File Converter & Custom Pomodoro Durations
+        BatchAndFocusTests.runTests(assert)
+
         return (passed, failed, logs)
     }
 }
